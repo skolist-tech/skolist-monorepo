@@ -7,7 +7,7 @@ export function HeroSection() {
         </h1>
         <p className="mx-auto mb-6 max-w-4xl text-center text-lg text-gray-600">
           Skolist helps schools identify each student&apos;s learning gaps and
-          implement strategic solutions through AI-powered, hassle-free
+          implement strategic solutions through Technologically empowered, hassle-free
           integration
         </p>
         <p className="mx-auto max-w-4xl text-center text-lg text-gray-600">
