@@ -72,6 +72,11 @@ export function ConceptSelectorTree() {
         noCascade={false}
       />
       <style>{`
+        .concept-tree-container {
+          height: 500px; /* Adjust height as needed */
+          overflow-y: auto; /* Enable vertical scrolling */
+          overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
         .concept-tree-container .react-checkbox-tree {
           font-size: 0.875rem;
         }
