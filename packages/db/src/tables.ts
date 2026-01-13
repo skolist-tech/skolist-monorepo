@@ -90,3 +90,7 @@ export type UpdateQgenDraftSection = Tables["qgen_draft_sections"]["Update"];
 export type QgenDraft = Tables["qgen_drafts"]["Row"];
 export type InsertQgenDraft = Tables["qgen_drafts"]["Insert"];
 export type UpdateQgenDraft = Tables["qgen_drafts"]["Update"];
+
+export type ConceptAndActivity = Tables["concepts_activities_maps"]["Row"];
+export type InsertConceptAndActivity = Tables["concepts_activities_maps"]["Insert"];
+export type UpdateConceptAndActivity = Tables["concepts_activities_maps"]["Update"];

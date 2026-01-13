@@ -271,6 +271,42 @@ export type Database = {
           },
         ]
       }
+      concepts_activities_maps: {
+        Row: {
+          activity_id: string | null
+          concept_id: string | null
+          created_at: string
+          id: number
+        }
+        Insert: {
+          activity_id?: string | null
+          concept_id?: string | null
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          activity_id?: string | null
+          concept_id?: string | null
+          created_at?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concepts_activities_maps_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concepts_activities_maps_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gen_artifacts: {
         Row: {
           activity_id: string
