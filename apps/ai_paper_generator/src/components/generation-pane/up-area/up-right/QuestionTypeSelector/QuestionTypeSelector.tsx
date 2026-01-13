@@ -1,22 +1,17 @@
 import { QUESTION_TYPE } from "@skolist/db";
 import type { QuestionType } from "@skolist/db";
 import { QuestionTypeCard } from "./QuestionTypeCard";
-import { Button } from "@skolist/ui";
 import {
   CheckSquare,
   FileText,
   BookOpen,
   Circle,
   Underline,
-  Sparkles,
-  Loader2,
 } from "lucide-react";
 
 interface QuestionTypeSelectorProps {
   questionCounts: Record<QuestionType, number>;
   onCountChange: (type: QuestionType, count: number) => void;
-  onGenerate: () => void;
-  isGenerating: boolean;
 }
 
 const QUESTION_TYPES: Array<{
@@ -54,8 +49,6 @@ const QUESTION_TYPES: Array<{
 export function QuestionTypeSelector({
   questionCounts,
   onCountChange,
-  onGenerate,
-  isGenerating,
 }: QuestionTypeSelectorProps) {
   const totalQuestions = Object.values(questionCounts).reduce(
     (sum, count) => sum + count,
@@ -84,27 +77,6 @@ export function QuestionTypeSelector({
             icon={icon}
           />
         ))}
-      </div>
-
-      {/* Generate Questions Button */}
-      <div className="flex justify-end pt-2">
-        <Button
-          onClick={onGenerate}
-          disabled={totalQuestions === 0 || isGenerating}
-          className="gap-2"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              Generate Questions
-            </>
-          )}
-        </Button>
       </div>
     </div>
   );

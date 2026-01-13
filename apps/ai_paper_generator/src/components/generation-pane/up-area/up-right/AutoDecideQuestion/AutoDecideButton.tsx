@@ -19,7 +19,7 @@ export function AutoDecideButton({
       onClick={onClick}
       disabled={disabled}
       size="lg"
-      className={`w-full gap-2 ${className || ""}`}
+      className={`gap-2 ${className || ""}`}
     >
       <Sparkles className="h-4 w-4" />
       {isLoading ? (
