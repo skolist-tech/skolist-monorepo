@@ -10,6 +10,7 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
 } from "react";
 import type { ReactNode } from "react";
 import type { Node } from "react-checkbox-tree";
@@ -167,6 +168,10 @@ export function ConceptProvider({ children }: { children: ReactNode }) {
 
   // Error state
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-selection state refs
+  const hasAutoSelectedClass = useRef(false);
+  const hasAutoSelectedSubject = useRef(false);
 
   // Build tree nodes from data
   const treeNodes = useMemo(
@@ -382,6 +387,40 @@ export function ConceptProvider({ children }: { children: ReactNode }) {
     const checked = conceptIds.map((id) => `concept:${id}`);
     setSelection((prev) => ({ ...prev, checked }));
   }, []);
+
+  // =========================================================
+  // Effect: Auto-select first class and subject on load
+  // =========================================================
+
+  useEffect(() => {
+    if (
+      !isLoadingSchoolClasses &&
+      schoolClasses.length > 0 &&
+      !hasAutoSelectedClass.current
+    ) {
+      // Use function reference directly or ensure it's defined
+      const firstClassId = schoolClasses[0]?.id;
+      if (firstClassId) {
+        selectSchoolClass(firstClassId);
+        hasAutoSelectedClass.current = true;
+      }
+    }
+  }, [isLoadingSchoolClasses, schoolClasses, selectSchoolClass]);
+
+  useEffect(() => {
+    if (
+      !isLoadingSubjects &&
+      subjects.length > 0 &&
+      selection.classId &&
+      !hasAutoSelectedSubject.current
+    ) {
+      const firstSubjectId = subjects[0]?.id;
+      if (firstSubjectId) {
+        selectSubject(firstSubjectId);
+        hasAutoSelectedSubject.current = true;
+      }
+    }
+  }, [isLoadingSubjects, subjects, selection.classId, selectSubject]);
 
   // =========================================================
   // Helpers
