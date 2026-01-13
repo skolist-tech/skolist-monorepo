@@ -72,6 +72,13 @@ export {
   DialogTitle,
   DialogDescription,
 } from "./components/dialog";
+export { Popover, PopoverTrigger, PopoverContent } from "./components/popover";
+export {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "./components/tooltip";
 
 // Data Display
 export { Avatar, AvatarImage, AvatarFallback } from "./components/avatar";
