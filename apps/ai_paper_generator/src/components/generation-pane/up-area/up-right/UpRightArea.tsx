@@ -14,6 +14,10 @@ interface UpRightAreaProps {
   onAutoDecide: (params: AutoDecideParams) => void;
   onGenerate: () => void;
   isGenerating: boolean;
+  hardnessLevels: Record<HardnessLevel, number>;
+  onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
+  totalQuestions: number;
+  onTotalQuestionsChange: (value: number) => void;
 }
 
 export function UpRightArea({
@@ -22,23 +26,16 @@ export function UpRightArea({
   onAutoDecide,
   onGenerate,
   isGenerating,
+  hardnessLevels,
+  onHardnessLevelChange,
+  totalQuestions,
+  onTotalQuestionsChange,
 }: UpRightAreaProps) {
   // Lifted state from AutoDecideQuestion
-  const [totalQuestions, setTotalQuestions] = useState(10);
+  // const [totalQuestions, setTotalQuestions] = useState(10); // Moved to parent
   const [totalMarks, setTotalMarks] = useState(30);
   const [totalTime, setTotalTime] = useState(60);
   const [customPrompt, setCustomPrompt] = useState("");
-  const [hardnessLevels, setHardnessLevels] = useState<
-    Record<HardnessLevel, number>
-  >({
-    easy: 40,
-    medium: 40,
-    hard: 20,
-  });
-
-  const handleLevelChange = (level: HardnessLevel, value: number) => {
-    setHardnessLevels((prev) => ({ ...prev, [level]: value }));
-  };
 
   const handleAutoDecide = () => {
     onAutoDecide({
@@ -63,7 +60,7 @@ export function UpRightArea({
         totalQuestions={totalQuestions}
         totalMarks={totalMarks}
         totalTime={totalTime}
-        onTotalQuestionsChange={setTotalQuestions}
+        onTotalQuestionsChange={onTotalQuestionsChange}
         onTotalMarksChange={setTotalMarks}
         onTotalTimeChange={setTotalTime}
       />
@@ -71,31 +68,35 @@ export function UpRightArea({
       {/* <Separator /> */}
 
       {/* 2, 3, 4, 5, 6] Difficulty Section (Header, Auto Button, Slider, %, Counts) */}
-      <HardnessLevelSliders
-        levels={hardnessLevels}
-        onLevelChange={handleLevelChange}
-        totalQuestions={totalQuestions}
-        headerElement={
-          <div className="flex items-center gap-4">
-            <h3 className="whitespace-nowrap text-sm font-semibold">
-              Difficulty :
-            </h3>
-            <AutoDecideButton
-              onClick={handleAutoDecide}
-              disabled={!isAutoDecideValid}
-              className="h-7 px-3 text-xs"
-            />
-          </div>
-        }
-      />
+      <div className="pt-4">
+        <HardnessLevelSliders
+          levels={hardnessLevels}
+          onLevelChange={onHardnessLevelChange}
+          totalQuestions={totalQuestions}
+          headerElement={
+            <div className="flex items-center gap-4">
+              <div className="mr-2 flex flex-col text-sm font-semibold leading-tight">
+                <span>Paper</span>
+                <span>Difficulty</span>
+              </div>
+              <AutoDecideButton
+                onClick={handleAutoDecide}
+                disabled={!isAutoDecideValid}
+                className="h-7 px-3 text-xs"
+              />
+            </div>
+          }
+        />
+      </div>
 
       {/* <Separator /> */}
-
-      {/* 7] Question Types Selector */}
-      <QuestionTypeSelector
-        questionCounts={questionCounts}
-        onCountChange={onQuestionCountChange}
-      />
+      <div className="pt-3">
+        {/* 7] Question Types Selector */}
+        <QuestionTypeSelector
+          questionCounts={questionCounts}
+          onCountChange={onQuestionCountChange}
+        />
+      </div>
 
       {/* <Separator /> */}
 

@@ -1,5 +1,16 @@
 import { useState } from "react";
-import { Button, Input, Textarea, Badge, Label, Checkbox } from "@skolist/ui";
+import { formatQuestionType } from "../../../utils/formatters";
+import {
+  Button,
+  Input,
+  Textarea,
+  Badge,
+  Label,
+  Checkbox,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@skolist/ui";
 import {
   ArrowRight,
   ArrowLeft,
@@ -9,8 +20,13 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
+  RefreshCw,
+  MessageSquarePlus,
+  Send,
+  Info,
 } from "lucide-react";
 import type { GeneratedQuestion, HardnessLevel } from "@skolist/db";
+import { type GeneratedQuestionWithConcepts } from "../../../services/questionService";
 import {
   QuestionMarks,
   QuestionTags,
@@ -19,11 +35,13 @@ import {
 } from "./index";
 
 interface GeneratedQuestionCardProps {
-  question: GeneratedQuestion;
+  question: GeneratedQuestionWithConcepts;
   onMoveToDraft: (id: string) => void;
   onRemoveFromDraft?: (id: string) => void;
-  onUpdate?: (updatedQuestion: GeneratedQuestion) => void;
+  onUpdate?: (updatedQuestion: GeneratedQuestionWithConcepts) => void;
   onDelete?: (id: string) => Promise<void>;
+  onDirectRegenerate?: () => void;
+  onRegenerate?: (prompt: string, image?: File) => void;
   index?: number; // Kept for reference if needed, but won't be displayed as rank
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -40,13 +58,18 @@ export function GeneratedQuestionCard({
   onDelete,
   onMoveUp,
   onMoveDown,
+  onDirectRegenerate,
+  onRegenerate,
   showReorder = false,
   isSelected = false,
   onSelect,
 }: GeneratedQuestionCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedQuestion, setEditedQuestion] =
-    useState<GeneratedQuestion>(question);
+    useState<GeneratedQuestionWithConcepts>(question);
+  // Replaced modal state with popover state (controlled if needed, or just for inputs)
+  const [prompt, setPrompt] = useState("");
+  const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
 
   const handleSave = () => {
     if (onUpdate) {
@@ -58,6 +81,14 @@ export function GeneratedQuestionCard({
   const handleCancel = () => {
     setEditedQuestion(question);
     setIsEditing(false);
+  };
+
+  const handleRegenerateSubmit = () => {
+    if (onRegenerate && prompt.trim()) {
+      onRegenerate(prompt);
+      setPrompt("");
+      setIsRegenerateOpen(false);
+    }
   };
 
   const updateField = <K extends keyof GeneratedQuestion>(
@@ -213,7 +244,53 @@ export function GeneratedQuestionCard({
         </div>
       )}
       {/* Header Actions */}
-      <div className="absolute right-2 top-2 flex items-center opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute right-2 top-2 flex items-center rounded-md bg-background/80 p-1 backdrop-blur-sm">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onDirectRegenerate}
+          title="Direct Regenerate"
+          disabled={!onDirectRegenerate}
+        >
+          <RefreshCw className="h-4 w-4 text-muted-foreground hover:text-primary" />
+        </Button>
+
+        <Popover open={isRegenerateOpen} onOpenChange={setIsRegenerateOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              title="Regenerate with Prompt"
+              disabled={!onRegenerate}
+            >
+              <MessageSquarePlus className="h-4 w-4 text-muted-foreground hover:text-primary" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-3" align="end">
+            <div className="flex w-full items-start gap-2">
+              <Textarea
+                placeholder="Instructions..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="h-16 resize-none py-2"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleRegenerateSubmit();
+                  }
+                }}
+              />
+              <Button
+                size="icon"
+                className="mt-1 h-8 w-8 shrink-0"
+                onClick={handleRegenerateSubmit}
+              >
+                <Send className="h-3 w-3" />
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <Button
           size="icon"
           variant="ghost"
@@ -222,6 +299,7 @@ export function GeneratedQuestionCard({
         >
           <Edit2 className="h-4 w-4 text-muted-foreground hover:text-primary" />
         </Button>
+
         {question.is_in_draft && onRemoveFromDraft ? (
           <Button
             size="icon"
@@ -238,9 +316,13 @@ export function GeneratedQuestionCard({
             onClick={() => onMoveToDraft(question.id)}
             title="Move to Draft"
           >
-            <ArrowRight className="h-4 w-4 text-green-500 hover:text-green-700" />
+            <ArrowRight
+              className="h-4 w-4 text-orange-500 hover:text-orange-700"
+              strokeWidth={3}
+            />
           </Button>
         )}
+
         {onDelete && (
           <Button
             size="icon"
@@ -265,7 +347,7 @@ export function GeneratedQuestionCard({
         {/* Meta info (Type, Marks, Hardness) */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Badge variant="outline" className="capitalize">
-            {question.question_type.replace(/_/g, " ")}
+            {formatQuestionType(question.question_type)}
           </Badge>
           <span>•</span>
           <QuestionMarks marks={question.marks} />
@@ -327,6 +409,43 @@ export function GeneratedQuestionCard({
             {question.explanation}
           </div>
         )}
+      </div>
+
+      <div className="absolute bottom-2 right-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              title="View Concepts"
+              className="h-9 w-9 text-muted-foreground hover:text-primary"
+            >
+              <Info className="!h-6 !w-6" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-3" align="end">
+            <h4 className="mb-2 text-sm font-medium leading-none">
+              Related Concepts
+            </h4>
+            <div className="flex flex-wrap gap-1">
+              {question.concepts && question.concepts.length > 0 ? (
+                question.concepts.map((concept) => (
+                  <Badge
+                    key={concept.id}
+                    variant="secondary"
+                    className="text-xs"
+                  >
+                    {concept.name}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  No concepts linked
+                </span>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );

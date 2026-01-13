@@ -179,6 +179,12 @@ function SortableSection({
                   onRemoveFromDraft={() => moveQuestionToGeneration(q.id)}
                   onUpdate={saveQuestion}
                   onDelete={deleteQuestion}
+                  onDirectRegenerate={() =>
+                    console.log("Direct regenerate draft")
+                  }
+                  onRegenerate={(prompt, image) =>
+                    console.log("Regenerate draft with prompt", prompt, image)
+                  }
                   showReorder={true}
                   onMoveUp={() => moveQuestion(idx, "up")}
                   onMoveDown={() => moveQuestion(idx, "down")}

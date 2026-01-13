@@ -14,7 +14,9 @@ import {
   Search,
   ArrowDownAZ,
   ArrowUpAZ,
+  FileQuestion,
 } from "lucide-react";
+import { subjectIcons } from "./thumbnail";
 
 interface ActivitySidebarProps {
   isCollapsed: boolean;
@@ -39,7 +41,20 @@ export function ActivitySidebar({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const handleCreateActivity = async () => {
-    await createActivity({ name: `Untitled Activity` });
+    let name = "New Activity";
+    let counter = 2;
+
+    // Check if "New Activity" exists
+    const baseExists = activities.some((a) => a.name === name);
+
+    if (baseExists) {
+      while (activities.some((a) => a.name === `New Activity (${counter})`)) {
+        counter++;
+      }
+      name = `New Activity (${counter})`;
+    }
+
+    await createActivity({ name });
   };
 
   const filteredActivities = activities
@@ -54,6 +69,16 @@ export function ActivitySidebar({
 
   const toggleSort = () => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
+  const getActivityIcon = (name: string) => {
+    const lowerName = name.toLowerCase();
+    for (const [key, Icon] of Object.entries(subjectIcons)) {
+      if (lowerName.includes(key)) {
+        return Icon;
+      }
+    }
+    return FileQuestion;
   };
 
   return (
@@ -178,9 +203,10 @@ export function ActivitySidebar({
                   onClick={() => selectActivity(activity.id)}
                   title={activity.name}
                 >
-                  <span className="text-xs font-bold">
-                    {activity.name.substring(0, 2).toUpperCase()}
-                  </span>
+                  {(() => {
+                    const Icon = getActivityIcon(activity.name);
+                    return <Icon className="h-5 w-5" />;
+                  })()}
                 </div>
               )
             )}

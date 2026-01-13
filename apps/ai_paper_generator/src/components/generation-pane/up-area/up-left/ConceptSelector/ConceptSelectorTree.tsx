@@ -9,16 +9,14 @@ import "react-checkbox-tree/lib/react-checkbox-tree.css";
 import {
   ChevronRight,
   ChevronDown,
-  Square,
-  CheckSquare,
-  MinusSquare,
   BookOpen,
   Lightbulb,
   Loader2,
   Search,
   X,
 } from "lucide-react";
-import { Input } from "@skolist/ui";
+
+import { Input, Checkbox } from "@skolist/ui";
 import { useConceptContext } from "../../../../../context/ConceptContext";
 
 /**
@@ -183,9 +181,16 @@ export function ConceptSelectorTree() {
           onCheck={setChecked}
           onExpand={searchQuery ? setSearchExpanded : setExpanded}
           icons={{
-            check: <CheckSquare className="h-4 w-4 text-primary" />,
-            uncheck: <Square className="h-4 w-4 text-muted-foreground" />,
-            halfCheck: <MinusSquare className="h-4 w-4 text-primary/70" />,
+            check: <Checkbox checked={true} className="pointer-events-none" />,
+            uncheck: (
+              <Checkbox checked={false} className="pointer-events-none" />
+            ),
+            halfCheck: (
+              <Checkbox
+                checked="indeterminate"
+                className="pointer-events-none"
+              />
+            ),
             expandClose: <ChevronRight className="h-4 w-4" />,
             expandOpen: <ChevronDown className="h-4 w-4" />,
             expandAll: null,
@@ -228,9 +233,30 @@ export function ConceptSelectorTree() {
         }
         .concept-tree-container ol {
           padding-left: 20px;
+          position: relative;
+        }
+        /* Vertical connector line from parent to children */
+        .concept-tree-container ol ol {
+          margin-left: 8px;
+          border-left: 1px solid hsl(var(--border));
         }
         .concept-tree-container .rct-node-parent > .rct-text > .rct-node-icon svg {
           color: hsl(var(--primary));
+        }
+        /* Level 1 - Chapters: green */
+        .concept-tree-container .react-checkbox-tree > ol > li > .rct-text .rct-title {
+          color: #16a34a !important;
+          font-weight: 600;
+        }
+        /* Level 2 - Topics: dark yellow/amber */
+        .concept-tree-container .react-checkbox-tree > ol > li > ol > li > .rct-text .rct-title {
+          color: #b45309 !important;
+          font-weight: 500;
+        }
+        /* Level 3 - Concepts: orange */
+        .concept-tree-container .react-checkbox-tree > ol > li > ol > li > ol > li > .rct-text .rct-title {
+          color: #2E0057 !important;
+          font-weight: 500;
         }
       `}</style>
     </div>

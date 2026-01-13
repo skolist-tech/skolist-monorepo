@@ -7,6 +7,7 @@ import {
   BookOpen,
   Circle,
   Underline,
+  ListChecks,
 } from "lucide-react";
 
 interface QuestionTypeSelectorProps {
@@ -23,6 +24,11 @@ const QUESTION_TYPES: Array<{
     type: QUESTION_TYPE.MCQ4,
     label: "MCQ",
     icon: <CheckSquare className="h-4 w-4 text-primary" />,
+  },
+  {
+    type: QUESTION_TYPE.MSQ4,
+    label: "MSQ",
+    icon: <ListChecks className="h-4 w-4 text-primary" />,
   },
   {
     type: QUESTION_TYPE.SHORT_ANSWER,

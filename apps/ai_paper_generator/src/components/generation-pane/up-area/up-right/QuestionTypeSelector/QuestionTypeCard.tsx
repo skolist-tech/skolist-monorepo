@@ -20,14 +20,14 @@ export function QuestionTypeCard({
   return (
     <div
       className={cn(
-        "rounded-lg border p-4 transition-all",
+        "rounded-lg border p-2 transition-all",
         count > 0
           ? "border-primary bg-primary/5"
           : "border-border hover:border-primary/50"
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-2 pt-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
           {icon}
           <Label className="font-medium leading-none">{label}</Label>
         </div>
