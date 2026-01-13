@@ -2,7 +2,8 @@
  * Down Area - Display generated questions
  */
 
-// import { Button } from "@skolist/ui"; // Removed unused
+import { useState } from "react";
+import { Button } from "@skolist/ui";
 // import { ArrowLeft } from "lucide-react"; // Removed unused
 import { useQuestionsContext } from "../../../context";
 import {
@@ -21,6 +22,33 @@ export function DownArea() {
 
   // Filter questions not in draft
   const visibleQuestions = questions.filter((q) => !q.is_in_draft);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkMoving, setIsBulkMoving] = useState(false);
+
+  const handleToggleSelect = (id: string, selected: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleBulkMoveToDraft = async () => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      setIsBulkMoving(true);
+      const idsToMove = Array.from(selectedIds);
+      await Promise.all(idsToMove.map((id) => moveQuestionToDraft(id)));
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error("Failed to bulk move questions:", error);
+    } finally {
+      setIsBulkMoving(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -46,6 +74,16 @@ export function DownArea() {
           <h3 className="text-lg font-medium text-muted-foreground">
             Generated Questions ({visibleQuestions.length})
           </h3>
+          {visibleQuestions.length > 0 && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleBulkMoveToDraft}
+              disabled={selectedIds.size === 0 || isBulkMoving}
+            >
+              Move To Draft →
+            </Button>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -56,6 +94,8 @@ export function DownArea() {
               onMoveToDraft={moveQuestionToDraft}
               onUpdate={(updated) => saveQuestion(updated)}
               onDelete={deleteQuestion}
+              isSelected={selectedIds.has(question.id)}
+              onSelect={(selected) => handleToggleSelect(question.id, selected)}
             />
           ))}
         </div>
