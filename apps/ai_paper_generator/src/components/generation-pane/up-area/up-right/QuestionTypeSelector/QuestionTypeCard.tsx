@@ -26,10 +26,10 @@ export function QuestionTypeCard({
           : "border-border hover:border-primary/50"
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2 pt-2">
           {icon}
-          <Label className="font-medium">{label}</Label>
+          <Label className="font-medium leading-none">{label}</Label>
         </div>
 
         <Input
