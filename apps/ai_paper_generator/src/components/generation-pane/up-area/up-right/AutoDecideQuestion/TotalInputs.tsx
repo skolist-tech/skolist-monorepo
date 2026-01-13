@@ -18,7 +18,7 @@ export function TotalInputs({
   onTotalTimeChange,
 }: TotalInputsProps) {
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <div className="space-y-2">
         <Label htmlFor="total-questions">Total Questions</Label>
         <Input
@@ -31,6 +31,7 @@ export function TotalInputs({
             onTotalQuestionsChange(parseInt(e.target.value) || 0)
           }
           placeholder="0"
+          className="[&::-webkit-inner-spin-button]:opacity-100 [&::-webkit-outer-spin-button]:opacity-100"
         />
       </div>
 
@@ -44,6 +45,7 @@ export function TotalInputs({
           value={totalMarks || ""}
           onChange={(e) => onTotalMarksChange(parseInt(e.target.value) || 0)}
           placeholder="0"
+          className="[&::-webkit-inner-spin-button]:opacity-100 [&::-webkit-outer-spin-button]:opacity-100"
         />
       </div>
 
@@ -57,6 +59,7 @@ export function TotalInputs({
           value={totalTime || ""}
           onChange={(e) => onTotalTimeChange(parseInt(e.target.value) || 0)}
           placeholder="0"
+          className="[&::-webkit-inner-spin-button]:opacity-100 [&::-webkit-outer-spin-button]:opacity-100"
         />
       </div>
     </div>

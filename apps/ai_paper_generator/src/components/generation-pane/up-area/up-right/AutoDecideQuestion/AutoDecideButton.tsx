@@ -19,13 +19,13 @@ export function AutoDecideButton({
       onClick={onClick}
       disabled={disabled}
       size="lg"
-      className={`w-full gap-2 ${className || ""}`}
+      className={`gap-2 ${className || ""}`}
     >
       <Sparkles className="h-4 w-4" />
       {isLoading ? (
         "Calculating..."
       ) : (
-        <span className="hidden xl:inline">Auto-Calculate</span>
+        <span className="hidden xl:inline">Auto</span>
       )}
       {!isLoading && <span className="xl:hidden">Auto</span>}
     </Button>

@@ -130,7 +130,7 @@ export function UpArea() {
     <div className="flex flex-col p-6">
       <div className="grid grid-cols-1 gap-6 overflow-hidden rounded-xl border bg-card p-6 shadow-sm lg:grid-cols-2">
         {/* Left Column: Selectors */}
-        <div className="h-full overflow-hidden">
+        <div className="h-full overflow-hidden lg:border-r lg:pr-6">
           <UpLeftArea />
         </div>
 
