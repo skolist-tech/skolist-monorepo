@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Input, Textarea, Badge, Label } from "@skolist/ui";
+import { Button, Input, Textarea, Badge, Label, Checkbox } from "@skolist/ui";
 import {
   ArrowRight,
   ArrowLeft,
@@ -28,6 +28,8 @@ interface GeneratedQuestionCardProps {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   showReorder?: boolean;
+  isSelected?: boolean;
+  onSelect?: (selected: boolean) => void;
 }
 
 export function GeneratedQuestionCard({
@@ -39,6 +41,8 @@ export function GeneratedQuestionCard({
   onMoveUp,
   onMoveDown,
   showReorder = false,
+  isSelected = false,
+  onSelect,
 }: GeneratedQuestionCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedQuestion, setEditedQuestion] =
@@ -193,7 +197,21 @@ export function GeneratedQuestionCard({
   }
 
   return (
-    <div className="group relative rounded-lg border bg-background p-4 shadow-sm transition-all hover:shadow-md">
+    <div
+      className={`group relative rounded-lg border bg-background p-4 shadow-sm transition-all hover:shadow-md ${
+        isSelected ? "border-primary ring-2 ring-primary" : ""
+      }`}
+    >
+      {/* Selection Checkbox */}
+      {onSelect && (
+        <div className="absolute left-3 top-3.5 z-10">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(checked) => onSelect(checked === true)}
+            aria-label="Select question"
+          />
+        </div>
+      )}
       {/* Header Actions */}
       <div className="absolute right-2 top-2 flex items-center opacity-0 transition-opacity group-hover:opacity-100">
         <Button
@@ -243,7 +261,7 @@ export function GeneratedQuestionCard({
         )}
       </div>
 
-      <div className="mb-2 space-y-3 pr-16">
+      <div className={`mb-2 space-y-3 pr-16 ${onSelect ? "pl-6" : ""}`}>
         {/* Meta info (Type, Marks, Hardness) */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Badge variant="outline" className="capitalize">
