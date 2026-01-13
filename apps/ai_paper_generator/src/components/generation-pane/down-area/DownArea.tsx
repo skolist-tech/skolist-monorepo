@@ -66,9 +66,10 @@ export function DownArea() {
   }
 
   return (
-    <div className="border-t bg-muted/20 p-6">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <div className="flex items-center justify-between">
+    <div className="sticky top-0 z-10 flex h-[calc(100vh-4rem)] flex-col p-6">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b bg-card px-6 py-4">
           <h3 className="text-lg font-medium text-muted-foreground">
             Generated Questions ({visibleQuestions.length})
           </h3>
@@ -139,7 +140,8 @@ export function DownArea() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        {/* Scrollable Content */}
+        <div className="flex-1 space-y-4 overflow-y-auto p-6">
           {visibleQuestions.map((question) => (
             <GeneratedQuestionCard
               key={question.id}
