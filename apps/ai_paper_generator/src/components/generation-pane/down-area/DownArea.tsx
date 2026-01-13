@@ -3,7 +3,14 @@
  */
 
 import { useState } from "react";
-import { Button } from "@skolist/ui";
+import {
+  Button,
+  Card,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@skolist/ui";
 // import { ArrowLeft } from "lucide-react"; // Removed unused
 import { useQuestionsContext } from "../../../context";
 import {
@@ -58,15 +65,6 @@ export function DownArea() {
     );
   }
 
-  if (visibleQuestions.length === 0) {
-    return (
-      <div className="border-t p-6 text-center text-muted-foreground">
-        <p>No generated questions yet.</p>
-        <p className="text-sm">Generate some questions to see them here.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="border-t bg-muted/20 p-6">
       <div className="mx-auto max-w-3xl space-y-6">
@@ -74,7 +72,62 @@ export function DownArea() {
           <h3 className="text-lg font-medium text-muted-foreground">
             Generated Questions ({visibleQuestions.length})
           </h3>
-          {visibleQuestions.length > 0 && (
+
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Card className="flex cursor-help items-center gap-2 px-3 py-1.5 text-sm font-medium">
+                    <span className="text-muted-foreground">
+                      Draft Progress:
+                    </span>
+                    <span>
+                      {questions.filter((q) => q.is_in_draft).length} /{" "}
+                      {questions.length} in Draft
+                    </span>
+                  </Card>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="space-y-1">
+                    <p className="mb-2 text-xs font-semibold">
+                      Breakdown by Question Type
+                    </p>
+                    {Object.values(
+                      questions.reduce(
+                        (acc, q) => {
+                          const type = q.question_type;
+                          if (!acc[type]) {
+                            acc[type] = { type, draft: 0, total: 0 };
+                          }
+                          acc[type].total++;
+                          if (q.is_in_draft) {
+                            acc[type].draft++;
+                          }
+                          return acc;
+                        },
+                        {} as Record<
+                          string,
+                          { type: string; draft: number; total: number }
+                        >
+                      )
+                    ).map((stat) => (
+                      <div
+                        key={stat.type}
+                        className="flex justify-between gap-4 text-xs"
+                      >
+                        <span className="capitalize">
+                          {stat.type.replace(/_/g, " ")}:
+                        </span>
+                        <span>
+                          {stat.draft} / {stat.total}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             <Button
               variant="default"
               size="sm"
@@ -83,7 +136,7 @@ export function DownArea() {
             >
               Move To Draft →
             </Button>
-          )}
+          </div>
         </div>
 
         <div className="space-y-4">
