@@ -6,11 +6,12 @@
 import { useState } from "react";
 import { UpLeftArea } from "./up-left";
 import { UpRightArea } from "./up-right";
-import type { QuestionType } from "@skolist/db";
+import type { QuestionType, HardnessLevel } from "@skolist/db";
 import type { AutoDecideParams } from "./up-right/AutoDecideQuestion";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { useConceptContext } from "../../../context/ConceptContext";
 import { fastApiService } from "../../../services/fastApiService";
+import { upsertActivityConcepts } from "../../../services/activityService";
 import { useToast } from "@skolist/ui";
 
 // Mapping from frontend QuestionType to API question type
@@ -23,29 +24,78 @@ const QUESTION_TYPE_API_MAP: Record<QuestionType, string> = {
   fill_in_the_blanks: "fill_in_the_blank",
 };
 
-export function UpArea() {
-  const { currentActivity } = useActivityContext();
-  const { getSelectedLeafConceptIds } = useConceptContext();
+interface UpAreaProps {
+  hardnessLevels: Record<HardnessLevel, number>;
+  onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
+}
+
+export function UpArea({ hardnessLevels, onHardnessLevelChange }: UpAreaProps) {
+  const { currentActivity, activities, renameActivity } = useActivityContext();
+  const { getSelectedLeafConceptIds, selection, schoolClasses, subjects } =
+    useConceptContext();
   const { toast } = useToast();
 
   const [questionCounts, setQuestionCounts] = useState<
     Record<QuestionType, number>
   >({
-    mcq4: 1,
-    msq4: 1,
-    short_answer: 1,
-    long_answer: 1,
-    true_or_false: 1,
-    fill_in_the_blanks: 1,
+    mcq4: 2,
+    msq4: 2,
+    short_answer: 2,
+    long_answer: 2,
+    true_or_false: 2,
+    fill_in_the_blanks: 2,
   });
 
+  const [totalQuestions, setTotalQuestions] = useState(12);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleQuestionCountChange = (type: QuestionType, count: number) => {
-    setQuestionCounts((prev) => ({
-      ...prev,
-      [type]: count,
-    }));
+    setQuestionCounts((prev) => {
+      const newCounts = { ...prev, [type]: count };
+      const newTotal = Object.values(newCounts).reduce((a, b) => a + b, 0);
+      setTotalQuestions(newTotal);
+      return newCounts;
+    });
+  };
+
+  const handleTotalQuestionsChange = (newTotal: number) => {
+    const diff = newTotal - totalQuestions;
+    setTotalQuestions(newTotal);
+
+    setQuestionCounts((prev) => {
+      // If increasing, just add to MCQ (first priority)
+      if (diff > 0) {
+        return {
+          ...prev,
+          mcq4: prev.mcq4 + diff,
+        };
+      }
+
+      // If decreasing, cascade through types
+      let remainingDiff = Math.abs(diff);
+      const newCounts = { ...prev };
+
+      const priorityOrder: QuestionType[] = [
+        "mcq4",
+        "msq4",
+        "short_answer",
+        "long_answer",
+        "true_or_false",
+        "fill_in_the_blanks",
+      ];
+
+      for (const type of priorityOrder) {
+        if (remainingDiff === 0) break;
+
+        const currentCount = newCounts[type];
+        const deduct = Math.min(currentCount, remainingDiff);
+
+        newCounts[type] = currentCount - deduct;
+        remainingDiff -= deduct;
+      }
+
+      return newCounts;
+    });
   };
 
   const handleAutoDecide = (params: AutoDecideParams) => {
@@ -94,16 +144,56 @@ export function UpArea() {
     setIsGenerating(true);
 
     try {
+      // Save selected concepts to the current activity context
+      // This ensures that even if generation fails, the association is recorded
+      await upsertActivityConcepts(currentActivity.id, conceptIds);
+
+      // Rename activity if it has a default name
+      if (
+        currentActivity.name === "New Activity" ||
+        /^New Activity \(\d+\)$/.test(currentActivity.name)
+      ) {
+        const className =
+          schoolClasses.find((c) => c.id === selection.classId)?.name ||
+          "Class";
+        const subjectName =
+          subjects.find((s) => s.id === selection.subjectId)?.name || "Subject";
+        const baseName = `${className} - ${subjectName}`;
+
+        let newName = baseName;
+        let counter = 2;
+
+        const baseExists = activities.some(
+          (a) => a.name === newName && a.id !== currentActivity.id
+        );
+
+        if (baseExists) {
+          while (
+            activities.some(
+              (a) =>
+                a.name === `${baseName} (${counter})` &&
+                a.id !== currentActivity.id
+            )
+          ) {
+            counter++;
+          }
+          newName = `${baseName} (${counter})`;
+        }
+
+        try {
+          await renameActivity(currentActivity.id, newName);
+        } catch (error) {
+          console.error("Failed to auto-rename activity:", error);
+          // Don't block generation if rename fails
+        }
+      }
+
       await fastApiService.generateQuestions({
         activity_id: currentActivity.id,
         concept_ids: conceptIds,
         config: {
           question_types: questionTypes,
-          difficulty_distribution: {
-            easy: 30,
-            medium: 50,
-            hard: 20,
-          },
+          difficulty_distribution: hardnessLevels,
         },
       });
 
@@ -142,6 +232,10 @@ export function UpArea() {
             onAutoDecide={handleAutoDecide}
             onGenerate={handleGenerateQuestions}
             isGenerating={isGenerating}
+            hardnessLevels={hardnessLevels}
+            onHardnessLevelChange={onHardnessLevelChange}
+            totalQuestions={totalQuestions}
+            onTotalQuestionsChange={handleTotalQuestionsChange}
           />
         </div>
       </div>

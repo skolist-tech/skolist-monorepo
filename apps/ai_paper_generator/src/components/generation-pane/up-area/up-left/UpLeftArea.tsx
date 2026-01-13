@@ -33,8 +33,17 @@ export function UpLeftArea() {
 
       {/* Instructional label */}
       <p className="flex-none text-sm font-medium text-muted-foreground">
-        Select Chapters / Topics / Concepts:
-      </p>
+  <span style={{ color: "#000000" }}>Select</span>
+  {" "}
+  <span style={{ color: "#16a34a" }}>Chapters</span>
+  {" / "}
+  <span style={{ color: "#b45309" }}>Topics</span>
+  {" / "}
+  <span style={{ color: "#2E0057" }}>Concepts</span>
+  :
+</p>
+
+
 
       {/* Show loading state */}
       {(isLoadingSchoolClasses || isLoadingSubjects || isLoadingTree) && (

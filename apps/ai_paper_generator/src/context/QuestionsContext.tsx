@@ -20,6 +20,7 @@ import {
   createQuestion,
   deleteQuestion,
   type GeneratedQuestion,
+  type GeneratedQuestionWithConcepts,
 } from "../services/questionService";
 import { getClient } from "../services/supabase";
 import {
@@ -29,13 +30,13 @@ import {
 } from "../services/draftService";
 
 interface QuestionsContextValue {
-  questions: GeneratedQuestion[];
+  questions: GeneratedQuestionWithConcepts[];
   isLoading: boolean;
   error: string | null;
   moveQuestionToDraft: (id: string) => Promise<void>;
   moveQuestionToGeneration: (id: string) => Promise<void>;
-  updateQuestionLocal: (question: GeneratedQuestion) => void;
-  saveQuestion: (question: GeneratedQuestion) => Promise<void>;
+  updateQuestionLocal: (question: GeneratedQuestionWithConcepts) => void;
+  saveQuestion: (question: GeneratedQuestionWithConcepts) => Promise<void>;
   deleteQuestion: (id: string) => Promise<void>;
   addCustomQuestion: (sectionId: string, type: QuestionType) => Promise<void>;
 }
@@ -46,7 +47,9 @@ const QuestionsContext = createContext<QuestionsContextValue | undefined>(
 
 export function QuestionsProvider({ children }: { children: ReactNode }) {
   const { currentActivity } = useActivityContext();
-  const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
+  const [questions, setQuestions] = useState<GeneratedQuestionWithConcepts[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,11 +93,19 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            setQuestions((prev) => [...prev, payload.new as GeneratedQuestion]);
+            setQuestions((prev) => [
+              ...prev,
+              { ...(payload.new as GeneratedQuestion), concepts: [] },
+            ]);
           } else if (payload.eventType === "UPDATE") {
             setQuestions((prev) =>
               prev.map((q) =>
-                q.id === payload.new.id ? (payload.new as GeneratedQuestion) : q
+                q.id === payload.new.id
+                  ? {
+                      ...(payload.new as GeneratedQuestion),
+                      concepts: q.concepts,
+                    }
+                  : q
               )
             );
           } else if (payload.eventType === "DELETE") {
@@ -173,14 +184,17 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Helper to optimistically update or fix local state if needed
-  const updateQuestionLocal = useCallback((question: GeneratedQuestion) => {
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === question.id ? question : q))
-    );
-  }, []);
+  const updateQuestionLocal = useCallback(
+    (question: GeneratedQuestionWithConcepts) => {
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === question.id ? question : q))
+      );
+    },
+    []
+  );
 
   const saveQuestion = useCallback(
-    async (question: GeneratedQuestion) => {
+    async (question: GeneratedQuestionWithConcepts) => {
       try {
         // Strip out any UI-only fields if they exist, though GeneratedQuestion should be pure DB type.
         // We pass the whole object as updates.

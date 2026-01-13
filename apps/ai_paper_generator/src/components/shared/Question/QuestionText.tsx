@@ -57,7 +57,7 @@ export function QuestionText({
 
   return (
     <div className="group relative">
-      <p className="text-sm leading-relaxed">{text}</p>
+      <p className="text-base leading-relaxed">{text}</p>
       {editable && onUpdate && (
         <Button
           size="icon"

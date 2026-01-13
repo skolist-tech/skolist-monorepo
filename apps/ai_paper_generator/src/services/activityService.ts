@@ -4,7 +4,12 @@
  */
 
 import { getClient, getCurrentUserId } from "./supabase";
-import type { Activity, InsertActivity, UpdateActivity } from "@skolist/db";
+import type {
+  Activity,
+  InsertActivity,
+  UpdateActivity,
+  InsertConceptAndActivity,
+} from "@skolist/db";
 
 const PRODUCT_TYPE = "qgen" as const;
 
@@ -96,4 +101,55 @@ export async function updateActivity(
   }
 
   return data;
+}
+
+/**
+ * Upsert concept-activity mappings
+ * Ignores duplicates if the pair already exists
+ */
+export async function upsertActivityConcepts(
+  activityId: string,
+  conceptIds: string[]
+): Promise<void> {
+  const client = getClient();
+
+  if (conceptIds.length === 0) return;
+
+  const records: InsertConceptAndActivity[] = conceptIds.map((conceptId) => ({
+    activity_id: activityId,
+    concept_id: conceptId,
+  }));
+
+  const { error } = await client
+    .from("concepts_activities_maps")
+    .upsert(records, {
+      onConflict: "activity_id,concept_id",
+      ignoreDuplicates: true,
+    });
+
+  if (error) {
+    console.error("Failed to upsert activity concepts:", error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch concept IDs associated with an activity
+ */
+export async function fetchActivityConcepts(
+  activityId: string
+): Promise<string[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from("concepts_activities_maps")
+    .select("concept_id")
+    .eq("activity_id", activityId);
+
+  if (error) {
+    console.error("Failed to fetch activity concepts:", error);
+    throw error;
+  }
+
+  return data.map((row) => row.concept_id);
 }
