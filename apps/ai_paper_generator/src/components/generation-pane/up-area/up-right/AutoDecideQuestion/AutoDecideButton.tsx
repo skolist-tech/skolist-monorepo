@@ -25,7 +25,7 @@ export function AutoDecideButton({
       {isLoading ? (
         "Calculating..."
       ) : (
-        <span className="hidden xl:inline">Auto-Calculate</span>
+        <span className="hidden xl:inline">Auto</span>
       )}
       {!isLoading && <span className="xl:hidden">Auto</span>}
     </Button>

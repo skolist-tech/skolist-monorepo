@@ -6,7 +6,7 @@ import { HardnessLevelSliders } from "./AutoDecideQuestion/HardnessLevelSliders"
 import { PromptBox } from "./AutoDecideQuestion/PromptBox";
 import { TotalInputs } from "./AutoDecideQuestion/TotalInputs";
 import type { QuestionType, HardnessLevel } from "@skolist/db";
-import { Separator } from "@skolist/ui";
+// import { Separator } from "@skolist/ui";
 
 interface UpRightAreaProps {
   questionCounts: Record<QuestionType, number>;
@@ -24,9 +24,9 @@ export function UpRightArea({
   isGenerating,
 }: UpRightAreaProps) {
   // Lifted state from AutoDecideQuestion
-  const [totalQuestions, setTotalQuestions] = useState(0);
-  const [totalMarks, setTotalMarks] = useState(0);
-  const [totalTime, setTotalTime] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(10);
+  const [totalMarks, setTotalMarks] = useState(30);
+  const [totalTime, setTotalTime] = useState(60);
   const [customPrompt, setCustomPrompt] = useState("");
   const [hardnessLevels, setHardnessLevels] = useState<
     Record<HardnessLevel, number>
@@ -57,7 +57,7 @@ export function UpRightArea({
     hardnessLevels.easy + hardnessLevels.medium + hardnessLevels.hard === 100;
 
   return (
-    <div className="h-full space-y-6 overflow-y-auto pr-2">
+    <div className="h-full w-full space-y-6 overflow-y-auto px-4 lg:max-w-5xl lg:px-6">
       {/* 1] Top three selectors, arranged horizontally */}
       <TotalInputs
         totalQuestions={totalQuestions}
@@ -68,28 +68,28 @@ export function UpRightArea({
         onTotalTimeChange={setTotalTime}
       />
 
-      <Separator />
+      {/* <Separator /> */}
 
-      {/* 2] Difficulty Header + Auto Button */}
-      <div className="flex items-center gap-4">
-        <h3 className="whitespace-nowrap text-sm font-semibold">
-          Difficulty Distribution :
-        </h3>
-        <AutoDecideButton
-          onClick={handleAutoDecide}
-          disabled={!isAutoDecideValid}
-          className="h-7 px-3 text-xs"
-        />
-      </div>
-
-      {/* 3, 4, 5, 6] Slider Section (Slider, %, Counts, Instructions) */}
+      {/* 2, 3, 4, 5, 6] Difficulty Section (Header, Auto Button, Slider, %, Counts) */}
       <HardnessLevelSliders
         levels={hardnessLevels}
         onLevelChange={handleLevelChange}
         totalQuestions={totalQuestions}
+        headerElement={
+          <div className="flex items-center gap-4">
+            <h3 className="whitespace-nowrap text-sm font-semibold">
+              Difficulty :
+            </h3>
+            <AutoDecideButton
+              onClick={handleAutoDecide}
+              disabled={!isAutoDecideValid}
+              className="h-7 px-3 text-xs"
+            />
+          </div>
+        }
       />
 
-      <Separator />
+      {/* <Separator /> */}
 
       {/* 7] Question Types Selector */}
       <QuestionTypeSelector
@@ -97,7 +97,7 @@ export function UpRightArea({
         onCountChange={onQuestionCountChange}
       />
 
-      <Separator />
+      {/* <Separator /> */}
 
       {/* 8] Prompt Box and Generate Button */}
       <PromptBox

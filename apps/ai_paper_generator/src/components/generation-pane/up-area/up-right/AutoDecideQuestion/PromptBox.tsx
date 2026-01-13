@@ -1,4 +1,5 @@
-import { Label, Button } from "@skolist/ui";
+// import { Label, Button } from "@skolist/ui";
+import { Button } from "@skolist/ui";
 import { cn } from "@skolist/utils";
 import { Sparkles, Loader2 } from "lucide-react";
 
@@ -19,13 +20,13 @@ export function PromptBox({
 }: PromptBoxProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="generation-prompt">Custom Instructions (Optional)</Label>
+      {/* <Label htmlFor="generation-prompt">Custom Instructions (Optional)</Label> */}
       <div className="relative">
         <textarea
           id="generation-prompt"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Example: &ldquo;Make 80% Objective and 20% Subjective&rdquo;"
+          placeholder="Custom Instructions (Optional) Example: &ldquo;Make 80% Objective and 20% Subjective&rdquo;"
           className={cn(
             "flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 pb-10 pr-28",
             "text-sm ring-offset-background placeholder:text-muted-foreground",
