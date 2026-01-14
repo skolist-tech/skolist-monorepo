@@ -272,13 +272,37 @@ export function PaperPreview() {
     setPages(calculatedPages);
   }, [items]);
 
-  // Trigger measurement when items change
+  // Trigger measurement when items change or content resizes
   useLayoutEffect(() => {
-    // Timeout to allow DOM to render the hidden items
-    const timer = setTimeout(() => {
-      calculatePages();
-    }, 100);
-    return () => clearTimeout(timer);
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
+    const debouncedCalculatePages = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        calculatePages();
+      }, 50);
+    };
+
+    // Initial measurement after DOM renders
+    debouncedCalculatePages();
+
+    // Use ResizeObserver to detect when content finishes rendering (images load, fonts apply, etc.)
+    const resizeObserver = new ResizeObserver(() => {
+      debouncedCalculatePages();
+    });
+
+    // Observe the measure container for size changes
+    if (measureRef.current) {
+      resizeObserver.observe(measureRef.current);
+      // Also observe each item for individual size changes
+      const itemNodes = measureRef.current.querySelectorAll("[data-item-id]");
+      itemNodes.forEach((node) => resizeObserver.observe(node));
+    }
+
+    return () => {
+      clearTimeout(debounceTimer);
+      resizeObserver.disconnect();
+    };
   }, [items, calculatePages]);
 
   const handlePrint = useReactToPrint({
@@ -372,12 +396,13 @@ export function PaperPreview() {
         ref={measureRef}
         aria-hidden="true"
         style={{
-          position: "absolute",
-          left: "-9999px",
+          position: "fixed",
+          left: 0,
           top: 0,
           width: `${CONTENT_WIDTH_PX}px`,
-          visibility: "hidden",
+          opacity: 0,
           pointerEvents: "none",
+          zIndex: -1,
         }}
       >
         {items.map((item) => (

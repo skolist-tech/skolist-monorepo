@@ -321,6 +321,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           created_at: _created_at,
           updated_at: _updated_at,
           concepts: _concepts,
+          images: _images,
           ...updates
         } = question; // Exclude system fields and join fields from update payload.
         // But `updates` in updateQuestion takes TablesUpdate<"gen_questions">.
