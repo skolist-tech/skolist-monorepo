@@ -24,14 +24,32 @@ const FOOTER_HEIGHT_PX = 30; // Reserve space for page footer
 const CONTENT_HEIGHT_PX = PAGE_HEIGHT_PX - PADDING_PX * 2 - FOOTER_HEIGHT_PX;
 
 // -- Types --
-type PaperItemType = "header" | "section" | "question";
-
-interface PaperItem {
+interface HeaderItem {
   id: string;
-  type: PaperItemType;
-  data: any;
+  type: "header";
+  data: QgenDraft;
   isPageBreakBelow?: boolean;
 }
+
+interface SectionItem {
+  id: string;
+  type: "section";
+  data: QgenDraftSection;
+  isPageBreakBelow?: boolean;
+}
+
+interface QuestionItemData extends GeneratedQuestionWithConcepts {
+  displayIndex: number;
+}
+
+interface QuestionPaperItem {
+  id: string;
+  type: "question";
+  data: QuestionItemData;
+  isPageBreakBelow?: boolean;
+}
+
+type PaperItem = HeaderItem | SectionItem | QuestionPaperItem;
 
 interface PageData {
   pageNumber: number;
