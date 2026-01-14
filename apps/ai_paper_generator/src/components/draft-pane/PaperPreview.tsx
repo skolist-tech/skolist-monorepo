@@ -20,7 +20,8 @@ const PAGE_WIDTH_PX = 794;
 const PAGE_HEIGHT_PX = 1123;
 const PADDING_PX = (PAGE_WIDTH_PX * MARGIN_MM) / A4_WIDTH_MM; // approx 75px
 const CONTENT_WIDTH_PX = PAGE_WIDTH_PX - PADDING_PX * 2;
-const CONTENT_HEIGHT_PX = PAGE_HEIGHT_PX - PADDING_PX * 2;
+const FOOTER_HEIGHT_PX = 30; // Reserve space for page footer
+const CONTENT_HEIGHT_PX = PAGE_HEIGHT_PX - PADDING_PX * 2 - FOOTER_HEIGHT_PX;
 
 // -- Types --
 type PaperItemType = "header" | "section" | "question";
@@ -228,7 +229,7 @@ export function PaperPreview() {
   }, [items, calculatePages]);
 
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: draft?.paper_title || "Paper",
   });
 
@@ -251,38 +252,59 @@ export function PaperPreview() {
       <div className="flex-1 overflow-auto p-8">
         <div className="mx-auto flex w-fit flex-col gap-8">
           {/* Printable Container */}
-          <div ref={printRef} className="print-container flex flex-col gap-8">
-            {pages.map((page) => (
+          <div
+            id="paper-preview-content"
+            ref={printRef}
+            className="print-container"
+          >
+            {pages.map((page, pageIndex) => (
               <div
                 key={page.pageNumber}
-                className="bg-white shadow-xl print:m-0 print:break-after-page print:shadow-none"
+                className="print-page bg-white shadow-xl"
                 style={{
                   width: `${PAGE_WIDTH_PX}px`,
-                  minHeight: `${PAGE_HEIGHT_PX}px`,
                   height: `${PAGE_HEIGHT_PX}px`,
                   padding: `${PADDING_PX}px`,
+                  marginBottom: pageIndex < pages.length - 1 ? "32px" : "0",
+                  boxSizing: "border-box",
                   position: "relative",
                 }}
               >
-                {page.items.map((item) => (
-                  <div key={item.id} className="w-full overflow-hidden p-0.5">
-                    {item.type === "header" && (
-                      <PaperHeader draft={item.data} />
-                    )}
-                    {item.type === "section" && (
-                      <SectionHeader section={item.data} />
-                    )}
-                    {item.type === "question" && (
-                      <QuestionItem
-                        question={item.data}
-                        index={item.data.displayIndex}
-                      />
-                    )}
-                  </div>
-                ))}
+                {/* Content area */}
+                <div
+                  style={{
+                    height: `${CONTENT_HEIGHT_PX}px`,
+                    overflow: "hidden",
+                  }}
+                >
+                  {page.items.map((item) => (
+                    <div key={item.id} className="w-full overflow-hidden p-0.5">
+                      {item.type === "header" && (
+                        <PaperHeader draft={item.data} />
+                      )}
+                      {item.type === "section" && (
+                        <SectionHeader section={item.data} />
+                      )}
+                      {item.type === "question" && (
+                        <QuestionItem
+                          question={item.data}
+                          index={item.data.displayIndex}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
 
-                {/* Page Footer */}
-                <div className="absolute bottom-8 right-8 text-xs text-gray-400 print:bottom-4 print:right-4">
+                {/* Page Footer - Absolutely positioned at bottom */}
+                <div
+                  className="page-footer text-right text-xs text-gray-400"
+                  style={{
+                    position: "absolute",
+                    bottom: `${PADDING_PX}px`,
+                    right: `${PADDING_PX}px`,
+                    left: `${PADDING_PX}px`,
+                  }}
+                >
                   Page {page.pageNumber} of {pages.length}
                 </div>
               </div>
@@ -291,11 +313,19 @@ export function PaperPreview() {
         </div>
       </div>
 
-      {/* Hidden Measure Layer */}
+      {/* Hidden Measure Layer - Outside print area */}
       <div
+        id="measure-layer"
         ref={measureRef}
-        className="absolute left-[-9999px] top-0 opacity-0"
-        style={{ width: `${CONTENT_WIDTH_PX}px` }}
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: 0,
+          width: `${CONTENT_WIDTH_PX}px`,
+          visibility: "hidden",
+          pointerEvents: "none",
+        }}
       >
         {items.map((item) => (
           <div
@@ -318,17 +348,54 @@ export function PaperPreview() {
       {/* Global Print Styles */}
       <style>{`
         @media print {
-            body {
-               background: white;
-            }
-            .print-container {
-               gap: 0 !important;
-            }
-             /* Hide everything else */
-             @page {
-               size: A4;
-               margin: 0;
-             }
+          /* Hide measure layer completely */
+          #measure-layer {
+            display: none !important;
+            visibility: hidden !important;
+          }
+          
+          @page {
+            size: A4;
+            margin: 0;
+          }
+          
+          #paper-preview-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          
+          .print-container {
+            display: block !important;
+          }
+          
+          .print-page {
+            width: 210mm !important;
+            height: 297mm !important;
+            min-height: 297mm !important;
+            max-height: 297mm !important;
+            margin: 0 !important;
+            padding: 20mm !important;
+            box-shadow: none !important;
+            page-break-after: always;
+            break-after: page;
+            box-sizing: border-box !important;
+            position: relative !important;
+            overflow: hidden !important;
+          }
+          
+          .print-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
+          }
+          
+          .page-footer {
+            position: absolute !important;
+            bottom: 20mm !important;
+            right: 20mm !important;
+            left: 20mm !important;
+          }
         }
       `}</style>
     </div>
