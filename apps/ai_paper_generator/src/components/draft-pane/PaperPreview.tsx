@@ -265,7 +265,7 @@ export function PaperPreview() {
                 }}
               >
                 {page.items.map((item) => (
-                  <div key={item.id}>
+                  <div key={item.id} className="w-full overflow-hidden p-0.5">
                     {item.type === "header" && (
                       <PaperHeader draft={item.data} />
                     )}
@@ -298,7 +298,11 @@ export function PaperPreview() {
         style={{ width: `${CONTENT_WIDTH_PX}px` }}
       >
         {items.map((item) => (
-          <div key={item.id} data-item-id={item.id}>
+          <div
+            key={item.id}
+            data-item-id={item.id}
+            className="w-full overflow-hidden p-0.5"
+          >
             {item.type === "header" && <PaperHeader draft={item.data} />}
             {item.type === "section" && <SectionHeader section={item.data} />}
             {item.type === "question" && (
