@@ -1,4 +1,11 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+} from "react";
 import { useReactToPrint } from "react-to-print";
 import { Printer } from "lucide-react";
 import { Button } from "@skolist/ui";
@@ -8,6 +15,8 @@ import type { GeneratedQuestionWithConcepts } from "../../services/questionServi
 import {
   type QgenDraftSection,
   type QgenDraft,
+  type QgenInstruction,
+  fetchDraftInstructions,
 } from "../../services/draftService";
 import { LatexHtmlRenderer, LatexRenderer } from "../shared/LatexRenderer";
 
@@ -32,6 +41,13 @@ interface HeaderItem {
   isPageBreakBelow?: boolean;
 }
 
+interface InstructionsItem {
+  id: string;
+  type: "instructions";
+  data: QgenInstruction[];
+  isPageBreakBelow?: boolean;
+}
+
 interface SectionItem {
   id: string;
   type: "section";
@@ -50,7 +66,11 @@ interface QuestionPaperItem {
   isPageBreakBelow?: boolean;
 }
 
-type PaperItem = HeaderItem | SectionItem | QuestionPaperItem;
+type PaperItem =
+  | HeaderItem
+  | InstructionsItem
+  | SectionItem
+  | QuestionPaperItem;
 
 interface PageData {
   pageNumber: number;
@@ -60,6 +80,21 @@ interface PageData {
 // -- Components --
 
 // 1. Render Components (Shared between Measure and Display)
+const formatTime = (timeStr?: string | null) => {
+  if (!timeStr) return "60 mins";
+  // If it's already "X mins" style, use it
+  if (timeStr.toLowerCase().includes("min")) return timeStr;
+
+  // Try parsing HH:MM:SS or HH:MM
+  const parts = timeStr.split(":").map(Number);
+  if (parts.length >= 2) {
+    const [h, m] = parts;
+    const totalMinutes = (h || 0) * 60 + (m || 0);
+    return totalMinutes > 0 ? `${totalMinutes} Minutes` : timeStr;
+  }
+  return timeStr;
+};
+
 const PaperHeader = ({ draft }: { draft: QgenDraft }) => (
   <div className="mb-6 border-b pb-4 text-center">
     <h1 className="text-2xl font-bold uppercase tracking-wide">
@@ -69,11 +104,33 @@ const PaperHeader = ({ draft }: { draft: QgenDraft }) => (
       {draft.paper_title || "Examination Paper"}
     </h2>
     <div className="mt-2 flex justify-between text-sm font-medium text-gray-600">
-      <span>Time: {draft.paper_duration || "60 mins"}</span>
+      <span>Time: {formatTime(draft.paper_duration)}</span>
       <span>Max Marks: {draft.maximum_marks || "100"}</span>
     </div>
   </div>
 );
+
+const PaperInstructions = ({
+  instructions,
+}: {
+  instructions: QgenInstruction[];
+}) => {
+  if (!instructions || instructions.length === 0) return null;
+  return (
+    <div className="mb-6">
+      <h3 className="mb-2 text-sm font-bold uppercase text-gray-700">
+        General Instructions:
+      </h3>
+      <ul className="list-outside list-disc space-y-1 pl-4 text-sm text-gray-800">
+        {instructions.map((inst) => (
+          <li key={inst.id} className="pl-1">
+            {inst.instruction_text}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 const SectionHeader = ({ section }: { section: QgenDraftSection }) => (
   <div className="mb-4 mt-6">
@@ -163,6 +220,18 @@ export function PaperPreview() {
   const { draft, sections } = useDraftContext();
   const { questions } = useQuestionsContext();
   const [pages, setPages] = useState<PageData[]>([]);
+  const [instructions, setInstructions] = useState<QgenInstruction[]>([]);
+
+  // Fetch instructions
+  useEffect(() => {
+    if (draft?.id) {
+      fetchDraftInstructions(draft.id)
+        .then(setInstructions)
+        .catch((err) =>
+          console.error("Failed to load instructions for preview", err)
+        );
+    }
+  }, [draft?.id]);
 
   const measureRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -179,6 +248,15 @@ export function PaperPreview() {
       type: "header",
       data: draft,
     });
+
+    // Instructions
+    if (instructions.length > 0) {
+      result.push({
+        id: "instructions",
+        type: "instructions",
+        data: instructions,
+      });
+    }
 
     // Sections and Questions
     let globalQIndex = 0;
@@ -209,7 +287,7 @@ export function PaperPreview() {
     });
 
     return result;
-  }, [draft, sections, questions]);
+  }, [draft, sections, questions, instructions]);
 
   // 2. Measure Function
   const calculatePages = useCallback(() => {
@@ -359,6 +437,9 @@ export function PaperPreview() {
                       {item.type === "header" && (
                         <PaperHeader draft={item.data} />
                       )}
+                      {item.type === "instructions" && (
+                        <PaperInstructions instructions={item.data} />
+                      )}
                       {item.type === "section" && (
                         <SectionHeader section={item.data} />
                       )}
@@ -412,6 +493,9 @@ export function PaperPreview() {
             className="w-full overflow-hidden p-0.5"
           >
             {item.type === "header" && <PaperHeader draft={item.data} />}
+            {item.type === "instructions" && (
+              <PaperInstructions instructions={item.data} />
+            )}
             {item.type === "section" && <SectionHeader section={item.data} />}
             {item.type === "question" && (
               <QuestionItem

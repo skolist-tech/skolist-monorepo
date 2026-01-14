@@ -80,12 +80,12 @@ export type InsertGeneratedQuestionAndConcept =
 export type UpdateGeneratedQuestionAndConcept =
   Tables["gen_questions_concepts_maps"]["Update"];
 
-export type UserAndQgenDraftInstruction =
-  Tables["qgen_draft_instructions_users_maps"]["Row"]; // One instruction is mapped to One User in this table. Though, each user can have multiple instructions mapped to them. But no instruction can have multiple users mapped.
-export type InsertUserAndQgenDraftInstruction =
-  Tables["qgen_draft_instructions_users_maps"]["Insert"];
-export type UpdateUserAndQgenDraftInstruction =
-  Tables["qgen_draft_instructions_users_maps"]["Update"];
+export type QgenDraftInstructionAndQgenDraft =
+  Tables["qgen_draft_instructions_drafts_maps"]["Row"]; // One instruction is mapped to One User in this table. Though, each user can have multiple instructions mapped to them. But no instruction can have multiple users mapped.
+export type InsertQgenDraftInstructionAndQgenDraft =
+  Tables["qgen_draft_instructions_drafts_maps"]["Insert"];
+export type UpdateQgenDraftInstructionAndQgenDraft =
+  Tables["qgen_draft_instructions_drafts_maps"]["Update"];
 
 export type QgenDraftSection = Tables["qgen_draft_sections"]["Row"];
 export type InsertQgenDraftSection = Tables["qgen_draft_sections"]["Insert"];

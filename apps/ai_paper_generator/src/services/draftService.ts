@@ -4,10 +4,99 @@
  */
 
 import { getClient } from "./supabase";
-import type { Tables, TablesUpdate } from "@skolist/db";
+import type {
+  Tables,
+  TablesUpdate,
+  QgenDraftInstructionAndQgenDraft,
+} from "@skolist/db";
 
 export type QgenDraft = Tables<"qgen_drafts">;
 export type QgenDraftSection = Tables<"qgen_draft_sections">;
+export type QgenInstruction = QgenDraftInstructionAndQgenDraft;
+
+// -- Instructions Service --
+
+/**
+ * Fetch all instructions for a draft
+ */
+export async function fetchDraftInstructions(
+  draftId: string
+): Promise<QgenInstruction[]> {
+  const client = getClient();
+  const { data, error } = await client
+    .from("qgen_draft_instructions_drafts_maps")
+    .select("*")
+    .eq("qgen_draft_id", draftId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Failed to fetch instructions:", error);
+    throw error;
+  }
+  return data || [];
+}
+
+/**
+ * Create a new instruction for the draft
+ */
+export async function createDraftInstruction(
+  draftId: string,
+  text: string
+): Promise<QgenInstruction> {
+  const client = getClient();
+  const { data, error } = await client
+    .from("qgen_draft_instructions_drafts_maps")
+    .insert({
+      "qgen_draft_id": draftId,
+      instruction_text: text,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Failed to create instruction:", error);
+    throw error;
+  }
+  return data;
+}
+
+/**
+ * Update an existing instruction
+ */
+export async function updateDraftInstruction(
+  id: string,
+  text: string
+): Promise<QgenInstruction> {
+  const client = getClient();
+  const { data, error } = await client
+    .from("qgen_draft_instructions_drafts_maps")
+    .update({ instruction_text: text })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Failed to update instruction:", error);
+    throw error;
+  }
+  return data;
+}
+
+/**
+ * Delete an instruction
+ */
+export async function deleteDraftInstruction(id: string): Promise<void> {
+  const client = getClient();
+  const { error } = await client
+    .from("qgen_draft_instructions_drafts_maps")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Failed to delete instruction:", error);
+    throw error;
+  }
+}
 
 /**
  * Fetch current draft for an activity

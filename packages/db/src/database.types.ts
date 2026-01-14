@@ -346,7 +346,7 @@ export type Database = {
         Row: {
           created_at: string
           gen_question_id: string | null
-          id: number
+          id: string
           img_url: string | null
           position: number | null
           svg_string: string | null
@@ -354,7 +354,7 @@ export type Database = {
         Insert: {
           created_at?: string
           gen_question_id?: string | null
-          id?: number
+          id?: string
           img_url?: string | null
           position?: number | null
           svg_string?: string | null
@@ -362,7 +362,7 @@ export type Database = {
         Update: {
           created_at?: string
           gen_question_id?: string | null
-          id?: number
+          id?: string
           img_url?: string | null
           position?: number | null
           svg_string?: string | null
@@ -553,34 +553,41 @@ export type Database = {
           },
         ]
       }
-      qgen_draft_instructions_users_maps: {
+      qgen_draft_instructions_drafts_maps: {
         Row: {
           created_at: string
           id: string
           instruction_text: string | null
+          qgen_draft_id: string
           updated_at: string | null
-          user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           instruction_text?: string | null
+          qgen_draft_id: string
           updated_at?: string | null
-          user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           instruction_text?: string | null
+          qgen_draft_id?: string
           updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "qgen_draft_instructions_maps_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "qgen_draft_instructions_users_maps_qgen_draft_id_fkey"
+            columns: ["qgen_draft_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "qgen_drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qgen_draft_instructions_users_maps_qgen_draft_id_fkey1"
+            columns: ["qgen_draft_id"]
+            isOneToOne: false
+            referencedRelation: "qgen_drafts"
             referencedColumns: ["id"]
           },
         ]

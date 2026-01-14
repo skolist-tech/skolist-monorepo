@@ -1,7 +1,8 @@
 import { usePaneContext } from "../../context/PaneContext";
 import { useActivityContext } from "../../context/ActivityContext";
 import { GenerationPane } from "../generation-pane/GenerationPane";
-import { DraftPaneWrapper } from "../draft-pane/DraftPaneWrapper";
+import { DraftProvider } from "../../context/DraftContext";
+import { DraftPane } from "../draft-pane/DraftPane";
 import { EmptyState } from "../shared/EmptyState";
 import { FileText } from "lucide-react";
 import { Button } from "@skolist/ui";
@@ -32,18 +33,22 @@ export function MainArea() {
   }
 
   return (
-    <div className="relative flex-1 overflow-hidden">
-      <div className={activePane === "generation" ? "h-full w-full" : "hidden"}>
-        <GenerationPane />
-      </div>
-      <div className={activePane === "draft" ? "h-full w-full" : "hidden"}>
-        <DraftPaneWrapper />
-      </div>
-      {activePane === "analysis" && (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
-          Analysis Pane (Coming Soon)
+    <DraftProvider>
+      <div className="relative flex-1 overflow-hidden">
+        <div
+          className={activePane === "generation" ? "h-full w-full" : "hidden"}
+        >
+          <GenerationPane />
         </div>
-      )}
-    </div>
+        <div className={activePane === "draft" ? "h-full w-full" : "hidden"}>
+          <DraftPane />
+        </div>
+        {activePane === "analysis" && (
+          <div className="flex h-full items-center justify-center text-muted-foreground">
+            Analysis Pane (Coming Soon)
+          </div>
+        )}
+      </div>
+    </DraftProvider>
   );
 }

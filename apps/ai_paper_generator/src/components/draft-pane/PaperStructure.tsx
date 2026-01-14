@@ -19,8 +19,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   Button,
-  Input,
-  Label,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -38,6 +36,7 @@ import { useDraftContext } from "../../context/DraftContext";
 import { useQuestionsContext } from "../../context/QuestionsContext";
 import { GeneratedQuestionCard } from "../shared/Question/GeneratedQuestionCard";
 import type { QgenDraftSection } from "../../services/draftService";
+import { PaperDetails } from "./PaperDetails";
 
 // -- Sub-components for Sortable Items --
 
@@ -289,6 +288,7 @@ export function PaperStructure() {
   );
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   if (isLoading || !draft) {
     return <div className="p-4 text-center">Loading draft structure...</div>;
@@ -326,65 +326,38 @@ export function PaperStructure() {
   return (
     <div className="flex h-full flex-col border-r bg-background">
       {/* Header / Draft Settings */}
-      <div className="space-y-4 border-b p-4">
-        <h2 className="text-lg font-semibold">Paper Structure</h2>
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label className="text-xs">Institute Name</Label>
-            <Input
-              value={draft.institute_name || ""}
-              onChange={(e) =>
-                updateDraftSettings({ institute_name: e.target.value })
-              }
-              placeholder="Ex. My School"
-              className="h-8"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Paper Title</Label>
-            <Input
-              value={draft.paper_title || ""}
-              onChange={(e) =>
-                updateDraftSettings({ paper_title: e.target.value })
-              }
-              placeholder="Ex. Mid-Term Examination"
-              className="h-8"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-xs">Time (mins)</Label>
-              <Input
-                value={draft.paper_duration || ""}
-                onChange={(e) =>
-                  updateDraftSettings({ paper_duration: e.target.value })
-                }
-                placeholder="60 mins"
-                className="h-8"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Max Marks</Label>
-              <Input
-                type="number"
-                value={draft.maximum_marks || ""}
-                onChange={(e) =>
-                  updateDraftSettings({
-                    maximum_marks: parseInt(e.target.value),
-                  })
-                }
-                placeholder="100"
-                className="h-8"
-              />
-            </div>
-          </div>
+      <div className="border-b p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-md font-semibold">Paper Details</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="h-8 w-8 p-0"
+          >
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+            <span className="sr-only">Toggle Paper Structure</span>
+          </Button>
         </div>
+
+        {isExpanded && (
+          <div className="mt-4">
+            <PaperDetails
+              draft={draft}
+              updateDraftSettings={updateDraftSettings}
+            />
+          </div>
+        )}
       </div>
 
       {/* Sections List */}
       <div className="flex-1 overflow-auto bg-muted/10 p-4">
         <div className="mb-4 flex items-center justify-between">
-          <span className="text-sm font-medium text-muted-foreground">
+          <span className="text-md font-medium">
             Sections
           </span>
           <Button

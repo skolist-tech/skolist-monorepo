@@ -9,6 +9,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
@@ -88,51 +89,57 @@ export function DraftProvider({ children }: { children: ReactNode }) {
     initDraft();
   }, [initDraft]);
 
-  const updateDraftSettings = async (updates: TablesUpdate<"qgen_drafts">) => {
-    if (!draft) return;
-    try {
-      const updated = await updateDraft(draft.id, updates);
-      setDraft(updated);
-    } catch (err) {
-      console.error("Failed to update draft settings:", err);
-      // Revert optimism if needed
-    }
-  };
+  const updateDraftSettings = useCallback(
+    async (updates: TablesUpdate<"qgen_drafts">) => {
+      if (!draft) return;
+      try {
+        const updated = await updateDraft(draft.id, updates);
+        setDraft(updated);
+      } catch (err) {
+        console.error("Failed to update draft settings:", err);
+        // Revert optimism if needed
+      }
+    },
+    [draft]
+  );
 
-  const addSection = async (name: string = "New Section") => {
-    console.log("Adding section...", { draftId: draft?.id });
-    if (!draft) {
-      console.warn("Cannot add section: No draft found");
-      return;
-    }
-    try {
-      const position = sections.length;
-      console.log("Creating section at position:", position);
-      const newSection = await createSection(draft.id, position, name);
-      console.log("Section created:", newSection);
-      setSections((prev) => [...prev, newSection]);
-    } catch (err) {
-      console.error("Failed to add section:", err);
-    }
-  };
+  const addSection = useCallback(
+    async (name: string = "New Section") => {
+      console.log("Adding section...", { draftId: draft?.id });
+      if (!draft) {
+        console.warn("Cannot add section: No draft found");
+        return;
+      }
+      try {
+        const position = sections.length;
+        console.log("Creating section at position:", position);
+        const newSection = await createSection(draft.id, position, name);
+        console.log("Section created:", newSection);
+        setSections((prev) => [...prev, newSection]);
+      } catch (err) {
+        console.error("Failed to add section:", err);
+      }
+    },
+    [draft, sections.length]
+  );
 
-  const editSection = async (
-    id: string,
-    updates: TablesUpdate<"qgen_draft_sections">
-  ) => {
-    try {
-      // Optimistic update
-      setSections((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
-      );
-      await updateSection(id, updates);
-    } catch (err) {
-      console.error("Failed to update section:", err);
-      // Revert logic would go here
-    }
-  };
+  const editSection = useCallback(
+    async (id: string, updates: TablesUpdate<"qgen_draft_sections">) => {
+      try {
+        // Optimistic update
+        setSections((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
+        );
+        await updateSection(id, updates);
+      } catch (err) {
+        console.error("Failed to update section:", err);
+        // Revert logic would go here
+      }
+    },
+    []
+  );
 
-  const removeSection = async (id: string) => {
+  const removeSection = useCallback(async (id: string) => {
     try {
       // Optimistic update
       setSections((prev) => prev.filter((s) => s.id !== id));
@@ -144,90 +151,105 @@ export function DraftProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("Failed to delete section:", err);
     }
-  };
+  }, []);
 
-  const moveSection = async (activeId: string, overId: string) => {
-    const oldIndex = sections.findIndex((s) => s.id === activeId);
-    const newIndex = sections.findIndex((s) => s.id === overId);
+  const moveSection = useCallback(
+    async (activeId: string, overId: string) => {
+      const oldIndex = sections.findIndex((s) => s.id === activeId);
+      const newIndex = sections.findIndex((s) => s.id === overId);
 
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newSections = arrayMove(sections, oldIndex, newIndex);
-      // Update positions locally
-      const updatedSections = newSections.map((s, index) => ({
-        ...s,
-        position_in_draft: index,
-      }));
-      setSections(updatedSections);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newSections = arrayMove(sections, oldIndex, newIndex);
+        // Update positions locally
+        const updatedSections = newSections.map((s, index) => ({
+          ...s,
+          position_in_draft: index,
+        }));
+        setSections(updatedSections);
 
-      // Persist changes
-      // We use a 2-phase update to avoid "duplicate key" unique constraint violations.
-      // Phase 1: Move changed items to a temporary negative position.
-      // Phase 2: Move items to their final position.
-      const changedItems = updatedSections.filter(
-        (s, index) =>
-          s.id !== sections[index]?.id || s.position_in_draft !== index
-      );
-
-      try {
-        // Phase 1: Temporary positions
-        await Promise.all(
-          changedItems.map((s, idx) =>
-            updateSection(s.id, {
-              position_in_draft: 10000 + idx,
-            })
-          )
+        // Persist changes
+        // We use a 2-phase update to avoid "duplicate key" unique constraint violations.
+        // Phase 1: Move changed items to a temporary negative position.
+        // Phase 2: Move items to their final position.
+        const changedItems = updatedSections.filter(
+          (s, index) =>
+            s.id !== sections[index]?.id || s.position_in_draft !== index
         );
 
-        // Phase 2: Final positions
-        await Promise.all(
-          changedItems.map((s) =>
-            updateSection(s.id, { position_in_draft: s.position_in_draft })
-          )
-        );
-      } catch (err) {
-        console.error("Failed to reorder sections:", err);
-        // Revert local state if needed (complex, maybe just reload)
+        try {
+          // Phase 1: Temporary positions
+          await Promise.all(
+            changedItems.map((s, idx) =>
+              updateSection(s.id, {
+                position_in_draft: 10000 + idx,
+              })
+            )
+          );
+
+          // Phase 2: Final positions
+          await Promise.all(
+            changedItems.map((s) =>
+              updateSection(s.id, { position_in_draft: s.position_in_draft })
+            )
+          );
+        } catch (err) {
+          console.error("Failed to reorder sections:", err);
+          // Revert local state if needed (complex, maybe just reload)
+        }
       }
-    }
-  };
+    },
+    [sections]
+  );
 
-  const moveQuestionToSection = async (
-    questionId: string,
-    sectionId: string,
-    index: number
-  ) => {
-    // Implement logic to update question's section_id and position
-    try {
-      await updateQuestion(questionId, {
-        qgen_draft_section_id: sectionId,
-        position_in_section: index,
-      });
-
-      // Optimistic update via QuestionsContext if possible
-      const q = questions.find((q) => q.id === questionId);
-      if (q) {
-        updateQuestionLocal({
-          ...q,
+  const moveQuestionToSection = useCallback(
+    async (questionId: string, sectionId: string, index: number) => {
+      // Implement logic to update question's section_id and position
+      try {
+        await updateQuestion(questionId, {
           qgen_draft_section_id: sectionId,
           position_in_section: index,
         });
-      }
-    } catch (err) {
-      console.error("Failed to move question:", err);
-    }
-  };
 
-  const value: DraftContextValue = {
-    draft,
-    sections,
-    isLoading,
-    updateDraftSettings,
-    addSection,
-    editSection,
-    removeSection,
-    moveSection,
-    moveQuestionToSection,
-  };
+        // Optimistic update via QuestionsContext if possible
+        const q = questions.find((q) => q.id === questionId);
+        if (q) {
+          updateQuestionLocal({
+            ...q,
+            qgen_draft_section_id: sectionId,
+            position_in_section: index,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to move question:", err);
+      }
+    },
+    [questions, updateQuestionLocal]
+  );
+
+  const value: DraftContextValue = useMemo(
+    () => ({
+      draft,
+      sections,
+      isLoading,
+      updateDraftSettings,
+      addSection,
+      editSection,
+      removeSection,
+      moveSection,
+      moveQuestionToSection,
+    }),
+    [
+      draft,
+      sections,
+      isLoading,
+      updateDraftSettings,
+      addSection,
+      editSection,
+      removeSection,
+      moveSection,
+      moveQuestionToSection,
+    ]
+  );
 
   return (
     <DraftContext.Provider value={value}>{children}</DraftContext.Provider>
