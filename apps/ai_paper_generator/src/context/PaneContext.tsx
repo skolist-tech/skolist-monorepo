@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
-import type { PaneType } from "../types";
+import type { PaneType } from "../types/pane";
 
 interface PaneContextValue {
   activePane: PaneType;

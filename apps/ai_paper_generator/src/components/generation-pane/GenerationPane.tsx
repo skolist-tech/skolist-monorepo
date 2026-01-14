@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { UpArea } from "./up-area";
-import { DownArea } from "./down-area";
+import { UpArea } from "./up-area/UpArea";
+import { DownArea } from "./down-area/DownArea";
 import type { HardnessLevel } from "@skolist/db";
 
 export function GenerationPane() {

@@ -19,11 +19,8 @@ import {
   DropdownMenuSeparator,
 } from "@skolist/ui";
 import { Filter } from "lucide-react";
-import { useQuestionsContext } from "../../../context";
-import {
-  /* QuestionText, QuestionTags, QuestionMarks removed as they are internal to GeneratedQuestionCard now */
-  GeneratedQuestionCard,
-} from "../../shared/Question";
+import { useQuestionsContext } from "../../../context/QuestionsContext";
+import { GeneratedQuestionCard } from "../../shared/Question/GeneratedQuestionCard";
 import type { HardnessLevel } from "@skolist/db";
 import { GenerateMoreButton } from "./GenerateMoreButton";
 import { formatQuestionType } from "../../../utils/formatters";

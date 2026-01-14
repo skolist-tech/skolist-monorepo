@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { QuestionTypeSelector } from "./QuestionTypeSelector";
-import type { AutoDecideParams } from "./AutoDecideQuestion"; // Keeping the type import
+import { QuestionTypeSelector } from "./QuestionTypeSelector/QuestionTypeSelector";
+import type { AutoDecideParams } from "./AutoDecideQuestion/AutoDecideQuestion";
 import { AutoDecideButton } from "./AutoDecideQuestion/AutoDecideButton";
 import { HardnessLevelSliders } from "./AutoDecideQuestion/HardnessLevelSliders";
 import { PromptBox } from "./AutoDecideQuestion/PromptBox";

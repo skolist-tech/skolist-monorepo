@@ -27,12 +27,10 @@ import {
 } from "lucide-react";
 import type { GeneratedQuestion, HardnessLevel } from "@skolist/db";
 import { type GeneratedQuestionWithConcepts } from "../../../services/questionService";
-import {
-  QuestionMarks,
-  QuestionTags,
-  QuestionText,
-  QuestionOptions,
-} from "./index";
+import { QuestionMarks } from "./QuestionMarks";
+import { QuestionTags } from "./QuestionTags";
+import { QuestionText } from "./QuestionText";
+import { QuestionOptions } from "./QuestionOptions";
 import { LatexRenderer } from "../LatexRenderer";
 
 interface GeneratedQuestionCardProps {

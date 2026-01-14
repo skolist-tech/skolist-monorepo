@@ -1,6 +1,6 @@
 import { usePaneContext } from "../../context/PaneContext";
 import { Button } from "@skolist/ui";
-import type { PaneType } from "../../types";
+import type { PaneType } from "../../types/pane";
 import { Sparkles, FileEdit, BarChart3 } from "lucide-react";
 import { cn } from "@skolist/utils";
 import { useUserCredits } from "../../hooks/useUserCredits";

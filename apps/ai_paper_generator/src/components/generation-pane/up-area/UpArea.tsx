@@ -4,10 +4,10 @@
  */
 
 import { useState } from "react";
-import { UpLeftArea } from "./up-left";
-import { UpRightArea } from "./up-right";
+import { UpLeftArea } from "./up-left/UpLeftArea";
+import { UpRightArea } from "./up-right/UpRightArea";
 import type { QuestionType, HardnessLevel } from "@skolist/db";
-import type { AutoDecideParams } from "./up-right/AutoDecideQuestion";
+import type { AutoDecideParams } from "./up-right/AutoDecideQuestion/AutoDecideQuestion";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { useConceptContext } from "../../../context/ConceptContext";
 import { fastApiService } from "../../../services/fastApiService";
