@@ -272,27 +272,36 @@ export function PaperPreview() {
     setPages(calculatedPages);
   }, [items]);
 
-  // Trigger measurement when items change
+  // Trigger measurement when items change or content resizes
   useLayoutEffect(() => {
-    // Initial measurement after a short delay for DOM to render
-    const timer1 = setTimeout(() => {
-      calculatePages();
-    }, 100);
+    let debounceTimer: ReturnType<typeof setTimeout>;
 
-    // Second measurement after longer delay for LaTeX/images to render
-    const timer2 = setTimeout(() => {
-      calculatePages();
-    }, 500);
+    const debouncedCalculatePages = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        calculatePages();
+      }, 50);
+    };
 
-    // Third measurement for slower content
-    const timer3 = setTimeout(() => {
-      calculatePages();
-    }, 1000);
+    // Initial measurement after DOM renders
+    debouncedCalculatePages();
+
+    // Use ResizeObserver to detect when content finishes rendering (images load, fonts apply, etc.)
+    const resizeObserver = new ResizeObserver(() => {
+      debouncedCalculatePages();
+    });
+
+    // Observe the measure container for size changes
+    if (measureRef.current) {
+      resizeObserver.observe(measureRef.current);
+      // Also observe each item for individual size changes
+      const itemNodes = measureRef.current.querySelectorAll("[data-item-id]");
+      itemNodes.forEach((node) => resizeObserver.observe(node));
+    }
 
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      clearTimeout(debounceTimer);
+      resizeObserver.disconnect();
     };
   }, [items, calculatePages]);
 
