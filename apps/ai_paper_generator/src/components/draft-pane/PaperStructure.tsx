@@ -190,6 +190,42 @@ function SortableSection({
                   onMoveDown={() => moveQuestion(idx, "down")}
                 />
               </div>
+
+              {/* Page Break Toggle */}
+              <div
+                className="group/pb -mt-2 mb-2 flex cursor-pointer flex-col items-center py-1"
+                onClick={() =>
+                  saveQuestion({
+                    ...q,
+                    is_page_break_below: !q.is_page_break_below,
+                  })
+                }
+                title={
+                  q.is_page_break_below
+                    ? "Remove Page Break"
+                    : "Insert Page Break Here"
+                }
+              >
+                {/* Visual Line */}
+                <div
+                  className={`h-0.5 w-full transition-all duration-200 ${
+                    q.is_page_break_below
+                      ? "bg-black opacity-100"
+                      : "bg-primary/20 opacity-0 group-hover/pb:opacity-100"
+                  }`}
+                />
+
+                {/* Visual Badge/Label */}
+                <div
+                  className={`mt-1 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
+                    q.is_page_break_below
+                      ? "bg-black text-white opacity-100"
+                      : "bg-primary/10 text-primary opacity-0 group-hover/pb:opacity-100"
+                  }`}
+                >
+                  {q.is_page_break_below ? "Page Break" : "Insert Break"}
+                </div>
+              </div>
             </div>
           ))
         )}

@@ -205,8 +205,9 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           id: _id,
           created_at: _created_at,
           updated_at: _updated_at,
+          concepts: _concepts,
           ...updates
-        } = question; // Exclude system fields from update payload if needed, though usually safe.
+        } = question; // Exclude system fields and join fields from update payload.
         // But `updates` in updateQuestion takes TablesUpdate<"gen_questions">.
         await updateQuestion(question.id, updates);
 

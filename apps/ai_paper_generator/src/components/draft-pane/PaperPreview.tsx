@@ -1,0 +1,332 @@
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
+import { Printer } from "lucide-react";
+import { Button } from "@skolist/ui";
+import { useDraftContext } from "../../context/DraftContext";
+import { useQuestionsContext } from "../../context/QuestionsContext";
+import type { GeneratedQuestionWithConcepts } from "../../services/questionService";
+import {
+  type QgenDraftSection,
+  type QgenDraft,
+} from "../../services/draftService";
+
+// -- Constants --
+const A4_WIDTH_MM = 210;
+const MARGIN_MM = 20;
+
+// We'll use pixels for measurement. 1mm approx 3.78px at 96 DPI.
+// Let's assume 794px width (standard for A4 at 96 DPI) for the preview.
+const PAGE_WIDTH_PX = 794;
+const PAGE_HEIGHT_PX = 1123;
+const PADDING_PX = (PAGE_WIDTH_PX * MARGIN_MM) / A4_WIDTH_MM; // approx 75px
+const CONTENT_WIDTH_PX = PAGE_WIDTH_PX - PADDING_PX * 2;
+const CONTENT_HEIGHT_PX = PAGE_HEIGHT_PX - PADDING_PX * 2;
+
+// -- Types --
+type PaperItemType = "header" | "section" | "question";
+
+interface PaperItem {
+  id: string;
+  type: PaperItemType;
+  data: any;
+  isPageBreakBelow?: boolean;
+}
+
+interface PageData {
+  pageNumber: number;
+  items: PaperItem[];
+}
+
+// -- Components --
+
+// 1. Render Components (Shared between Measure and Display)
+const PaperHeader = ({ draft }: { draft: QgenDraft }) => (
+  <div className="mb-6 border-b pb-4 text-center">
+    <h1 className="text-2xl font-bold uppercase tracking-wide">
+      {draft.institute_name || "Institute Name"}
+    </h1>
+    <h2 className="mt-2 text-xl font-semibold">
+      {draft.paper_title || "Examination Paper"}
+    </h2>
+    <div className="mt-2 flex justify-between text-sm font-medium text-gray-600">
+      <span>Time: {draft.paper_duration || "60 mins"}</span>
+      <span>Max Marks: {draft.maximum_marks || "100"}</span>
+    </div>
+  </div>
+);
+
+const SectionHeader = ({ section }: { section: QgenDraftSection }) => (
+  <div className="mb-4 mt-6">
+    <h3 className="text-lg font-bold uppercase text-primary">
+      {section.section_name}
+    </h3>
+    <div className="mt-1 h-0.5 w-full bg-primary/20" />
+  </div>
+);
+
+const QuestionItem = ({
+  question,
+  index,
+}: {
+  question: GeneratedQuestionWithConcepts;
+  index: number;
+}) => (
+  <div className="mb-4 break-inside-avoid">
+    <div className="flex gap-2">
+      <span className="font-semibold">{index + 1}.</span>
+      <div className="flex-1">
+        <div
+          className="prose prose-sm max-w-none text-gray-800"
+          dangerouslySetInnerHTML={{ __html: question.question_text || "" }}
+        />
+        {/* Render Options if MCQ/MSQ */}
+        {(["mcq4", "msq4"] as string[]).includes(question.question_type) && (
+          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+            {[
+              question.option1,
+              question.option2,
+              question.option3,
+              question.option4,
+            ].map((opt, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm">
+                <span className="font-medium text-gray-500">
+                  {String.fromCharCode(97 + i)})
+                </span>
+                <span>{opt}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <span className="ml-2 whitespace-nowrap text-sm font-semibold text-gray-500">
+        [{question.marks} marks]
+      </span>
+    </div>
+  </div>
+);
+
+export function PaperPreview() {
+  const { draft, sections } = useDraftContext();
+  const { questions } = useQuestionsContext();
+  const [pages, setPages] = useState<PageData[]>([]);
+
+  const measureRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  // 1. Flatten Data Structure
+  const items: PaperItem[] = useMemo(() => {
+    if (!draft) return [];
+
+    const result: PaperItem[] = [];
+
+    // Header
+    result.push({
+      id: "header",
+      type: "header",
+      data: draft,
+    });
+
+    // Sections and Questions
+    let globalQIndex = 0;
+    sections.forEach((section) => {
+      // Section Header
+      result.push({
+        id: `section-${section.id}`,
+        type: "section",
+        data: section,
+      });
+
+      // Questions in Section
+      const sectionQuestions = questions
+        .filter((q) => q.is_in_draft && q.qgen_draft_section_id === section.id)
+        .sort(
+          (a, b) => (a.position_in_section || 0) - (b.position_in_section || 0)
+        );
+
+      sectionQuestions.forEach((q) => {
+        result.push({
+          id: `question-${q.id}`,
+          type: "question",
+          data: { ...q, displayIndex: globalQIndex },
+          isPageBreakBelow: q.is_page_break_below,
+        });
+        globalQIndex++;
+      });
+    });
+
+    return result;
+  }, [draft, sections, questions]);
+
+  // 2. Measure Function
+  const calculatePages = useCallback(() => {
+    if (!measureRef.current) return;
+
+    const container = measureRef.current;
+    const itemNodes = container.querySelectorAll("[data-item-id]");
+    const calculatedPages: PageData[] = [];
+    let currentPageItems: PaperItem[] = [];
+    let currentHeight = 0;
+    let pageNumber = 1;
+
+    itemNodes.forEach((node) => {
+      const itemId = node.getAttribute("data-item-id");
+      const item = items.find((i) => i.id === itemId);
+      if (!item) return;
+
+      const height = (node as HTMLElement).offsetHeight;
+
+      // Check overflow
+      if (
+        currentHeight + height > CONTENT_HEIGHT_PX &&
+        currentPageItems.length > 0
+      ) {
+        // Push old page
+        calculatedPages.push({
+          pageNumber,
+          items: [...currentPageItems],
+        });
+        // Start new page
+        pageNumber++;
+        currentPageItems = [item];
+        currentHeight = height;
+      } else {
+        // Add to current
+        currentPageItems.push(item);
+        currentHeight += height;
+      }
+
+      // Check forced break
+      if (item.isPageBreakBelow) {
+        calculatedPages.push({
+          pageNumber,
+          items: [...currentPageItems],
+        });
+        pageNumber++;
+        currentPageItems = [];
+        currentHeight = 0;
+      }
+    });
+
+    // Push last page
+    if (currentPageItems.length > 0) {
+      calculatedPages.push({
+        pageNumber,
+        items: [...currentPageItems],
+      });
+    }
+
+    setPages(calculatedPages);
+  }, [items]);
+
+  // Trigger measurement when items change
+  useLayoutEffect(() => {
+    // Timeout to allow DOM to render the hidden items
+    const timer = setTimeout(() => {
+      calculatePages();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [items, calculatePages]);
+
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    documentTitle: draft?.paper_title || "Paper",
+  });
+
+  if (!draft) return null;
+
+  return (
+    <div className="flex h-full flex-col bg-gray-100">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between border-b bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-600">
+          Print Preview ({pages.length} Pages)
+        </h2>
+        <Button onClick={() => handlePrint()} size="sm" className="gap-2">
+          <Printer className="h-4 w-4" />
+          Print / Save PDF
+        </Button>
+      </div>
+
+      {/* Preview Area */}
+      <div className="flex-1 overflow-auto p-8">
+        <div className="mx-auto flex w-fit flex-col gap-8">
+          {/* Printable Container */}
+          <div ref={printRef} className="print-container flex flex-col gap-8">
+            {pages.map((page) => (
+              <div
+                key={page.pageNumber}
+                className="bg-white shadow-xl print:m-0 print:break-after-page print:shadow-none"
+                style={{
+                  width: `${PAGE_WIDTH_PX}px`,
+                  minHeight: `${PAGE_HEIGHT_PX}px`,
+                  height: `${PAGE_HEIGHT_PX}px`,
+                  padding: `${PADDING_PX}px`,
+                  position: "relative",
+                }}
+              >
+                {page.items.map((item) => (
+                  <div key={item.id}>
+                    {item.type === "header" && (
+                      <PaperHeader draft={item.data} />
+                    )}
+                    {item.type === "section" && (
+                      <SectionHeader section={item.data} />
+                    )}
+                    {item.type === "question" && (
+                      <QuestionItem
+                        question={item.data}
+                        index={item.data.displayIndex}
+                      />
+                    )}
+                  </div>
+                ))}
+
+                {/* Page Footer */}
+                <div className="absolute bottom-8 right-8 text-xs text-gray-400 print:bottom-4 print:right-4">
+                  Page {page.pageNumber} of {pages.length}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden Measure Layer */}
+      <div
+        ref={measureRef}
+        className="absolute left-[-9999px] top-0 opacity-0"
+        style={{ width: `${CONTENT_WIDTH_PX}px` }}
+      >
+        {items.map((item) => (
+          <div key={item.id} data-item-id={item.id}>
+            {item.type === "header" && <PaperHeader draft={item.data} />}
+            {item.type === "section" && <SectionHeader section={item.data} />}
+            {item.type === "question" && (
+              <QuestionItem
+                question={item.data}
+                index={item.data.displayIndex}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Global Print Styles */}
+      <style>{`
+        @media print {
+            body {
+               background: white;
+            }
+            .print-container {
+               gap: 0 !important;
+            }
+             /* Hide everything else */
+             @page {
+               size: A4;
+               margin: 0;
+             }
+        }
+      `}</style>
+    </div>
+  );
+}

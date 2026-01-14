@@ -1,5 +1,5 @@
 import { PaperStructure } from "./PaperStructure";
-import { HtmlPreview } from "./HtmlPreview";
+import { PaperPreview } from "./PaperPreview";
 
 export function DraftPane() {
   return (
@@ -11,7 +11,7 @@ export function DraftPane() {
 
       {/* Right Pane - Preview (45%) */}
       <div className="flex h-full min-w-0 flex-1 flex-col bg-muted/30">
-        <HtmlPreview />
+        <PaperPreview />
       </div>
     </div>
   );
