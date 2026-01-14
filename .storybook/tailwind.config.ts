@@ -1,12 +1,13 @@
 import type { Config } from "tailwindcss";
 import baseConfig from "../packages/config/tailwind.config";
+import { join } from "path";
 
 const config: Config = {
   ...baseConfig,
   content: [
-    "./.storybook/**/*.{js,ts,jsx,tsx}",
-    "../packages/ui/src/**/*.{js,ts,jsx,tsx}",
-    "../packages/auth/src/**/*.{js,ts,jsx,tsx}",
+    join(__dirname, "./**/*.{js,ts,jsx,tsx}"),
+    join(__dirname, "../packages/ui/src/**/*.{js,ts,jsx,tsx}"),
+    join(__dirname, "../packages/auth/src/**/*.{js,ts,jsx,tsx}"),
   ],
 };
 

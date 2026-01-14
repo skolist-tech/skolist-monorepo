@@ -24,9 +24,7 @@ const preview: Preview = {
   decorators: [
     (Story) => (
       <BrowserRouter>
-        <div className="p-4">
-          <Story />
-        </div>
+        <Story />
       </BrowserRouter>
     ),
   ],
