@@ -1,6 +1,8 @@
 import type { StorybookConfig } from "@storybook/react-vite";
 import { join, dirname } from "path";
 import { mergeConfig } from "vite";
+import tailwindcss from "tailwindcss";
+import autoprefixer from "autoprefixer";
 
 /**
  * This function is used to resolve the absolute path of a package.
@@ -29,6 +31,14 @@ const config: StorybookConfig = {
   },
   viteFinal: async (config) => {
     return mergeConfig(config, {
+      css: {
+        postcss: {
+          plugins: [
+            tailwindcss({ config: join(__dirname, "tailwind.config.ts") }),
+            autoprefixer(),
+          ],
+        },
+      },
       resolve: {
         alias: {
           "@skolist/ui": join(__dirname, "../packages/ui/src"),
