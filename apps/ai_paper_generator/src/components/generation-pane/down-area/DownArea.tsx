@@ -143,7 +143,10 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
     <div className="sticky top-0 z-10 flex h-[calc(100vh-4rem)] flex-col p-6">
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
         {/* Header */}
-        <div className="grid grid-cols-3 items-center border-b bg-card px-6 py-4">
+        <div
+          id="generated-questions-header"
+          className="grid grid-cols-3 items-center border-b bg-card px-6 py-4"
+        >
           <div className="flex items-center gap-3">
             <Checkbox
               checked={isAllSelected}
