@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Header } from "../header";
-import { ActivitySidebar } from "../activity-sidebar";
+import { Header } from "../header/Header";
+import { ActivitySidebar } from "../activity-sidebar/ActivitySidebar";
 import { MainArea } from "./MainArea";
 
 export function Layout() {

@@ -27,7 +27,7 @@
   }
 
   @page {
-    size: auto;
-    margin: 0mm;
+    size: A4;
+    margin: 0;
   }
 }

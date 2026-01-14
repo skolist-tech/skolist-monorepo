@@ -4,7 +4,7 @@
  */
 
 import { getClient } from "./supabase";
-import type { Tables, TablesUpdate, TablesInsert } from "@skolist/db";
+import type { Tables, TablesUpdate, TablesInsert, GeneratedImage } from "@skolist/db";
 
 export type GeneratedQuestion = Tables<"gen_questions">;
 
@@ -32,6 +32,7 @@ export async function createQuestion(
 
 export type GeneratedQuestionWithConcepts = GeneratedQuestion & {
   concepts: { id: string; name: string }[];
+  images: GeneratedImage[];
 };
 
 // Define the raw response type from Supabase join
@@ -42,6 +43,7 @@ type QuestionWithConceptsResponse = GeneratedQuestion & {
       name: string;
     } | null;
   }[];
+  gen_images: GeneratedImage[];
 };
 
 /**
@@ -63,6 +65,14 @@ export async function fetchQuestions(
           id,
           name
         )
+      ),
+      gen_images (
+        id,
+        gen_question_id,
+        svg_string,
+        img_url,
+        position,
+        created_at
       )
     `
     )
@@ -85,7 +95,12 @@ export async function fetchQuestions(
           (c): c is { id: string; name: string } =>
             c !== null && c !== undefined
         ) || [],
+    // Sort images by position, filter out those without svg_string or img_url
+    images: (q.gen_images || [])
+      .filter((img) => img.svg_string || img.img_url)
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
     gen_questions_concepts_maps: undefined, // Remove the raw mapping data from the result object if desired, or keep it.
+    gen_images: undefined, // Remove the raw gen_images from result
     // The Type specifies GeneratedQuestionWithConcepts which adds concepts array.
     // We destructured q so it has all properties of GeneratedQuestion.
   }));

@@ -27,12 +27,12 @@ import {
 } from "lucide-react";
 import type { GeneratedQuestion, HardnessLevel } from "@skolist/db";
 import { type GeneratedQuestionWithConcepts } from "../../../services/questionService";
-import {
-  QuestionMarks,
-  QuestionTags,
-  QuestionText,
-  QuestionOptions,
-} from "./index";
+import { QuestionMarks } from "./QuestionMarks";
+import { QuestionTags } from "./QuestionTags";
+import { QuestionText } from "./QuestionText";
+import { QuestionOptions } from "./QuestionOptions";
+import { QuestionImages } from "./QuestionImages";
+import { LatexRenderer } from "../LatexRenderer";
 
 interface GeneratedQuestionCardProps {
   question: GeneratedQuestionWithConcepts;
@@ -390,6 +390,11 @@ export function GeneratedQuestionCard({
           <QuestionText text={question.question_text || ""} />
         </div>
 
+        {/* Question Images */}
+        {question.images && question.images.length > 0 && (
+          <QuestionImages images={question.images} className="my-3" />
+        )}
+
         {/* Options / Answer */}
         {isMcqOrMsq ? (
           <QuestionOptions question={question} showCorrect={true} />
@@ -397,7 +402,7 @@ export function GeneratedQuestionCard({
           question.answer_text && (
             <div className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
               <span className="font-semibold text-primary">Answer: </span>
-              {question.answer_text}
+              <LatexRenderer content={question.answer_text} />
             </div>
           )
         )}
@@ -406,7 +411,7 @@ export function GeneratedQuestionCard({
         {question.explanation && (
           <div className="mt-2 text-sm text-muted-foreground">
             <span className="font-semibold">Explanation: </span>
-            {question.explanation}
+            <LatexRenderer content={question.explanation} />
           </div>
         )}
       </div>

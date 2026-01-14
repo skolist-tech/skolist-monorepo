@@ -1,5 +1,6 @@
 import type { GeneratedQuestion } from "@skolist/db";
 import { Check } from "lucide-react";
+import { LatexRenderer } from "../LatexRenderer";
 
 interface QuestionOptionsProps {
   question: Pick<
@@ -62,7 +63,7 @@ export function QuestionOptions({
             <span className="min-w-[20px] font-semibold">
               {String.fromCharCode(65 + index)}.
             </span>
-            <span className="">{option.text}</span>
+            <LatexRenderer content={option.text || ""} />
             {showCorrect && option.isCorrect && (
               <Check className="h-4 w-4 shrink-0 text-green-600" />
             )}

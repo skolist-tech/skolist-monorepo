@@ -13,7 +13,7 @@ import {
 } from "react";
 import { useActivityContext } from "./ActivityContext";
 
-import { type QuestionType } from "@skolist/db";
+import { type QuestionType, type GeneratedImage } from "@skolist/db";
 import {
   fetchQuestions,
   updateQuestion,
@@ -95,7 +95,11 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           if (payload.eventType === "INSERT") {
             setQuestions((prev) => [
               ...prev,
-              { ...(payload.new as GeneratedQuestion), concepts: [] },
+              {
+                ...(payload.new as GeneratedQuestion),
+                concepts: [],
+                images: [],
+              },
             ]);
           } else if (payload.eventType === "UPDATE") {
             setQuestions((prev) =>
@@ -104,12 +108,123 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
                   ? {
                       ...(payload.new as GeneratedQuestion),
                       concepts: q.concepts,
+                      images: q.images,
                     }
                   : q
               )
             );
           } else if (payload.eventType === "DELETE") {
             setQuestions((prev) => prev.filter((q) => q.id !== payload.old.id));
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "gen_images",
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            const newImage = payload.new as GeneratedImage;
+            if (!newImage.gen_question_id) return;
+            // Only add if it has svg_string or img_url
+            if (!newImage.svg_string && !newImage.img_url) return;
+
+            setQuestions((prev) =>
+              prev.map((q) =>
+                q.id === newImage.gen_question_id
+                  ? {
+                      ...q,
+                      images: [...q.images, newImage].sort(
+                        (a, b) => (a.position ?? 0) - (b.position ?? 0)
+                      ),
+                    }
+                  : q
+              )
+            );
+          } else if (payload.eventType === "UPDATE") {
+            const updatedImage = payload.new as GeneratedImage;
+            const oldImage = payload.old as GeneratedImage;
+
+            setQuestions((prev) =>
+              prev.map((q) => {
+                // If this question had the old image, remove it
+                if (
+                  oldImage.gen_question_id &&
+                  q.id === oldImage.gen_question_id
+                ) {
+                  const filteredImages = q.images.filter(
+                    (img) => img.id !== updatedImage.id
+                  );
+                  // If the image moved to a different question, just remove it
+                  if (
+                    updatedImage.gen_question_id !== oldImage.gen_question_id
+                  ) {
+                    return { ...q, images: filteredImages };
+                  }
+                }
+
+                // If this question should have the updated image
+                if (
+                  updatedImage.gen_question_id &&
+                  q.id === updatedImage.gen_question_id
+                ) {
+                  // Check if image already exists in this question
+                  const existingIndex = q.images.findIndex(
+                    (img) => img.id === updatedImage.id
+                  );
+
+                  // Only include if it has svg_string or img_url
+                  if (!updatedImage.svg_string && !updatedImage.img_url) {
+                    // Remove if it no longer has valid content
+                    return {
+                      ...q,
+                      images: q.images.filter(
+                        (img) => img.id !== updatedImage.id
+                      ),
+                    };
+                  }
+
+                  let newImages: GeneratedImage[];
+                  if (existingIndex >= 0) {
+                    // Update existing image
+                    newImages = q.images.map((img) =>
+                      img.id === updatedImage.id ? updatedImage : img
+                    );
+                  } else {
+                    // Add new image (moved from another question)
+                    newImages = [...q.images, updatedImage];
+                  }
+
+                  return {
+                    ...q,
+                    images: newImages.sort(
+                      (a, b) => (a.position ?? 0) - (b.position ?? 0)
+                    ),
+                  };
+                }
+
+                return q;
+              })
+            );
+          } else if (payload.eventType === "DELETE") {
+            const deletedImage = payload.old as GeneratedImage;
+            if (!deletedImage.gen_question_id) return;
+
+            setQuestions((prev) =>
+              prev.map((q) =>
+                q.id === deletedImage.gen_question_id
+                  ? {
+                      ...q,
+                      images: q.images.filter(
+                        (img) => img.id !== deletedImage.id
+                      ),
+                    }
+                  : q
+              )
+            );
           }
         }
       )
@@ -205,8 +320,9 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           id: _id,
           created_at: _created_at,
           updated_at: _updated_at,
+          concepts: _concepts,
           ...updates
-        } = question; // Exclude system fields from update payload if needed, though usually safe.
+        } = question; // Exclude system fields and join fields from update payload.
         // But `updates` in updateQuestion takes TablesUpdate<"gen_questions">.
         await updateQuestion(question.id, updates);
 

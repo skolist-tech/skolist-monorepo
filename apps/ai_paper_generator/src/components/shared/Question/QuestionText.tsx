@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Textarea, Button } from "@skolist/ui";
 import { Edit2, Check, X } from "lucide-react";
 import type { GeneratedQuestion } from "@skolist/db";
+import { LatexHtmlRenderer } from "../LatexRenderer";
 
 interface QuestionTextProps {
   text: NonNullable<GeneratedQuestion["question_text"]>;
@@ -57,7 +58,7 @@ export function QuestionText({
 
   return (
     <div className="group relative">
-      <p className="text-base leading-relaxed">{text}</p>
+      <LatexHtmlRenderer content={text} className="text-base leading-relaxed" />
       {editable && onUpdate && (
         <Button
           size="icon"

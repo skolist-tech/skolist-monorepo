@@ -1,8 +1,8 @@
 import { usePaneContext } from "../../context/PaneContext";
 import { useActivityContext } from "../../context/ActivityContext";
-import { GenerationPane } from "../generation-pane";
-import { DraftPane } from "../draft-pane";
-import { EmptyState } from "../shared";
+import { GenerationPane } from "../generation-pane/GenerationPane";
+import { DraftPaneWrapper } from "../draft-pane/DraftPaneWrapper";
+import { EmptyState } from "../shared/EmptyState";
 import { FileText } from "lucide-react";
 import { Button } from "@skolist/ui";
 
@@ -37,7 +37,7 @@ export function MainArea() {
         <GenerationPane />
       </div>
       <div className={activePane === "draft" ? "h-full w-full" : "hidden"}>
-        <DraftPane />
+        <DraftPaneWrapper />
       </div>
       {activePane === "analysis" && (
         <div className="flex h-full items-center justify-center text-muted-foreground">
