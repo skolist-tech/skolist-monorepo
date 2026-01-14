@@ -274,11 +274,26 @@ export function PaperPreview() {
 
   // Trigger measurement when items change
   useLayoutEffect(() => {
-    // Timeout to allow DOM to render the hidden items
-    const timer = setTimeout(() => {
+    // Initial measurement after a short delay for DOM to render
+    const timer1 = setTimeout(() => {
       calculatePages();
     }, 100);
-    return () => clearTimeout(timer);
+
+    // Second measurement after longer delay for LaTeX/images to render
+    const timer2 = setTimeout(() => {
+      calculatePages();
+    }, 500);
+
+    // Third measurement for slower content
+    const timer3 = setTimeout(() => {
+      calculatePages();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
   }, [items, calculatePages]);
 
   const handlePrint = useReactToPrint({
@@ -372,12 +387,13 @@ export function PaperPreview() {
         ref={measureRef}
         aria-hidden="true"
         style={{
-          position: "absolute",
-          left: "-9999px",
+          position: "fixed",
+          left: 0,
           top: 0,
           width: `${CONTENT_WIDTH_PX}px`,
-          visibility: "hidden",
+          opacity: 0,
           pointerEvents: "none",
+          zIndex: -1,
         }}
       >
         {items.map((item) => (
