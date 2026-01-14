@@ -27,9 +27,14 @@ const QUESTION_TYPE_API_MAP: Record<QuestionType, string> = {
 interface UpAreaProps {
   hardnessLevels: Record<HardnessLevel, number>;
   onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
+  onGenerationComplete?: () => void;
 }
 
-export function UpArea({ hardnessLevels, onHardnessLevelChange }: UpAreaProps) {
+export function UpArea({
+  hardnessLevels,
+  onHardnessLevelChange,
+  onGenerationComplete,
+}: UpAreaProps) {
   const { currentActivity, activities, renameActivity } = useActivityContext();
   const { getSelectedLeafConceptIds, selection, schoolClasses, subjects } =
     useConceptContext();
@@ -201,6 +206,8 @@ export function UpArea({ hardnessLevels, onHardnessLevelChange }: UpAreaProps) {
         title: "Questions Generated",
         description: `Successfully generated questions for ${conceptIds.length} concept(s).`,
       });
+
+      onGenerationComplete?.();
     } catch (error) {
       console.error("Failed to generate questions:", error);
       toast({
