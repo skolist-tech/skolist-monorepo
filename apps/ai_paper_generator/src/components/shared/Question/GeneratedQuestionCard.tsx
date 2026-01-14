@@ -31,6 +31,7 @@ import { QuestionMarks } from "./QuestionMarks";
 import { QuestionTags } from "./QuestionTags";
 import { QuestionText } from "./QuestionText";
 import { QuestionOptions } from "./QuestionOptions";
+import { QuestionImages } from "./QuestionImages";
 import { LatexRenderer } from "../LatexRenderer";
 
 interface GeneratedQuestionCardProps {
@@ -388,6 +389,11 @@ export function GeneratedQuestionCard({
         <div className="font-medium">
           <QuestionText text={question.question_text || ""} />
         </div>
+
+        {/* Question Images */}
+        {question.images && question.images.length > 0 && (
+          <QuestionImages images={question.images} className="my-3" />
+        )}
 
         {/* Options / Answer */}
         {isMcqOrMsq ? (

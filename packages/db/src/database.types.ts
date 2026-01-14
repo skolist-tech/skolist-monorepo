@@ -342,6 +342,41 @@ export type Database = {
           },
         ]
       }
+      gen_images: {
+        Row: {
+          created_at: string
+          gen_question_id: string | null
+          id: number
+          img_url: string | null
+          position: number | null
+          svg_string: string | null
+        }
+        Insert: {
+          created_at?: string
+          gen_question_id?: string | null
+          id?: number
+          img_url?: string | null
+          position?: number | null
+          svg_string?: string | null
+        }
+        Update: {
+          created_at?: string
+          gen_question_id?: string | null
+          id?: number
+          img_url?: string | null
+          position?: number | null
+          svg_string?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gen_images_gen_question_id_fkey"
+            columns: ["gen_question_id"]
+            isOneToOne: false
+            referencedRelation: "gen_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gen_questions: {
         Row: {
           activity_id: string

@@ -90,40 +90,74 @@ const QuestionItem = ({
 }: {
   question: GeneratedQuestionWithConcepts;
   index: number;
-}) => (
-  <div className="mb-4 break-inside-avoid">
-    <div className="flex gap-2">
-      <span className="font-semibold">{index + 1}.</span>
-      <div className="flex-1">
-        <LatexHtmlRenderer
-          content={question.question_text || ""}
-          className="prose prose-sm max-w-none text-gray-800"
-        />
-        {/* Render Options if MCQ/MSQ */}
-        {(["mcq4", "msq4"] as string[]).includes(question.question_type) && (
-          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
-            {[
-              question.option1,
-              question.option2,
-              question.option3,
-              question.option4,
-            ].map((opt, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm">
-                <span className="font-medium text-gray-500">
-                  {String.fromCharCode(97 + i)})
-                </span>
-                <LatexRenderer content={opt || ""} />
-              </div>
-            ))}
-          </div>
-        )}
+}) => {
+  // Filter and sort images by position
+  const validImages = (question.images || [])
+    .filter((img) => img.svg_string || img.img_url)
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+  return (
+    <div className="mb-4 break-inside-avoid">
+      <div className="flex gap-2">
+        <span className="font-semibold">{index + 1}.</span>
+        <div className="flex-1">
+          <LatexHtmlRenderer
+            content={question.question_text || ""}
+            className="prose prose-sm max-w-none text-gray-800"
+          />
+          {/* Render Question Images */}
+          {validImages.length > 0 && (
+            <div className="my-2 flex flex-wrap gap-2">
+              {validImages.map((image) => {
+                if (image.svg_string) {
+                  return (
+                    <div
+                      key={image.id}
+                      className="question-image-svg max-w-full overflow-hidden"
+                      dangerouslySetInnerHTML={{ __html: image.svg_string }}
+                    />
+                  );
+                }
+                if (image.img_url) {
+                  return (
+                    <img
+                      key={image.id}
+                      src={image.img_url}
+                      alt={`Question image ${image.position ?? image.id}`}
+                      className="max-h-40 max-w-full object-contain"
+                    />
+                  );
+                }
+                return null;
+              })}
+            </div>
+          )}
+          {/* Render Options if MCQ/MSQ */}
+          {(["mcq4", "msq4"] as string[]).includes(question.question_type) && (
+            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+              {[
+                question.option1,
+                question.option2,
+                question.option3,
+                question.option4,
+              ].map((opt, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <span className="font-medium text-gray-500">
+                    {String.fromCharCode(97 + i)})
+                  </span>
+                  <LatexRenderer content={opt || ""} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <span className="ml-2 whitespace-nowrap text-sm font-semibold text-gray-500">
+          [{question.marks} marks]
+        </span>
       </div>
-      <span className="ml-2 whitespace-nowrap text-sm font-semibold text-gray-500">
-        [{question.marks} marks]
-      </span>
     </div>
-  </div>
-);
+  );
+};
 
 export function PaperPreview() {
   const { draft, sections } = useDraftContext();

@@ -48,6 +48,10 @@ export type UpdateGeneratedQuestion = Tables["gen_questions"]["Update"];
 export type QuestionType = Database["public"]["Enums"]["question_type_enum"];
 export type HardnessLevel = Database["public"]["Enums"]["hardness_level_enum"];
 
+export type GeneratedImage = Tables["gen_images"]["Row"]; // Image is associated with a Generated Questions in the AI Paper Generator Product
+export type InsertGeneratedImage = Tables["gen_images"]["Insert"];
+export type UpdateGeneratedImage = Tables["gen_images"]["Update"];
+
 // Constants for runtime usage - TypeScript will error if these don't match the database enum
 export const QUESTION_TYPE = {
   MCQ4: "mcq4",
