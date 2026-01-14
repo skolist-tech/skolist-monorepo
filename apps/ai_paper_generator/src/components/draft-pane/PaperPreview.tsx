@@ -9,6 +9,7 @@ import {
   type QgenDraftSection,
   type QgenDraft,
 } from "../../services/draftService";
+import { LatexHtmlRenderer, LatexRenderer } from "../shared/LatexRenderer";
 
 // -- Constants --
 const A4_WIDTH_MM = 210;
@@ -94,9 +95,9 @@ const QuestionItem = ({
     <div className="flex gap-2">
       <span className="font-semibold">{index + 1}.</span>
       <div className="flex-1">
-        <div
+        <LatexHtmlRenderer
+          content={question.question_text || ""}
           className="prose prose-sm max-w-none text-gray-800"
-          dangerouslySetInnerHTML={{ __html: question.question_text || "" }}
         />
         {/* Render Options if MCQ/MSQ */}
         {(["mcq4", "msq4"] as string[]).includes(question.question_type) && (
@@ -111,7 +112,7 @@ const QuestionItem = ({
                 <span className="font-medium text-gray-500">
                   {String.fromCharCode(97 + i)})
                 </span>
-                <span>{opt}</span>
+                <LatexRenderer content={opt || ""} />
               </div>
             ))}
           </div>

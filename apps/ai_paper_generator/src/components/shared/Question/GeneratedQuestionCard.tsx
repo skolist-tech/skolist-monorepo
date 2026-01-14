@@ -33,6 +33,7 @@ import {
   QuestionText,
   QuestionOptions,
 } from "./index";
+import { LatexRenderer } from "../LatexRenderer";
 
 interface GeneratedQuestionCardProps {
   question: GeneratedQuestionWithConcepts;
@@ -397,7 +398,7 @@ export function GeneratedQuestionCard({
           question.answer_text && (
             <div className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
               <span className="font-semibold text-primary">Answer: </span>
-              {question.answer_text}
+              <LatexRenderer content={question.answer_text} />
             </div>
           )
         )}
@@ -406,7 +407,7 @@ export function GeneratedQuestionCard({
         {question.explanation && (
           <div className="mt-2 text-sm text-muted-foreground">
             <span className="font-semibold">Explanation: </span>
-            {question.explanation}
+            <LatexRenderer content={question.explanation} />
           </div>
         )}
       </div>
