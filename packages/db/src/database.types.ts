@@ -577,14 +577,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "qgen_draft_instructions_users_maps_qgen_draft_id_fkey"
+            foreignKeyName: "qgen_draft_instructions_users_maps_qgen _draft_id_fkey"
             columns: ["qgen_draft_id"]
             isOneToOne: false
             referencedRelation: "qgen_drafts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "qgen_draft_instructions_users_maps_qgen_draft_id_fkey1"
+            foreignKeyName: "qgen_draft_instructions_users_maps_qgen _draft_id_fkey1"
             columns: ["qgen_draft_id"]
             isOneToOne: false
             referencedRelation: "qgen_drafts"
@@ -794,6 +794,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           credits: number
+          dark_mode: boolean
           email: string | null
           id: string
           last_active_at: string
@@ -811,6 +812,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           credits?: number
+          dark_mode?: boolean
           email?: string | null
           id: string
           last_active_at?: string
@@ -828,6 +830,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           credits?: number
+          dark_mode?: boolean
           email?: string | null
           id?: string
           last_active_at?: string

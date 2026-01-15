@@ -1,16 +1,8 @@
-import {
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-} from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 
 import { Printer, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { Button } from "@skolist/ui";
-
 
 import { useDraftContext } from "../../context/DraftContext";
 import { useQuestionsContext } from "../../context/QuestionsContext";
@@ -19,7 +11,6 @@ import {
   type QgenDraftSection,
   type QgenDraft,
   type QgenInstruction,
-  fetchDraftInstructions,
 } from "../../services/draftService";
 import { LatexHtmlRenderer, LatexRenderer } from "../shared/LatexRenderer";
 
@@ -220,24 +211,12 @@ const QuestionItem = ({
 };
 
 export function PaperPreview() {
-  const { draft, sections } = useDraftContext();
+  const { draft, sections, instructions } = useDraftContext();
   const { questions } = useQuestionsContext();
   const [scale, setScale] = useState<number>(1.0);
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2.0;
   const [pages, setPages] = useState<PageData[]>([]);
-  const [instructions, setInstructions] = useState<QgenInstruction[]>([]);
-
-  // Fetch instructions
-  useEffect(() => {
-    if (draft?.id) {
-      fetchDraftInstructions(draft.id)
-        .then(setInstructions)
-        .catch((err) =>
-          console.error("Failed to load instructions for preview", err)
-        );
-    }
-  }, [draft?.id]);
 
   const measureRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -402,30 +381,43 @@ export function PaperPreview() {
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b bg-white p-4 shadow-sm">
         <div className="flex items-center gap-6">
-      <h2 className="text-sm font-semibold text-gray-600">
-    Print Preview ({pages.length} Pages)
-  </h2>
-  
-  <div className="flex items-center gap-2 bg-gray-50 border rounded-md px-2 py-1">
-    <button onClick={() => setScale(s => Math.max(MIN_SCALE, s - 0.1))} className="p-1 hover:text-primary">
-      <ZoomOut className="h-4 w-4" />
-    </button>
-    <input 
-      type="range" 
-      min={MIN_SCALE} max={MAX_SCALE} step={0.1} 
-      value={scale} 
-      onChange={(e) => setScale(parseFloat(e.target.value))}
-      className="w-24 accent-primary" 
-    />
-    <button onClick={() => setScale(s => Math.min(MAX_SCALE, s + 0.1))} className="p-1 hover:text-primary">
-      <ZoomIn className="h-4 w-4" />
-    </button>
-    <span className="text-xs font-medium w-10 text-center">{Math.round(scale * 100)}%</span>
-    <button onClick={() => setScale(1.0)} className="p-1 text-gray-400 hover:text-gray-600 border-l ml-1">
-      <RotateCcw className="h-3 w-3" />
-    </button>
-  </div>
-</div>
+          <h2 className="text-sm font-semibold text-gray-600">
+            Print Preview ({pages.length} Pages)
+          </h2>
+
+          <div className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1">
+            <button
+              onClick={() => setScale((s) => Math.max(MIN_SCALE, s - 0.1))}
+              className="p-1 hover:text-primary"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </button>
+            <input
+              type="range"
+              min={MIN_SCALE}
+              max={MAX_SCALE}
+              step={0.1}
+              value={scale}
+              onChange={(e) => setScale(parseFloat(e.target.value))}
+              className="w-24 accent-primary"
+            />
+            <button
+              onClick={() => setScale((s) => Math.min(MAX_SCALE, s + 0.1))}
+              className="p-1 hover:text-primary"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </button>
+            <span className="w-10 text-center text-xs font-medium">
+              {Math.round(scale * 100)}%
+            </span>
+            <button
+              onClick={() => setScale(1.0)}
+              className="ml-1 border-l p-1 text-gray-400 hover:text-gray-600"
+            >
+              <RotateCcw className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
         <Button onClick={() => handlePrint()} size="sm" className="gap-2">
           <Printer className="h-4 w-4" />
           Print / Save PDF
@@ -435,80 +427,89 @@ export function PaperPreview() {
       {/* Preview Area */}
       <div className="flex-1 overflow-auto p-8">
         <div className="mx-auto flex w-fit flex-col gap-8">
-          <div style={{ transform: `scale(${scale})`, transformOrigin: "top center", transition: "transform 0.1s" }}>
-          <div 
-    className="zoom-wrapper"
-    style={{ 
-      transform: `scale(${scale})`, 
-      transformOrigin: "top center", 
-      transition: "transform 0.1s" 
-    }}
-  >
-          {/* Printable Container */}
           <div
-            id="paper-preview-content"
-            ref={printRef}
-            className="print-container"
+            style={{
+              transform: `scale(${scale})`,
+              transformOrigin: "top center",
+              transition: "transform 0.1s",
+            }}
           >
-            {pages.map((page, pageIndex) => (
+            <div
+              className="zoom-wrapper"
+              style={{
+                transform: `scale(${scale})`,
+                transformOrigin: "top center",
+                transition: "transform 0.1s",
+              }}
+            >
+              {/* Printable Container */}
               <div
-                key={page.pageNumber}
-                className="print-page bg-white shadow-xl"
-                style={{
-                  width: `${PAGE_WIDTH_PX}px`,
-                  height: `${PAGE_HEIGHT_PX}px`,
-                  padding: `${PADDING_PX}px`,
-                  marginBottom: pageIndex < pages.length - 1 ? "32px" : "0",
-                  boxSizing: "border-box",
-                  position: "relative",
-                }}
+                id="paper-preview-content"
+                ref={printRef}
+                className="print-container"
               >
-                {/* Content area */}
-                <div
-                  style={{
-                    height: `${CONTENT_HEIGHT_PX}px`,
-                    overflow: "hidden",
-                  }}
-                >
-                  {page.items.map((item) => (
-                    <div key={item.id} className="w-full overflow-hidden p-0.5">
-                      {item.type === "header" && (
-                        <PaperHeader draft={item.data} />
-                      )}
-                      {item.type === "instructions" && (
-                        <PaperInstructions instructions={item.data} />
-                      )}
-                      {item.type === "section" && (
-                        <SectionHeader section={item.data} />
-                      )}
-                      {item.type === "question" && (
-                        <QuestionItem
-                          question={item.data}
-                          index={item.data.displayIndex}
-                        />
-                      )}
+                {pages.map((page, pageIndex) => (
+                  <div
+                    key={page.pageNumber}
+                    className="print-page bg-white shadow-xl"
+                    style={{
+                      width: `${PAGE_WIDTH_PX}px`,
+                      height: `${PAGE_HEIGHT_PX}px`,
+                      padding: `${PADDING_PX}px`,
+                      marginBottom: pageIndex < pages.length - 1 ? "32px" : "0",
+                      boxSizing: "border-box",
+                      position: "relative",
+                    }}
+                  >
+                    {/* Content area */}
+                    <div
+                      style={{
+                        height: `${CONTENT_HEIGHT_PX}px`,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {page.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="w-full overflow-hidden p-0.5"
+                        >
+                          {item.type === "header" && (
+                            <PaperHeader draft={item.data} />
+                          )}
+                          {item.type === "instructions" && (
+                            <PaperInstructions instructions={item.data} />
+                          )}
+                          {item.type === "section" && (
+                            <SectionHeader section={item.data} />
+                          )}
+                          {item.type === "question" && (
+                            <QuestionItem
+                              question={item.data}
+                              index={item.data.displayIndex}
+                            />
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                {/* Page Footer - Absolutely positioned at bottom */}
-                <div
-                  className="page-footer text-right text-xs text-gray-400"
-                  style={{
-                    position: "absolute",
-                    bottom: `${PADDING_PX}px`,
-                    right: `${PADDING_PX}px`,
-                    left: `${PADDING_PX}px`,
-                  }}
-                >
-                  Page {page.pageNumber} of {pages.length}
-                </div>
+                    {/* Page Footer - Absolutely positioned at bottom */}
+                    <div
+                      className="page-footer text-right text-xs text-gray-400"
+                      style={{
+                        position: "absolute",
+                        bottom: `${PADDING_PX}px`,
+                        right: `${PADDING_PX}px`,
+                        left: `${PADDING_PX}px`,
+                      }}
+                    >
+                      Page {page.pageNumber} of {pages.length}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
             </div>
           </div>
         </div>
-      </div>
       </div>
 
       {/* Hidden Measure Layer - Outside print area */}

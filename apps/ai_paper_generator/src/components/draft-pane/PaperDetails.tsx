@@ -5,12 +5,8 @@ import { type TablesUpdate } from "@skolist/db";
 import {
   type QgenDraft,
   type QgenInstruction,
-  fetchDraftInstructions,
-  createDraftInstruction,
-  updateDraftInstruction,
-  deleteDraftInstruction,
 } from "../../services/draftService";
-// import { useActivityContext } from "../../context/ActivityContext"; // Not strictly needed for instructions anymore if we use draft.activity_id, but might be used for other things? It was used for currentActivity.user_id.
+import { useDraftContext } from "../../context/DraftContext";
 
 interface PaperDetailsProps {
   draft: QgenDraft;
@@ -126,41 +122,15 @@ export function PaperDetails({
   draft,
   updateDraftSettings,
 }: PaperDetailsProps) {
-  // const { currentActivity } = useActivityContext(); // Removed as we use draft.activity_id
-  const [instructions, setInstructions] = useState<QgenInstruction[]>([]);
-  const [instructionsLoading, setInstructionsLoading] = useState(false);
+  const { instructions, addInstruction, editInstruction, removeInstruction } =
+    useDraftContext();
   const [newInstructionText, setNewInstructionText] = useState("");
   const [isAddingInstruction, setIsAddingInstruction] = useState(false);
-
-  // Fetch instructions on mount
-  useEffect(() => {
-    if (draft.id) {
-      loadInstructions();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.id]);
-
-  const loadInstructions = async () => {
-    if (!draft.id) return;
-    try {
-      setInstructionsLoading(true);
-      const data = await fetchDraftInstructions(draft.id);
-      setInstructions(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setInstructionsLoading(false);
-    }
-  };
 
   const handleAddInstruction = async () => {
     if (!newInstructionText.trim() || !draft.id) return;
     try {
-      const newInst = await createDraftInstruction(
-        draft.id,
-        newInstructionText
-      );
-      setInstructions((prev) => [newInst, ...prev]);
+      await addInstruction(newInstructionText);
       setNewInstructionText("");
       setIsAddingInstruction(false);
     } catch (err) {
@@ -170,20 +140,15 @@ export function PaperDetails({
 
   const handleDeleteInstruction = async (id: string) => {
     try {
-      setInstructions((prev) => prev.filter((i) => i.id !== id)); // Optimistic
-      await deleteDraftInstruction(id);
+      await removeInstruction(id);
     } catch (err) {
       console.error(err);
-      loadInstructions(); // Revert
     }
   };
 
   const handleUpdateInstruction = async (id: string, text: string) => {
     try {
-      setInstructions((prev) =>
-        prev.map((i) => (i.id === id ? { ...i, instruction_text: text } : i))
-      );
-      await updateDraftInstruction(id, text);
+      await editInstruction(id, text);
     } catch (err) {
       console.error(err);
     }
@@ -339,21 +304,14 @@ export function PaperDetails({
         )}
 
         <div className="space-y-1">
-          {instructionsLoading && instructions.length === 0 && (
-            <div className="text-center text-xs text-muted-foreground">
-              Loading...
-            </div>
-          )}
           {instructions.map((inst) => (
             <InstructionItem key={inst.id} item={inst} />
           ))}
-          {!instructionsLoading &&
-            instructions.length === 0 &&
-            !isAddingInstruction && (
-              <div className="py-4 text-center text-xs italic text-muted-foreground">
-                No instructions added yet.
-              </div>
-            )}
+          {instructions.length === 0 && !isAddingInstruction && (
+            <div className="py-4 text-center text-xs italic text-muted-foreground">
+              No instructions added yet.
+            </div>
+          )}
         </div>
       </div>
     </div>

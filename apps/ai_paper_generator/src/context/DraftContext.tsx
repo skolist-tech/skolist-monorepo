@@ -22,8 +22,13 @@ import {
   updateSection,
   deleteSection,
   updateDraft,
+  fetchDraftInstructions,
+  createDraftInstruction,
+  updateDraftInstruction,
+  deleteDraftInstruction,
   type QgenDraft,
   type QgenDraftSection,
+  type QgenInstruction,
 } from "../services/draftService";
 import { updateQuestion } from "../services/questionService";
 import type { TablesUpdate } from "@skolist/db";
@@ -31,6 +36,7 @@ import type { TablesUpdate } from "@skolist/db";
 interface DraftContextValue {
   draft: QgenDraft | null;
   sections: QgenDraftSection[];
+  instructions: QgenInstruction[];
   isLoading: boolean;
   updateDraftSettings: (updates: TablesUpdate<"qgen_drafts">) => Promise<void>;
   addSection: (name?: string) => Promise<void>;
@@ -45,6 +51,11 @@ interface DraftContextValue {
     sectionId: string,
     index: number
   ) => Promise<void>;
+
+  // Instructions
+  addInstruction: (text: string) => Promise<void>;
+  editInstruction: (id: string, text: string) => Promise<void>;
+  removeInstruction: (id: string) => Promise<void>;
 }
 
 const DraftContext = createContext<DraftContextValue | undefined>(undefined);
@@ -54,6 +65,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   const { questions, updateQuestionLocal } = useQuestionsContext();
   const [draft, setDraft] = useState<QgenDraft | null>(null);
   const [sections, setSections] = useState<QgenDraftSection[]>([]);
+  const [instructions, setInstructions] = useState<QgenInstruction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Initialize Draft and Sections
@@ -65,7 +77,13 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       const draftData = await fetchOrCreateDraft(currentActivity.id);
       setDraft(draftData);
 
-      const sectionsData = await fetchSections(draftData.id);
+      // Parallel fetch
+      const [sectionsData, instructionsData] = await Promise.all([
+        fetchSections(draftData.id),
+        fetchDraftInstructions(draftData.id),
+      ]);
+
+      setInstructions(instructionsData);
 
       // If no sections exist, create a default one
       if (sectionsData.length === 0) {
@@ -226,10 +244,48 @@ export function DraftProvider({ children }: { children: ReactNode }) {
     [questions, updateQuestionLocal]
   );
 
+  // --- Instructions Logic ---
+
+  const addInstruction = useCallback(
+    async (text: string) => {
+      if (!draft) return;
+      try {
+        const newInst = await createDraftInstruction(draft.id, text);
+        setInstructions((prev) => [newInst, ...prev]);
+      } catch (err) {
+        console.error("Failed to add instruction:", err);
+      }
+    },
+    [draft]
+  );
+
+  const editInstruction = useCallback(async (id: string, text: string) => {
+    try {
+      // Optimistic
+      setInstructions((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, instruction_text: text } : i))
+      );
+      await updateDraftInstruction(id, text);
+    } catch (err) {
+      console.error("Failed to update instruction:", err);
+      // revert logic...
+    }
+  }, []);
+
+  const removeInstruction = useCallback(async (id: string) => {
+    try {
+      setInstructions((prev) => prev.filter((i) => i.id !== id));
+      await deleteDraftInstruction(id);
+    } catch (err) {
+      console.error("Failed to delete instruction:", err);
+    }
+  }, []);
+
   const value: DraftContextValue = useMemo(
     () => ({
       draft,
       sections,
+      instructions,
       isLoading,
       updateDraftSettings,
       addSection,
@@ -237,10 +293,14 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       removeSection,
       moveSection,
       moveQuestionToSection,
+      addInstruction,
+      editInstruction,
+      removeInstruction,
     }),
     [
       draft,
       sections,
+      instructions,
       isLoading,
       updateDraftSettings,
       addSection,
@@ -248,6 +308,9 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       removeSection,
       moveSection,
       moveQuestionToSection,
+      addInstruction,
+      editInstruction,
+      removeInstruction,
     ]
   );
 
