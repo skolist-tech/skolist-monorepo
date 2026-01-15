@@ -392,6 +392,7 @@ export function PaperPreview() {
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: draft?.paper_title || "Paper",
+    onBeforePrint: () => new Promise((resolve) => setTimeout(resolve, 500)),
   });
 
   if (!draft) return null;
@@ -435,6 +436,14 @@ export function PaperPreview() {
       <div className="flex-1 overflow-auto p-8">
         <div className="mx-auto flex w-fit flex-col gap-8">
           <div style={{ transform: `scale(${scale})`, transformOrigin: "top center", transition: "transform 0.1s" }}>
+          <div 
+    className="zoom-wrapper"
+    style={{ 
+      transform: `scale(${scale})`, 
+      transformOrigin: "top center", 
+      transition: "transform 0.1s" 
+    }}
+  >
           {/* Printable Container */}
           <div
             id="paper-preview-content"
@@ -500,6 +509,7 @@ export function PaperPreview() {
           </div>
         </div>
       </div>
+      </div>
 
       {/* Hidden Measure Layer - Outside print area */}
       <div
@@ -550,7 +560,10 @@ export function PaperPreview() {
             size: A4;
             margin: 0;
           }
-          
+          .zoom-wrapper {
+    transform: scale(1) !important;
+    transition: none !important;
+  }
           #paper-preview-content {
             position: absolute;
             left: 0;
