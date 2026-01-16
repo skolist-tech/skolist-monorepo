@@ -6,6 +6,7 @@ import { DraftPane } from "../draft-pane/DraftPane";
 import { EmptyState } from "../shared/EmptyState";
 import { FileText } from "lucide-react";
 import { Button } from "@skolist/ui";
+import { AnalysisPane } from "../analysis-pane/AnalysisPane";
 
 export function MainArea() {
   const { activePane } = usePaneContext();
@@ -44,8 +45,8 @@ export function MainArea() {
           <DraftPane />
         </div>
         {activePane === "analysis" && (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            Analysis Pane (Coming Soon)
+          <div className="h-full w-full">
+            <AnalysisPane />
           </div>
         )}
       </div>

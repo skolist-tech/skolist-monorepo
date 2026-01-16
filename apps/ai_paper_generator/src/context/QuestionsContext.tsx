@@ -22,6 +22,7 @@ import {
   type GeneratedQuestion,
   type GeneratedQuestionWithConcepts,
 } from "../services/questionService";
+export type { GeneratedQuestionWithConcepts };
 import { getClient } from "../services/supabase";
 
 interface QuestionsContextValue {
