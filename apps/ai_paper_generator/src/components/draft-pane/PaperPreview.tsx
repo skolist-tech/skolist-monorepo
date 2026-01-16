@@ -17,6 +17,7 @@ import {
   CheckSquare,
 } from "lucide-react";
 import { Button } from "@skolist/ui";
+import { cn } from "@skolist/utils";
 
 import { useDraftContext } from "../../context/DraftContext";
 import { useQuestionsContext } from "../../context/QuestionsContext";
@@ -305,6 +306,9 @@ const AnswerItem = ({
             </div>
           )}
         </div>
+        <span className="ml-2 whitespace-nowrap text-sm font-semibold text-gray-500">
+          [{question.marks} marks]
+        </span>
       </div>
     </div>
   );
@@ -472,7 +476,7 @@ export function PaperPreview() {
         id: `section-${section.id}`,
         type: "section",
         data: section,
-        totalMarks: previewMode === "paper" ? totalMarks : undefined,
+        totalMarks: totalMarks,
       });
 
       // Questions by Section
@@ -600,29 +604,25 @@ export function PaperPreview() {
       <div className="flex items-center justify-between border-b bg-white p-4 shadow-sm">
         <div className="flex items-center gap-6">
           {/* Mode Switcher */}
-          <div className="flex items-center rounded-lg border bg-gray-100 p-1">
-            <button
+          <div className="flex items-center gap-2">
+            <Button
+              variant={previewMode === "paper" ? "default" : "ghost"}
+              size="sm"
               onClick={() => setPreviewMode("paper")}
-              className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                previewMode === "paper"
-                  ? "bg-white text-primary shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
+              className={cn("gap-2", previewMode === "paper" && "shadow-sm")}
             >
               <FileText className="h-4 w-4" />
               Paper
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={previewMode === "answer" ? "default" : "ghost"}
+              size="sm"
               onClick={() => setPreviewMode("answer")}
-              className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                previewMode === "answer"
-                  ? "bg-white text-primary shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
+              className={cn("gap-2", previewMode === "answer" && "shadow-sm")}
             >
               <CheckSquare className="h-4 w-4" />
               Answers
-            </button>
+            </Button>
           </div>
 
           <span className="hidden text-sm font-semibold text-gray-600 sm:inline-block">
