@@ -23,17 +23,13 @@ import {
   type GeneratedQuestionWithConcepts,
 } from "../services/questionService";
 import { getClient } from "../services/supabase";
-import {
-  fetchOrCreateDraft,
-  fetchSections,
-  createSection,
-} from "../services/draftService";
 
 interface QuestionsContextValue {
   questions: GeneratedQuestionWithConcepts[];
   isLoading: boolean;
   error: string | null;
   moveQuestionToDraft: (id: string) => Promise<void>;
+  moveQuestionsToDraft: (ids: string[]) => Promise<void>;
   moveQuestionToGeneration: (id: string) => Promise<void>;
   updateQuestionLocal: (question: GeneratedQuestionWithConcepts) => void;
   saveQuestion: (question: GeneratedQuestionWithConcepts) => Promise<void>;
@@ -240,33 +236,9 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
       if (!currentActivity?.id) return;
 
       try {
-        // 1. Get or Create Draft
-        const draft = await fetchOrCreateDraft(currentActivity.id);
-
-        // 2. Get Sections
-        const sections = await fetchSections(draft.id);
-
-        let targetSectionId: string;
-
-        // 3. Determine Target Section
-        if (sections.length === 0) {
-          // Create default section if none exist
-          const newSection = await createSection(draft.id, 0, "Section A");
-          targetSectionId = newSection.id;
-        } else {
-          // Add to the last section
-          targetSectionId = sections[sections.length - 1]!.id;
-        }
-
-        // 4. Update Question
-        // calculation position: count questions in that section?
-        // For simplicity, we just push it. Position management can be refined later or handled by DB default/trigger if exists,
-        // but usually we want to append.
-        // Ideally we'd fetch questions in that section to get max position, but for now we'll just assign the section.
-
+        // Only set is_in_draft = true
         await updateQuestion(id, {
           is_in_draft: true,
-          qgen_draft_section_id: targetSectionId,
         });
 
         // Optimistic update
@@ -276,7 +248,6 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
               ? {
                   ...q,
                   is_in_draft: true,
-                  qgen_draft_section_id: targetSectionId,
                 }
               : q
           )
@@ -289,9 +260,66 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     [currentActivity?.id]
   );
 
+  const moveQuestionsToDraft = useCallback(
+    async (ids: string[]) => {
+      if (!currentActivity?.id || ids.length === 0) return;
+
+      try {
+        // Update All Questions
+        const updates = ids.map((id) => {
+          return {
+            id,
+            is_in_draft: true,
+          };
+        });
+
+        // Parallel update requests
+        await Promise.all(
+          updates.map((update) => updateQuestion(update.id, update))
+        );
+
+        // Optimistic update
+        setQuestions((prev) =>
+          prev.map((q) => {
+            const update = updates.find((u) => u.id === q.id);
+            if (update) {
+              return {
+                ...q,
+                is_in_draft: true,
+              };
+            }
+            return q;
+          })
+        );
+      } catch (err) {
+        console.error("Failed to bulk move to draft:", err);
+        throw err;
+      }
+    },
+    [currentActivity?.id]
+  );
+
   const moveQuestionToGeneration = useCallback(async (id: string) => {
     try {
-      await updateQuestion(id, { is_in_draft: false });
+      // Optimistic Update
+      setQuestions((prev) =>
+        prev.map((q) => {
+          if (q.id === id) {
+            return {
+              ...q,
+              is_in_draft: false,
+              position_in_draft: null,
+              qgen_draft_section_id: null,
+            } as unknown as GeneratedQuestionWithConcepts;
+          }
+          return q;
+        })
+      );
+
+      // Only update is_in_draft = false
+      await updateQuestion(id, {
+        is_in_draft: false,
+      });
     } catch (err) {
       console.error("Failed to move to generation:", err);
       throw err;
@@ -345,6 +373,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
         await createQuestion({
           activity_id: currentActivity.id,
           question_text: "New Question",
+          answer_text: "New Answer",
           question_type: type,
           marks: 1,
           hardness_level: "medium",
@@ -382,6 +411,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     isLoading,
     error,
     moveQuestionToDraft,
+    moveQuestionsToDraft,
     moveQuestionToGeneration,
     updateQuestionLocal,
     saveQuestion,

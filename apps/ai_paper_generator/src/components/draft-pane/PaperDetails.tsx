@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { Button, Input, Label, Textarea } from "@skolist/ui";
+import { Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Button, Input, Label, Textarea, Switch } from "@skolist/ui";
 import { type TablesUpdate } from "@skolist/db";
 import {
   type QgenDraft,
@@ -126,6 +126,11 @@ export function PaperDetails({
     useDraftContext();
   const [newInstructionText, setNewInstructionText] = useState("");
   const [isAddingInstruction, setIsAddingInstruction] = useState(false);
+  const [isLogoSectionOpen, setIsLogoSectionOpen] = useState(!!draft.logo_url);
+
+  useEffect(() => {
+    if (draft.logo_url) setIsLogoSectionOpen(true);
+  }, [draft.logo_url]);
 
   const handleAddInstruction = async () => {
     if (!newInstructionText.trim() || !draft.id) return;
@@ -235,6 +240,25 @@ export function PaperDetails({
           placeholder="Enter Paper Title"
           onSave={(val) => updateDraftSettings({ paper_title: String(val) })}
         />
+
+        {/* New Metadata Fields */}
+        <div className="grid grid-cols-2 gap-4">
+          <EditableField
+            label="Subject"
+            value={draft.subject_name || ""}
+            placeholder="Science"
+            onSave={(val) => updateDraftSettings({ subject_name: String(val) })}
+          />
+          <EditableField
+            label="Class"
+            value={draft.school_class_name || ""}
+            placeholder="Class X"
+            onSave={(val) =>
+              updateDraftSettings({ school_class_name: String(val) })
+            }
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <EditableField
             label="Time (mins)"
@@ -254,6 +278,80 @@ export function PaperDetails({
               updateDraftSettings({ maximum_marks: Number(val) })
             }
           />
+        </div>
+
+        {/* Logo Section */}
+        <div className="pt-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">
+              Show Logo on Paper
+            </Label>
+            <div className="flex h-5 items-center">
+              <Switch
+                checked={!!draft.logo_url || isLogoSectionOpen}
+                onCheckedChange={(checked) => {
+                  setIsLogoSectionOpen(checked);
+                  if (!checked) {
+                    updateDraftSettings({ logo_url: null });
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {(!!draft.logo_url || isLogoSectionOpen) && (
+            <div className="mt-2">
+              <div className="flex items-center gap-3">
+                {draft.logo_url ? (
+                  <div className="relative h-12 w-12 overflow-hidden rounded border bg-white p-1">
+                    <img
+                      src={draft.logo_url}
+                      alt="Logo"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-12 w-12 rounded border border-dashed bg-muted/20" />
+                )}
+
+                <div className="flex flex-col gap-1">
+                  <Label
+                    htmlFor="logo-upload"
+                    className="flex cursor-pointer items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700"
+                  >
+                    <Upload className="h-3.5 w-3.5 text-white" />
+                    {draft.logo_url ? "Change Logo" : "Upload Logo"}
+                  </Label>
+                  <input
+                    id="logo-upload"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const { uploadLogo } =
+                            await import("../../services/draftService");
+                          const { getCurrentUserId } =
+                            await import("../../services/supabase");
+                          const userId = await getCurrentUserId();
+
+                          const url = await uploadLogo(file, userId);
+                          if (url) {
+                            updateDraftSettings({ logo_url: url });
+                          }
+                        } catch (err) {
+                          console.error("Upload failed", err);
+                          alert("Failed to upload logo.");
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -47,7 +47,7 @@ export async function createDraftInstruction(
   const { data, error } = await client
     .from("qgen_draft_instructions_drafts_maps")
     .insert({
-      "qgen_draft_id": draftId,
+      qgen_draft_id: draftId,
       instruction_text: text,
     })
     .select()
@@ -268,4 +268,30 @@ export async function deleteSection(sectionId: string): Promise<void> {
     console.error("Failed to delete section:", error);
     throw error;
   }
+}
+
+/**
+ * Upload logo to storage
+ */
+export async function uploadLogo(
+  file: File,
+  userId: string
+): Promise<string | null> {
+  const client = getClient();
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError } = await client.storage
+    .from("logo_bucket")
+    .upload(filePath, file);
+
+  if (uploadError) {
+    console.error("Error uploading logo:", uploadError);
+    throw uploadError;
+  }
+
+  const { data } = client.storage.from("logo_bucket").getPublicUrl(filePath);
+
+  return data.publicUrl;
 }

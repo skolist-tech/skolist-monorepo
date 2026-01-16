@@ -4,7 +4,12 @@
  */
 
 import { getClient } from "./supabase";
-import type { Tables, TablesUpdate, TablesInsert, GeneratedImage } from "@skolist/db";
+import type {
+  Tables,
+  TablesUpdate,
+  TablesInsert,
+  GeneratedImage,
+} from "@skolist/db";
 
 export type GeneratedQuestion = Tables<"gen_questions">;
 
@@ -143,6 +148,24 @@ export async function deleteQuestion(questionId: string): Promise<void> {
 
   if (error) {
     console.error("Failed to delete question:", error);
+    throw error;
+  }
+}
+
+/**
+ * Bulk upsert questions (for reordering)
+ */
+export async function upsertQuestions(
+  questions: TablesInsert<"gen_questions">[]
+): Promise<void> {
+  const client = getClient();
+
+  const { error } = await client
+    .from("gen_questions")
+    .upsert(questions, { onConflict: "id" });
+
+  if (error) {
+    console.error("Failed to upsert questions:", error);
     throw error;
   }
 }

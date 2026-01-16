@@ -5,11 +5,6 @@
 import { useState } from "react";
 import {
   Button,
-  Card,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
   Checkbox,
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +18,7 @@ import { useQuestionsContext } from "../../../context/QuestionsContext";
 import { GeneratedQuestionCard } from "../../shared/Question/GeneratedQuestionCard";
 import type { HardnessLevel } from "@skolist/db";
 import { GenerateMoreButton } from "./GenerateMoreButton";
+import { DraftProgress } from "../../shared/DraftProgress";
 import { formatQuestionType } from "../../../utils/formatters";
 
 interface DownAreaProps {
@@ -34,6 +30,7 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
     questions,
     isLoading,
     moveQuestionToDraft,
+    moveQuestionsToDraft,
     saveQuestion,
     deleteQuestion,
   } = useQuestionsContext();
@@ -119,7 +116,7 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
     try {
       setIsBulkMoving(true);
       const idsToMove = Array.from(selectedIds);
-      await Promise.all(idsToMove.map((id) => moveQuestionToDraft(id)));
+      await moveQuestionsToDraft(idsToMove);
       setSelectedIds(new Set());
     } catch (error) {
       console.error("Failed to bulk move questions:", error);
@@ -156,59 +153,7 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
           </div>
 
           <div className="flex justify-center">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Card className="flex cursor-help items-center gap-2 px-3 py-1.5 text-sm font-medium">
-                    <span className="text-muted-foreground">
-                      Draft Progress:
-                    </span>
-                    <span>
-                      {questions.filter((q) => q.is_in_draft).length} /{" "}
-                      {questions.length} in Draft
-                    </span>
-                  </Card>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div className="space-y-1">
-                    <p className="mb-2 text-xs font-semibold">
-                      Breakdown by Question Type
-                    </p>
-                    {Object.values(
-                      questions.reduce(
-                        (acc, q) => {
-                          const type = q.question_type;
-                          if (!acc[type]) {
-                            acc[type] = { type, draft: 0, total: 0 };
-                          }
-                          acc[type].total++;
-                          if (q.is_in_draft) {
-                            acc[type].draft++;
-                          }
-                          return acc;
-                        },
-                        {} as Record<
-                          string,
-                          { type: string; draft: number; total: number }
-                        >
-                      )
-                    ).map((stat) => (
-                      <div
-                        key={stat.type}
-                        className="flex justify-between gap-4 text-xs"
-                      >
-                        <span className="capitalize">
-                          {formatQuestionType(stat.type)}:
-                        </span>
-                        <span>
-                          {stat.draft} / {stat.total}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <DraftProgress />
           </div>
 
           <div className="flex items-center justify-end gap-2">

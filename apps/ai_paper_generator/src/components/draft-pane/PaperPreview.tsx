@@ -1,7 +1,21 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useReactToPrint } from "react-to-print";
 
-import { Printer, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import {
+  Printer,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  FileText,
+  CheckSquare,
+} from "lucide-react";
 import { Button } from "@skolist/ui";
 
 import { useDraftContext } from "../../context/DraftContext";
@@ -26,6 +40,8 @@ const PADDING_PX = (PAGE_WIDTH_PX * MARGIN_MM) / A4_WIDTH_MM; // approx 75px
 const CONTENT_WIDTH_PX = PAGE_WIDTH_PX - PADDING_PX * 2;
 const FOOTER_HEIGHT_PX = 30; // Reserve space for page footer
 const CONTENT_HEIGHT_PX = PAGE_HEIGHT_PX - PADDING_PX * 2 - FOOTER_HEIGHT_PX;
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 2.0;
 
 // -- Types --
 interface HeaderItem {
@@ -47,6 +63,7 @@ interface SectionItem {
   type: "section";
   data: QgenDraftSection;
   isPageBreakBelow?: boolean;
+  totalMarks?: number;
 }
 
 interface QuestionItemData extends GeneratedQuestionWithConcepts {
@@ -60,11 +77,19 @@ interface QuestionPaperItem {
   isPageBreakBelow?: boolean;
 }
 
+interface AnswerPaperItem {
+  id: string;
+  type: "answer";
+  data: QuestionItemData;
+  isPageBreakBelow?: boolean;
+}
+
 type PaperItem =
   | HeaderItem
   | InstructionsItem
   | SectionItem
-  | QuestionPaperItem;
+  | QuestionPaperItem
+  | AnswerPaperItem;
 
 interface PageData {
   pageNumber: number;
@@ -84,22 +109,45 @@ const formatTime = (timeStr?: string | null) => {
   if (parts.length >= 2) {
     const [h, m] = parts;
     const totalMinutes = (h || 0) * 60 + (m || 0);
-    return totalMinutes > 0 ? `${totalMinutes} Minutes` : timeStr;
+    return totalMinutes > 0 ? `${totalMinutes} Mins` : timeStr;
   }
   return timeStr;
 };
 
-const PaperHeader = ({ draft }: { draft: QgenDraft }) => (
-  <div className="mb-6 border-b pb-4 text-center">
-    <h1 className="text-2xl font-bold uppercase tracking-wide">
+const PaperHeader = ({
+  draft,
+  titleSuffix,
+}: {
+  draft: QgenDraft;
+  titleSuffix?: string;
+}) => (
+  <div className="mb-6 text-center">
+    {draft.logo_url && (
+      <div className="mb-2 flex justify-center">
+        <img
+          src={draft.logo_url}
+          alt="Logo"
+          className="h-16 w-auto object-contain"
+        />
+      </div>
+    )}
+    <h1 className="text-2xl font-bold uppercase tracking-wide text-black">
       {draft.institute_name || "Institute Name"}
     </h1>
-    <h2 className="mt-2 text-xl font-semibold">
-      {draft.paper_title || "Examination Paper"}
+    <h2 className="mt-1 text-xl font-bold text-black">
+      {draft.paper_title || "Examination Paper"} {titleSuffix}
     </h2>
-    <div className="mt-2 flex justify-between text-sm font-medium text-gray-600">
-      <span>Time: {formatTime(draft.paper_duration)}</span>
-      <span>Max Marks: {draft.maximum_marks || "100"}</span>
+    <div className="mt-4 border-y-2 border-black py-2">
+      <div className="flex justify-between px-2 text-sm font-bold text-black">
+        <div className="flex flex-col items-start gap-1">
+          <span>Subject: {draft.subject_name || "..................."}</span>
+          <span>Class: {draft.school_class_name || "..................."}</span>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <span>Max. Marks: {draft.maximum_marks || "..."}</span>
+          <span>Duration: {formatTime(draft.paper_duration)}</span>
+        </div>
+      </div>
     </div>
   </div>
 );
@@ -111,27 +159,38 @@ const PaperInstructions = ({
 }) => {
   if (!instructions || instructions.length === 0) return null;
   return (
-    <div className="mb-6">
-      <h3 className="mb-2 text-sm font-bold uppercase text-gray-700">
+    <div className="mb-6 border-b-2 border-black pb-4">
+      <h3 className="mb-1 text-sm font-bold text-black">
         General Instructions:
       </h3>
-      <ul className="list-outside list-disc space-y-1 pl-4 text-sm text-gray-800">
+      <ol className="list-outside list-decimal space-y-1 pl-5 text-sm font-medium text-black">
         {instructions.map((inst) => (
           <li key={inst.id} className="pl-1">
             {inst.instruction_text}
           </li>
         ))}
-      </ul>
+      </ol>
     </div>
   );
 };
 
-const SectionHeader = ({ section }: { section: QgenDraftSection }) => (
-  <div className="mb-4 mt-6">
-    <h3 className="text-lg font-bold uppercase text-primary">
+const SectionHeader = ({
+  section,
+  totalMarks,
+}: {
+  section: QgenDraftSection;
+  totalMarks?: number;
+}) => (
+  <div className="mb-4 mt-6 flex items-baseline justify-between">
+    <h3 className="text-lg font-bold uppercase underline">
       {section.section_name}
     </h3>
-    <div className="mt-1 h-0.5 w-full bg-primary/20" />
+    {totalMarks !== undefined && totalMarks > 0 && (
+      <span className="whitespace-nowrap text-sm font-bold text-black">
+        [{totalMarks} marks]
+      </span>
+    )}
+    {/* <div className="mt-1 h-0.5 w-full bg-primary/20" /> */}
   </div>
 );
 
@@ -155,6 +214,7 @@ const QuestionItem = ({
           <LatexHtmlRenderer
             content={question.question_text || ""}
             className="prose prose-sm max-w-none text-gray-800"
+            style={{ fontFamily: '"Times New Roman", Times, serif' }}
           />
           {/* Render Question Images */}
           {validImages.length > 0 && (
@@ -192,7 +252,11 @@ const QuestionItem = ({
                 question.option3,
                 question.option4,
               ].map((opt, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm">
+                <div
+                  key={i}
+                  className="flex items-start gap-2 text-sm"
+                  style={{ fontFamily: '"Times New Roman", Times, serif' }}
+                >
                   <span className="font-medium text-gray-500">
                     {String.fromCharCode(97 + i)})
                   </span>
@@ -210,16 +274,161 @@ const QuestionItem = ({
   );
 };
 
+const AnswerItem = ({
+  question,
+  index,
+}: {
+  question: QuestionItemData;
+  index: number;
+}) => {
+  return (
+    <div className="mb-4 break-inside-avoid">
+      <div className="flex gap-2">
+        <span className="font-semibold">{index + 1}.</span>
+        <div className="flex-1">
+          <div className="flex gap-2">
+            <span className="text-sm font-bold">Ans:</span>
+            <LatexHtmlRenderer
+              content={question.answer_text || "N/A"}
+              className="prose prose-sm max-w-none text-gray-800"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            />
+          </div>
+          {question.explanation && (
+            <div className="mt-2 text-sm">
+              <span className="font-bold underline">Explanation:</span>
+              <LatexHtmlRenderer
+                content={question.explanation}
+                className="prose prose-sm mt-1 max-w-none text-gray-800"
+                style={{ fontFamily: '"Times New Roman", Times, serif' }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function PaperPreview() {
   const { draft, sections, instructions } = useDraftContext();
   const { questions } = useQuestionsContext();
   const [scale, setScale] = useState<number>(1.0);
-  const MIN_SCALE = 0.5;
-  const MAX_SCALE = 2.0;
+  const [previewMode, setPreviewMode] = useState<"paper" | "answer">("paper");
   const [pages, setPages] = useState<PageData[]>([]);
 
   const measureRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle zoom interactions
+  useEffect(() => {
+    const container = previewContainerRef.current;
+    if (!container) return;
+
+    // 1. Wheel Zoom (Trackpad Pinch or Ctrl + Mouse Wheel)
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Normalize delta
+        // deltaMode: 0 (pixels), 1 (lines), 2 (pages)
+        let delta = e.deltaY;
+        if (e.deltaMode === 1) delta *= 33;
+        if (e.deltaMode === 2) delta *= 800;
+
+        const sensitivity = 0.005;
+        const zoomDelta = -delta * sensitivity;
+
+        setScale((prev) => {
+          const newScale = prev + zoomDelta;
+          return Math.min(Math.max(newScale, MIN_SCALE), MAX_SCALE);
+        });
+      }
+    };
+
+    // 2. Touch Zoom (Pinch on Touchscreen)
+    let initialDistance = 0;
+    let initialScale = 1;
+
+    const getDistance = (touches: TouchList) => {
+      const touch1 = touches[0];
+      const touch2 = touches[1];
+      if (!touch1 || !touch2) return 0;
+      return Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        initialDistance = getDistance(e.touches);
+        initialScale = scale;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault(); // Prevent page scroll
+        const currentDistance = getDistance(e.touches);
+        if (initialDistance > 0) {
+          const ratio = currentDistance / initialDistance;
+          setScale(() => {
+            const newScale = initialScale * ratio;
+            return Math.min(Math.max(newScale, MIN_SCALE), MAX_SCALE);
+          });
+        }
+      }
+    };
+
+    // 3. Gesture Zoom (Safari specific for Trackpad Pinch if not covered by wheel)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGestureStart = (e: any) => {
+      e.preventDefault();
+      initialScale = scale;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGestureChange = (e: any) => {
+      e.preventDefault();
+      setScale(() => {
+        const newScale = initialScale * e.scale;
+        return Math.min(Math.max(newScale, MIN_SCALE), MAX_SCALE);
+      });
+    };
+
+    // Add Listeners
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    container.addEventListener("touchstart", handleTouchStart, {
+      passive: false,
+    });
+    container.addEventListener("touchmove", handleTouchMove, {
+      passive: false,
+    });
+
+    // Check for gesture support (Safari)
+    if ("ongesturestart" in window) {
+      container.addEventListener("gesturestart", handleGestureStart, {
+        passive: false,
+      });
+      container.addEventListener("gesturechange", handleGestureChange, {
+        passive: false,
+      });
+    }
+
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchmove", handleTouchMove);
+
+      if ("ongesturestart" in window) {
+        container.removeEventListener("gesturestart", handleGestureStart);
+        container.removeEventListener("gesturechange", handleGestureChange);
+      }
+    };
+  }, [scale]); // Re-bind if scale changes (needed for closure capture in some handlers if not using refs)
 
   // 1. Flatten Data Structure
   const items: PaperItem[] = useMemo(() => {
@@ -234,8 +443,8 @@ export function PaperPreview() {
       data: draft,
     });
 
-    // Instructions
-    if (instructions.length > 0) {
+    // Instructions - Only for Paper mode
+    if (previewMode === "paper" && instructions.length > 0) {
       result.push({
         id: "instructions",
         type: "instructions",
@@ -246,24 +455,31 @@ export function PaperPreview() {
     // Sections and Questions
     let globalQIndex = 0;
     sections.forEach((section) => {
+      // Questions in Section
+      const sectionQuestions = questions
+        .filter((q) => q.is_in_draft && q.qgen_draft_section_id === section.id)
+        .sort(
+          (a, b) => (a.position_in_draft || 0) - (b.position_in_draft || 0)
+        );
+
+      const totalMarks = sectionQuestions.reduce(
+        (sum, q) => sum + Number(q.marks || 0),
+        0
+      );
+
       // Section Header
       result.push({
         id: `section-${section.id}`,
         type: "section",
         data: section,
+        totalMarks: previewMode === "paper" ? totalMarks : undefined,
       });
 
-      // Questions in Section
-      const sectionQuestions = questions
-        .filter((q) => q.is_in_draft && q.qgen_draft_section_id === section.id)
-        .sort(
-          (a, b) => (a.position_in_section || 0) - (b.position_in_section || 0)
-        );
-
+      // Questions by Section
       sectionQuestions.forEach((q) => {
         result.push({
-          id: `question-${q.id}`,
-          type: "question",
+          id: `${previewMode}-${q.id}`, // Distinct IDs to force re-measure on mode switch
+          type: previewMode === "paper" ? "question" : "answer",
           data: { ...q, displayIndex: globalQIndex },
           isPageBreakBelow: q.is_page_break_below,
         });
@@ -272,7 +488,7 @@ export function PaperPreview() {
     });
 
     return result;
-  }, [draft, sections, questions, instructions]);
+  }, [draft, sections, questions, instructions, previewMode]);
 
   // 2. Measure Function
   const calculatePages = useCallback(() => {
@@ -370,7 +586,9 @@ export function PaperPreview() {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: draft?.paper_title || "Paper",
+    documentTitle: draft
+      ? `${draft.paper_title || "Paper"} - ${previewMode === "paper" ? "Questions" : "Answers"}`
+      : "Print",
     onBeforePrint: () => new Promise((resolve) => setTimeout(resolve, 500)),
   });
 
@@ -381,9 +599,35 @@ export function PaperPreview() {
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b bg-white p-4 shadow-sm">
         <div className="flex items-center gap-6">
-          <h2 className="text-sm font-semibold text-gray-600">
-            Print Preview ({pages.length} Pages)
-          </h2>
+          {/* Mode Switcher */}
+          <div className="flex items-center rounded-lg border bg-gray-100 p-1">
+            <button
+              onClick={() => setPreviewMode("paper")}
+              className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
+                previewMode === "paper"
+                  ? "bg-white text-primary shadow-sm"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              <FileText className="h-4 w-4" />
+              Paper
+            </button>
+            <button
+              onClick={() => setPreviewMode("answer")}
+              className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
+                previewMode === "answer"
+                  ? "bg-white text-primary shadow-sm"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              <CheckSquare className="h-4 w-4" />
+              Answers
+            </button>
+          </div>
+
+          <span className="hidden text-sm font-semibold text-gray-600 sm:inline-block">
+            ({pages.length} Pages)
+          </span>
 
           <div className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1">
             <button
@@ -420,12 +664,12 @@ export function PaperPreview() {
         </div>
         <Button onClick={() => handlePrint()} size="sm" className="gap-2">
           <Printer className="h-4 w-4" />
-          Print / Save PDF
+          Print {previewMode === "paper" ? "Paper" : "Answers"}
         </Button>
       </div>
 
       {/* Preview Area */}
-      <div className="flex-1 overflow-auto p-8">
+      <div ref={previewContainerRef} className="flex-1 overflow-auto p-8">
         <div className="mx-auto flex w-fit flex-col gap-8">
           <div
             style={{
@@ -459,6 +703,7 @@ export function PaperPreview() {
                       marginBottom: pageIndex < pages.length - 1 ? "32px" : "0",
                       boxSizing: "border-box",
                       position: "relative",
+                      fontFamily: '"Times New Roman", Times, serif',
                     }}
                   >
                     {/* Content area */}
@@ -474,16 +719,30 @@ export function PaperPreview() {
                           className="w-full overflow-hidden p-0.5"
                         >
                           {item.type === "header" && (
-                            <PaperHeader draft={item.data} />
+                            <PaperHeader
+                              draft={item.data}
+                              titleSuffix={
+                                previewMode === "answer" ? "- Answer Key" : ""
+                              }
+                            />
                           )}
                           {item.type === "instructions" && (
                             <PaperInstructions instructions={item.data} />
                           )}
                           {item.type === "section" && (
-                            <SectionHeader section={item.data} />
+                            <SectionHeader
+                              section={item.data}
+                              totalMarks={item.totalMarks}
+                            />
                           )}
                           {item.type === "question" && (
                             <QuestionItem
+                              question={item.data}
+                              index={item.data.displayIndex}
+                            />
+                          )}
+                          {item.type === "answer" && (
+                            <AnswerItem
                               question={item.data}
                               index={item.data.displayIndex}
                             />
@@ -502,7 +761,12 @@ export function PaperPreview() {
                         left: `${PADDING_PX}px`,
                       }}
                     >
-                      Page {page.pageNumber} of {pages.length}
+                      <div className="mt-4 border-t-2 border-black py-2">
+                        <span className="font-bold">#PTO</span>
+                        <span className="ml-4">
+                          Page {page.pageNumber} of {pages.length}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -525,6 +789,7 @@ export function PaperPreview() {
           opacity: 0,
           pointerEvents: "none",
           zIndex: -1,
+          fontFamily: '"Times New Roman", Times, serif',
         }}
       >
         {items.map((item) => (
@@ -533,16 +798,26 @@ export function PaperPreview() {
             data-item-id={item.id}
             className="w-full overflow-hidden p-0.5"
           >
-            {item.type === "header" && <PaperHeader draft={item.data} />}
+            {item.type === "header" && (
+              <PaperHeader
+                draft={item.data}
+                titleSuffix={previewMode === "answer" ? "- Answer Key" : ""}
+              />
+            )}
             {item.type === "instructions" && (
               <PaperInstructions instructions={item.data} />
             )}
-            {item.type === "section" && <SectionHeader section={item.data} />}
+            {item.type === "section" && (
+              <SectionHeader section={item.data} totalMarks={item.totalMarks} />
+            )}
             {item.type === "question" && (
               <QuestionItem
                 question={item.data}
                 index={item.data.displayIndex}
               />
+            )}
+            {item.type === "answer" && (
+              <AnswerItem question={item.data} index={item.data.displayIndex} />
             )}
           </div>
         ))}
@@ -562,9 +837,9 @@ export function PaperPreview() {
             margin: 0;
           }
           .zoom-wrapper {
-    transform: scale(1) !important;
-    transition: none !important;
-  }
+            transform: scale(1) !important;
+            transition: none !important;
+          }
           #paper-preview-content {
             position: absolute;
             left: 0;

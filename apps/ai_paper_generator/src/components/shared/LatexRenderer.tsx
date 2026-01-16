@@ -1,17 +1,22 @@
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 
 interface LatexRendererProps {
   content: string;
   className?: string;
+  style?: CSSProperties;
 }
 
 /**
  * Renders text with LaTeX expressions.
  * Supports both inline ($...$) and display ($$...$$) math.
  */
-export function LatexRenderer({ content, className = "" }: LatexRendererProps) {
+export function LatexRenderer({
+  content,
+  className = "",
+  style,
+}: LatexRendererProps) {
   const renderedContent = useMemo(() => {
     if (!content) return "";
 
@@ -54,6 +59,7 @@ export function LatexRenderer({ content, className = "" }: LatexRendererProps) {
   return (
     <span
       className={className}
+      style={style}
       dangerouslySetInnerHTML={{ __html: renderedContent }}
     />
   );
@@ -66,6 +72,7 @@ export function LatexRenderer({ content, className = "" }: LatexRendererProps) {
 export function LatexHtmlRenderer({
   content,
   className = "",
+  style,
 }: LatexRendererProps) {
   const renderedContent = useMemo(() => {
     if (!content) return "";
@@ -107,6 +114,7 @@ export function LatexHtmlRenderer({
   return (
     <div
       className={className}
+      style={style}
       dangerouslySetInnerHTML={{ __html: renderedContent }}
     />
   );

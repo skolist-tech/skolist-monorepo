@@ -380,7 +380,7 @@ export type Database = {
       gen_questions: {
         Row: {
           activity_id: string
-          answer_text: string | null
+          answer_text: string
           correct_mcq_option: number | null
           created_at: string
           explanation: string | null
@@ -397,7 +397,7 @@ export type Database = {
           option2: string | null
           option3: string | null
           option4: string | null
-          position_in_section: number | null
+          position_in_draft: number | null
           qgen_draft_section_id: string | null
           question_text: string | null
           question_type: Database["public"]["Enums"]["question_type_enum"]
@@ -405,7 +405,7 @@ export type Database = {
         }
         Insert: {
           activity_id: string
-          answer_text?: string | null
+          answer_text: string
           correct_mcq_option?: number | null
           created_at?: string
           explanation?: string | null
@@ -422,7 +422,7 @@ export type Database = {
           option2?: string | null
           option3?: string | null
           option4?: string | null
-          position_in_section?: number | null
+          position_in_draft?: number | null
           qgen_draft_section_id?: string | null
           question_text?: string | null
           question_type: Database["public"]["Enums"]["question_type_enum"]
@@ -430,7 +430,7 @@ export type Database = {
         }
         Update: {
           activity_id?: string
-          answer_text?: string | null
+          answer_text?: string
           correct_mcq_option?: number | null
           created_at?: string
           explanation?: string | null
@@ -447,7 +447,7 @@ export type Database = {
           option2?: string | null
           option3?: string | null
           option4?: string | null
-          position_in_section?: number | null
+          position_in_draft?: number | null
           qgen_draft_section_id?: string | null
           question_text?: string | null
           question_type?: Database["public"]["Enums"]["question_type_enum"]
@@ -639,6 +639,8 @@ export type Database = {
           paper_duration: string | null
           paper_subtitle: string | null
           paper_title: string | null
+          school_class_name: string | null
+          subject_name: string | null
           updated_at: string
         }
         Insert: {
@@ -652,6 +654,8 @@ export type Database = {
           paper_duration?: string | null
           paper_subtitle?: string | null
           paper_title?: string | null
+          school_class_name?: string | null
+          subject_name?: string | null
           updated_at?: string
         }
         Update: {
@@ -665,6 +669,8 @@ export type Database = {
           paper_duration?: string | null
           paper_subtitle?: string | null
           paper_title?: string | null
+          school_class_name?: string | null
+          subject_name?: string | null
           updated_at?: string
         }
         Relationships: [

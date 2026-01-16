@@ -30,7 +30,11 @@ import {
   type QgenDraftSection,
   type QgenInstruction,
 } from "../services/draftService";
-import { updateQuestion } from "../services/questionService";
+import {
+  updateQuestion,
+  upsertQuestions,
+  type GeneratedQuestionWithConcepts,
+} from "../services/questionService";
 import type { TablesUpdate } from "@skolist/db";
 
 interface DraftContextValue {
@@ -89,7 +93,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       if (sectionsData.length === 0) {
         const defaultSection = await createSection(
           draftData.id,
-          0,
+          1,
           "Section A"
         );
         setSections([defaultSection]);
@@ -129,7 +133,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
         return;
       }
       try {
-        const position = sections.length;
+        const position = sections.length + 1;
         console.log("Creating section at position:", position);
         const newSection = await createSection(draft.id, position, name);
         console.log("Section created:", newSection);
@@ -181,9 +185,63 @@ export function DraftProvider({ children }: { children: ReactNode }) {
         // Update positions locally
         const updatedSections = newSections.map((s, index) => ({
           ...s,
-          position_in_draft: index,
+          position_in_draft: index + 1,
         }));
         setSections(updatedSections);
+
+        // --- Question Re-indexing Logic ---
+        const questionsBySection: Record<
+          string,
+          GeneratedQuestionWithConcepts[]
+        > = {};
+
+        // Group questions by section
+        questions.forEach((q) => {
+          if (q.is_in_draft && q.qgen_draft_section_id) {
+            if (!questionsBySection[q.qgen_draft_section_id]) {
+              questionsBySection[q.qgen_draft_section_id] = [];
+            }
+            questionsBySection[q.qgen_draft_section_id]!.push(q);
+          }
+        });
+
+        // Loop through the NEW section order
+        let globalCounter = 1;
+        const questionUpdates: any[] = [];
+
+        updatedSections.forEach((section) => {
+          const sectionQuestions = questionsBySection[section.id] || [];
+          // Sort by existing position to maintain intra-section order
+          sectionQuestions.sort(
+            (a, b) => (a.position_in_draft || 0) - (b.position_in_draft || 0)
+          );
+
+          sectionQuestions.forEach((q) => {
+            if (q.position_in_draft !== globalCounter) {
+              // Prepare update payload (remove relations)
+              const { ...rest } = q;
+              questionUpdates.push({
+                ...rest,
+                position_in_draft: globalCounter,
+              });
+
+              // Optimistic local update
+              updateQuestionLocal({ ...q, position_in_draft: globalCounter });
+            }
+            globalCounter++;
+          });
+        });
+
+        // Batch update questions if needed
+        if (questionUpdates.length > 0) {
+          try {
+            await upsertQuestions(questionUpdates);
+          } catch (e) {
+            console.error("Failed to re-index questions:", e);
+          }
+        }
+
+        // --- End Question Re-indexing ---
 
         // Persist changes
         // We use a 2-phase update to avoid "duplicate key" unique constraint violations.
@@ -191,7 +249,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
         // Phase 2: Move items to their final position.
         const changedItems = updatedSections.filter(
           (s, index) =>
-            s.id !== sections[index]?.id || s.position_in_draft !== index
+            s.id !== sections[index]?.id || s.position_in_draft !== index + 1
         );
 
         try {
@@ -216,7 +274,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [sections]
+    [sections, questions, updateQuestionLocal]
   );
 
   const moveQuestionToSection = useCallback(
@@ -225,7 +283,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       try {
         await updateQuestion(questionId, {
           qgen_draft_section_id: sectionId,
-          position_in_section: index,
+          position_in_draft: index,
         });
 
         // Optimistic update via QuestionsContext if possible
@@ -234,7 +292,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
           updateQuestionLocal({
             ...q,
             qgen_draft_section_id: sectionId,
-            position_in_section: index,
+            position_in_draft: index,
           });
         }
       } catch (err) {

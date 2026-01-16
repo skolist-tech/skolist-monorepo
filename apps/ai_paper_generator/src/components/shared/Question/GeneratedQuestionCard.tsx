@@ -357,7 +357,7 @@ export function GeneratedQuestionCard({
 
         {/* Reorder Buttons */}
         {showReorder && (
-          <div className="absolute -left-3 top-1/2 flex -translate-y-1/2 transform flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="absolute -right-3 top-1/2 flex -translate-y-1/2 transform flex-col gap-1">
             <Button
               size="icon"
               variant="ghost"
@@ -386,8 +386,16 @@ export function GeneratedQuestionCard({
         )}
 
         {/* Question Text */}
-        <div className="font-medium">
-          <QuestionText text={question.question_text || ""} />
+        <div className="flex gap-2 font-medium">
+          {question.is_in_draft &&
+            typeof question.position_in_draft === "number" && (
+              <span className="font-semibold">
+                {question.position_in_draft}.
+              </span>
+            )}
+          <div className="flex-1">
+            <QuestionText text={question.question_text || ""} />
+          </div>
         </div>
 
         {/* Question Images */}
