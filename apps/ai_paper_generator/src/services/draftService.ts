@@ -5,13 +5,15 @@
 
 import { getClient } from "./supabase";
 import type {
-  Tables,
-  TablesUpdate,
   QgenDraftInstructionAndQgenDraft,
+  QgenDraft,
+  UpdateQgenDraft,
+  QgenDraftSection,
+  UpdateQgenDraftSection
 } from "@skolist/db";
 
-export type QgenDraft = Tables<"qgen_drafts">;
-export type QgenDraftSection = Tables<"qgen_draft_sections">;
+;
+
 export type QgenInstruction = QgenDraftInstructionAndQgenDraft;
 
 // -- Instructions Service --
@@ -146,7 +148,7 @@ export async function fetchOrCreateDraft(
  */
 export async function updateDraft(
   draftId: string,
-  updates: TablesUpdate<"qgen_drafts">
+  updates: UpdateQgenDraft
 ): Promise<QgenDraft> {
   const client = getClient();
 
@@ -220,7 +222,7 @@ export async function createSection(
  */
 export async function updateSection(
   sectionId: string,
-  updates: TablesUpdate<"qgen_draft_sections">
+  updates: UpdateQgenDraftSection
 ): Promise<QgenDraftSection> {
   const client = getClient();
 

@@ -37,7 +37,7 @@ import { QUESTION_TYPE, type QuestionType } from "@skolist/db";
 import { useDraftContext } from "../../context/DraftContext";
 import { useQuestionsContext } from "../../context/QuestionsContext";
 import { GeneratedQuestionCard } from "../shared/Question/GeneratedQuestionCard";
-import type { QgenDraftSection } from "../../services/draftService";
+import type { QgenDraftSection } from "@skolist/db";
 import type { GeneratedQuestionWithConcepts } from "../../services/questionService";
 import { DraftProgress } from "../shared/DraftProgress";
 import { PaperDetails } from "./PaperDetails";

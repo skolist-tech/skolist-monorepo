@@ -1,16 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { Button, Input, Label, Textarea, Switch } from "@skolist/ui";
-import { type TablesUpdate } from "@skolist/db";
-import {
-  type QgenDraft,
-  type QgenInstruction,
-} from "../../services/draftService";
+import type { QgenDraft, UpdateQgenDraft} from "@skolist/db";
+import type { QgenInstruction} from "../../services/draftService";
 import { useDraftContext } from "../../context/DraftContext";
 
 interface PaperDetailsProps {
   draft: QgenDraft;
-  updateDraftSettings: (updates: TablesUpdate<"qgen_drafts">) => Promise<void>;
+  updateDraftSettings: (updates: UpdateQgenDraft) => Promise<void>;
 }
 
 // Helper component for editable fields
