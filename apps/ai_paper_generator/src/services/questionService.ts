@@ -5,19 +5,15 @@
 
 import { getClient } from "./supabase";
 import type {
-  Tables,
-  TablesUpdate,
-  TablesInsert,
+  GeneratedQuestion,
   GeneratedImage,
+  InsertGeneratedQuestion,
+  UpdateGeneratedQuestion,
 } from "@skolist/db";
 
-export type GeneratedQuestion = Tables<"gen_questions">;
 
-/**
- * Create a new question
- */
 export async function createQuestion(
-  question: TablesInsert<"gen_questions">
+  question: InsertGeneratedQuestion
 ): Promise<GeneratedQuestion> {
   const client = getClient();
 
@@ -116,7 +112,7 @@ export async function fetchQuestions(
  */
 export async function updateQuestion(
   questionId: string,
-  updates: TablesUpdate<"gen_questions">
+  updates: UpdateGeneratedQuestion
 ): Promise<GeneratedQuestion> {
   const client = getClient();
 
@@ -156,7 +152,7 @@ export async function deleteQuestion(questionId: string): Promise<void> {
  * Bulk upsert questions (for reordering)
  */
 export async function upsertQuestions(
-  questions: TablesInsert<"gen_questions">[]
+  questions: InsertGeneratedQuestion[]
 ): Promise<void> {
   const client = getClient();
 

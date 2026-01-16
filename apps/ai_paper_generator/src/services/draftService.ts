@@ -5,13 +5,15 @@
 
 import { getClient } from "./supabase";
 import type {
-  Tables,
-  TablesUpdate,
   QgenDraftInstructionAndQgenDraft,
+  QgenDraft,
+  UpdateQgenDraft,
+  QgenDraftSection,
+  UpdateQgenDraftSection
 } from "@skolist/db";
 
-export type QgenDraft = Tables<"qgen_drafts">;
-export type QgenDraftSection = Tables<"qgen_draft_sections">;
+;
+
 export type QgenInstruction = QgenDraftInstructionAndQgenDraft;
 
 // -- Instructions Service --
@@ -146,7 +148,7 @@ export async function fetchOrCreateDraft(
  */
 export async function updateDraft(
   draftId: string,
-  updates: TablesUpdate<"qgen_drafts">
+  updates: UpdateQgenDraft
 ): Promise<QgenDraft> {
   const client = getClient();
 
@@ -220,7 +222,7 @@ export async function createSection(
  */
 export async function updateSection(
   sectionId: string,
-  updates: TablesUpdate<"qgen_draft_sections">
+  updates: UpdateQgenDraftSection
 ): Promise<QgenDraftSection> {
   const client = getClient();
 
@@ -244,20 +246,6 @@ export async function updateSection(
  */
 export async function deleteSection(sectionId: string): Promise<void> {
   const client = getClient();
-
-  // First unassign questions from this section
-  const { error: updateError } = await client
-    .from("gen_questions")
-    .update({ qgen_draft_section_id: null })
-    .eq("qgen_draft_section_id", sectionId);
-
-  if (updateError) {
-    console.error(
-      "Failed to unassign questions before deleting section:",
-      updateError
-    );
-    throw updateError;
-  }
 
   const { error } = await client
     .from("qgen_draft_sections")

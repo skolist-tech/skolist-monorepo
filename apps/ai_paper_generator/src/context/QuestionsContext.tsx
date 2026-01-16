@@ -13,13 +13,16 @@ import {
 } from "react";
 import { useActivityContext } from "./ActivityContext";
 
-import { type QuestionType, type GeneratedImage } from "@skolist/db";
+import type {
+  QuestionType,
+  GeneratedImage,
+  GeneratedQuestion,
+} from "@skolist/db";
 import {
   fetchQuestions,
   updateQuestion,
   createQuestion,
   deleteQuestion,
-  type GeneratedQuestion,
   type GeneratedQuestionWithConcepts,
 } from "../services/questionService";
 export type { GeneratedQuestionWithConcepts };

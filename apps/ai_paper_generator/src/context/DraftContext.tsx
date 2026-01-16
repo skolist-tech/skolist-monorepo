@@ -26,8 +26,6 @@ import {
   createDraftInstruction,
   updateDraftInstruction,
   deleteDraftInstruction,
-  type QgenDraft,
-  type QgenDraftSection,
   type QgenInstruction,
 } from "../services/draftService";
 import {
@@ -35,18 +33,23 @@ import {
   upsertQuestions,
   type GeneratedQuestionWithConcepts,
 } from "../services/questionService";
-import type { TablesUpdate } from "@skolist/db";
+import type {
+  QgenDraft,
+  UpdateQgenDraft,
+  QgenDraftSection,
+  UpdateQgenDraftSection
+} from "@skolist/db";
 
 interface DraftContextValue {
   draft: QgenDraft | null;
   sections: QgenDraftSection[];
   instructions: QgenInstruction[];
   isLoading: boolean;
-  updateDraftSettings: (updates: TablesUpdate<"qgen_drafts">) => Promise<void>;
+  updateDraftSettings: (updates: UpdateQgenDraft) => Promise<void>;
   addSection: (name?: string) => Promise<void>;
   editSection: (
     id: string,
-    updates: TablesUpdate<"qgen_draft_sections">
+    updates: UpdateQgenDraftSection
   ) => Promise<void>;
   removeSection: (id: string) => Promise<void>;
   moveSection: (activeId: string, overId: string) => Promise<void>;
@@ -112,7 +115,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   }, [initDraft]);
 
   const updateDraftSettings = useCallback(
-    async (updates: TablesUpdate<"qgen_drafts">) => {
+    async (updates: UpdateQgenDraft) => {
       if (!draft) return;
       try {
         const updated = await updateDraft(draft.id, updates);
@@ -146,7 +149,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   );
 
   const editSection = useCallback(
-    async (id: string, updates: TablesUpdate<"qgen_draft_sections">) => {
+    async (id: string, updates: UpdateQgenDraftSection) => {
       try {
         // Optimistic update
         setSections((prev) =>

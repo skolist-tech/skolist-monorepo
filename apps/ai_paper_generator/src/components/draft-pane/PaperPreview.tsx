@@ -22,11 +22,8 @@ import { cn } from "@skolist/utils";
 import { useDraftContext } from "../../context/DraftContext";
 import { useQuestionsContext } from "../../context/QuestionsContext";
 import type { GeneratedQuestionWithConcepts } from "../../services/questionService";
-import {
-  type QgenDraftSection,
-  type QgenDraft,
-  type QgenInstruction,
-} from "../../services/draftService";
+import type { QgenDraft, QgenDraftSection} from "@skolist/db";
+import type { QgenInstruction} from "../../services/draftService";
 import { LatexHtmlRenderer, LatexRenderer } from "../shared/LatexRenderer";
 
 // -- Constants --

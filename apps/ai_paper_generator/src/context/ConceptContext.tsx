@@ -100,21 +100,39 @@ function buildTreeNodes(
 
   // Build tree
   return chapters
-    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    .sort(
+      (a, b) =>
+        ((a.position as unknown as number) ?? 0) -
+        ((b.position as unknown as number) ?? 0)
+    )
     .map((chapter) => {
       const chapterTopics = topicsByChapter.get(chapter.id) || [];
 
       return {
         value: `chapter:${chapter.id}`,
         label: chapter.name,
+        icon: (
+          <span className="font-semibold text-green-600">
+            {chapter.position}.
+          </span>
+        ),
         children: chapterTopics
-          .sort((a, b) => a.position - b.position)
+          .sort(
+            (a, b) =>
+              (a.position as unknown as number) -
+              (b.position as unknown as number)
+          )
           .map((topic) => {
             const topicConcepts = conceptsByTopic.get(topic.id) || [];
 
             return {
               value: `topic:${topic.id}`,
               label: topic.name,
+              icon: (
+                <span className="font-semibold text-amber-700 mr-2">
+                  {chapter.position}.{topic.position}
+                </span>
+              ),
               children: topicConcepts
                 .sort((a, b) => a.page_number - b.page_number)
                 .map((concept) => ({

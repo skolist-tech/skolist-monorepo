@@ -201,7 +201,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
-          position: number | null
+          position: string
           subject_id: string
           updated_at: string
         }
@@ -210,7 +210,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
-          position?: number | null
+          position?: string
           subject_id: string
           updated_at?: string
         }
@@ -219,7 +219,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
-          position?: number | null
+          position?: string
           subject_id?: string
           updated_at?: string
         }
@@ -763,7 +763,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
-          position: number
+          position: string
           updated_at: string
         }
         Insert: {
@@ -772,7 +772,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
-          position: number
+          position?: string
           updated_at?: string
         }
         Update: {
@@ -781,7 +781,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
-          position?: number
+          position?: string
           updated_at?: string
         }
         Relationships: [
