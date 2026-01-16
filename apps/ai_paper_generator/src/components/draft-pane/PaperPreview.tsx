@@ -22,8 +22,8 @@ import { cn } from "@skolist/utils";
 import { useDraftContext } from "../../context/DraftContext";
 import { useQuestionsContext } from "../../context/QuestionsContext";
 import type { GeneratedQuestionWithConcepts } from "../../services/questionService";
-import type { QgenDraft, QgenDraftSection} from "@skolist/db";
-import type { QgenInstruction} from "../../services/draftService";
+import type { QgenDraft, QgenDraftSection } from "@skolist/db";
+import type { QgenInstruction } from "../../services/draftService";
 import { LatexHtmlRenderer, LatexRenderer } from "../shared/LatexRenderer";
 
 // -- Constants --
@@ -322,6 +322,13 @@ export function PaperPreview() {
   const printRef = useRef<HTMLDivElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
+  const scaleRef = useRef(scale);
+
+  // Update scaleRef whenever scale changes
+  useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
+
   // Handle zoom interactions
   useEffect(() => {
     const container = previewContainerRef.current;
@@ -329,6 +336,7 @@ export function PaperPreview() {
 
     // 1. Wheel Zoom (Trackpad Pinch or Ctrl + Mouse Wheel)
     const handleWheel = (e: WheelEvent) => {
+      // Check if it's a pinch gesture (ctrlKey) or mouse wheel with ctrl
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         e.stopPropagation();
@@ -366,7 +374,7 @@ export function PaperPreview() {
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2) {
         initialDistance = getDistance(e.touches);
-        initialScale = scale;
+        initialScale = scaleRef.current;
       }
     };
 
@@ -389,7 +397,7 @@ export function PaperPreview() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleGestureStart = (e: any) => {
       e.preventDefault();
-      initialScale = scale;
+      initialScale = scaleRef.current;
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleGestureChange = (e: any) => {
@@ -429,7 +437,7 @@ export function PaperPreview() {
         container.removeEventListener("gesturechange", handleGestureChange);
       }
     };
-  }, [scale]); // Re-bind if scale changes (needed for closure capture in some handlers if not using refs)
+  }, []); // Empty dependency array to bind listeners only once
 
   // 1. Flatten Data Structure
   const items: PaperItem[] = useMemo(() => {
