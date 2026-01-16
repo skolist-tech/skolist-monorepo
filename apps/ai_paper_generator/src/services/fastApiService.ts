@@ -63,4 +63,49 @@ export const fastApiService = {
       throw error;
     }
   },
+  /**
+   * info: Calls the FastAPI backend to beautify the question
+   * endpoint: POST /api/v1/beautify_question
+   */
+  async beautifyQuestion(gen_question_id: string) {
+    try {
+      const {
+        data: { session },
+      } = await getClient().auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/v1/beautify_question?gen_question_id=${gen_question_id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail ||
+            `Failed to beautify question: ${response.statusText}`
+        );
+      }
+
+      // 201 Created returns empty body, so don't try to parse JSON
+      if (response.status === 201) {
+        return { success: true };
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error beautifying question:", error);
+      throw error;
+    }
+  },
 };

@@ -11,7 +11,6 @@ import type {
   UpdateGeneratedQuestion,
 } from "@skolist/db";
 
-
 export async function createQuestion(
   question: InsertGeneratedQuestion
 ): Promise<GeneratedQuestion> {
@@ -162,6 +161,73 @@ export async function upsertQuestions(
 
   if (error) {
     console.error("Failed to upsert questions:", error);
+    throw error;
+  }
+}
+
+/**
+ * Upload an image for a question
+ */
+export async function uploadQuestionImage(
+  file: File,
+  questionId: string
+): Promise<{ success: boolean; imgUrl: string; filePath: string }> {
+  // 1. Validate file type
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Only image files are allowed");
+  }
+
+  const client = getClient();
+  const ext = file.name.split(".").pop();
+  const filePath = `${questionId}/${crypto.randomUUID()}.${ext}`;
+
+  // 2. Upload to Supabase Storage
+  const { error: uploadError } = await client.storage
+    .from("gen_images_bucket")
+    .upload(filePath, file);
+
+  if (uploadError) {
+    console.error("Failed to upload image:", uploadError);
+    throw uploadError;
+  }
+
+  // 3. Generate Signed URL (1 year expiry)
+  const { data: signedData, error: urlError } = await client.storage
+    .from("gen_images_bucket")
+    .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year
+
+  if (urlError || !signedData?.signedUrl) {
+    console.error("Failed to generate signed URL:", urlError);
+    throw urlError || new Error("Failed to generate signed URL");
+  }
+
+  const imgUrl = signedData.signedUrl;
+
+  // 4. Insert Metadata Into Table gen_images
+  const { error: insertError } = await client.from("gen_images").insert({
+    gen_question_id: questionId,
+    img_url: imgUrl,
+    file_path: filePath,
+  });
+
+  if (insertError) {
+    console.error("Failed to insert image metadata:", insertError);
+    throw insertError;
+  }
+
+  return { success: true, imgUrl, filePath };
+}
+
+/**
+ * Delete a question image
+ */
+export async function deleteQuestionImage(imageId: string): Promise<void> {
+  const client = getClient();
+
+  const { error } = await client.from("gen_images").delete().eq("id", imageId);
+
+  if (error) {
+    console.error("Failed to delete question image:", error);
     throw error;
   }
 }

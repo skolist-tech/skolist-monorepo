@@ -8,6 +8,7 @@ import { Button, Input } from "@skolist/ui";
 import { Trash2, Pencil, Check, X } from "lucide-react";
 import type { Activity } from "@skolist/db";
 import { cn } from "@skolist/utils";
+import { ConfirmDialog } from "../shared/ConfirmDialog";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -27,6 +28,7 @@ export function ActivityListItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(activity.name);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -140,7 +142,7 @@ export function ActivityListItem({
               className="h-6 w-6 text-muted-foreground hover:text-destructive"
               onClick={(e) => {
                 e.stopPropagation();
-                handleDelete();
+                setIsDeleteModalOpen(true);
               }}
               disabled={isDeleting}
             >
@@ -149,6 +151,16 @@ export function ActivityListItem({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        title="Delete Activity"
+        description={`Are you sure you want to delete "${activity.name}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        variant="destructive"
+        confirmLabel="Delete"
+      />
 
       {!isEditing && (
         <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">

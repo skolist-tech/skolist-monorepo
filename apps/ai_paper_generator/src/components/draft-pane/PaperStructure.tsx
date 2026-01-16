@@ -49,6 +49,7 @@ import {
   DialogTrigger,
 } from "@skolist/ui";
 import { ArrowLeft } from "lucide-react";
+import { ConfirmDialog } from "../shared/ConfirmDialog";
 
 function AddCustomQuestionGlobal({
   sections,
@@ -175,6 +176,7 @@ function SortableSection({
   onMoveDown: () => void;
 }) {
   const [isSectionExpanded, setIsSectionExpanded] = useState(true);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const {
     attributes,
@@ -359,7 +361,10 @@ function SortableSection({
         ) : (
           <div className="flex flex-1 items-center gap-2">
             <span className="text-sm font-semibold">
-              {section.section_name}
+              {section.section_name}{" "}
+              <span className="text-muted-foreground">
+                ({sectionQuestions.length})
+              </span>
             </span>
             <Button
               variant="ghost"
@@ -388,11 +393,20 @@ function SortableSection({
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-destructive"
-          onClick={() => onDelete(section.id)}
+          onClick={() => setIsDeleteModalOpen(true)}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
+      <ConfirmDialog
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        title="Delete Section"
+        description={`Are you sure you want to delete "${section.section_name || "this section"}"? All questions in this section will be moved to draft or deleted.`}
+        onConfirm={() => onDelete(section.id)}
+        variant="destructive"
+        confirmLabel="Delete"
+      />
       {isSectionExpanded && (
         <>
           <div className="min-h-[50px] space-y-3 p-3">
@@ -414,11 +428,11 @@ function SortableSection({
                       onDirectRegenerate={() =>
                         console.log("Direct regenerate draft")
                       }
-                      onRegenerate={(prompt, image) =>
+                      onRegenerate={(prompt, files) =>
                         console.log(
                           "Regenerate draft with prompt",
                           prompt,
-                          image
+                          files
                         )
                       }
                       showReorder={true}
@@ -562,10 +576,25 @@ export function PaperStructure() {
     }
   };
 
+  /* New handler for auto-closing */
+  const handleAutoClose = () => {
+    if (isExpanded) {
+      setIsExpanded(false);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col border-r bg-background">
       {/* Header / Draft Settings */}
-      <div className="border-b p-4">
+      <div
+        className="border-b px-4 py-4"
+        onWheel={(e) => {
+          // If scrolling down significantly, close it
+          if (e.deltaY > 0) {
+            handleAutoClose();
+          }
+        }}
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">Paper Details</h2>
           <Button
@@ -594,8 +623,11 @@ export function PaperStructure() {
       </div>
 
       {/* Sections List */}
-      <div className="flex-1 overflow-auto bg-muted/10 p-4">
-        <div className="mb-4 flex items-center justify-between">
+      <div
+        className="flex-1 overflow-auto bg-muted/10 px-4"
+        onScroll={handleAutoClose}
+      >
+        <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-6 flex items-center justify-between border-b bg-white px-4 py-2 shadow-sm">
           <span className="text-sm font-semibold">Sections</span>
           <DraftProgress />
           <div className="flex items-center gap-2">

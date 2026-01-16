@@ -251,8 +251,8 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
               onUpdate={(updated) => saveQuestion(updated)}
               onDelete={deleteQuestion}
               onDirectRegenerate={() => console.log("Direct regenerate")}
-              onRegenerate={(prompt, image) =>
-                console.log("Regenerate with prompt", prompt, image)
+              onRegenerate={(prompt, files) =>
+                console.log("Regenerate with prompt", prompt, files)
               }
               isSelected={selectedIds.has(question.id)}
               onSelect={(selected) => handleToggleSelect(question.id, selected)}

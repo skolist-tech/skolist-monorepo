@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { formatQuestionType } from "../../../utils/formatters";
 import {
   Button,
@@ -24,15 +24,26 @@ import {
   MessageSquarePlus,
   Send,
   Info,
+  Paperclip,
+  Loader2,
+  Sparkles,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import type { GeneratedQuestion, HardnessLevel } from "@skolist/db";
-import { type GeneratedQuestionWithConcepts } from "../../../services/questionService";
+import {
+  uploadQuestionImage,
+  deleteQuestionImage,
+  type GeneratedQuestionWithConcepts,
+} from "../../../services/questionService";
+import { fastApiService } from "../../../services/fastApiService";
 import { QuestionMarks } from "./QuestionMarks";
 import { QuestionTags } from "./QuestionTags";
 import { QuestionText } from "./QuestionText";
 import { QuestionOptions } from "./QuestionOptions";
 import { QuestionImages } from "./QuestionImages";
 import { LatexRenderer } from "../LatexRenderer";
+import { ConfirmDialog } from "../ConfirmDialog";
 
 interface GeneratedQuestionCardProps {
   question: GeneratedQuestionWithConcepts;
@@ -41,7 +52,7 @@ interface GeneratedQuestionCardProps {
   onUpdate?: (updatedQuestion: GeneratedQuestionWithConcepts) => void;
   onDelete?: (id: string) => Promise<void>;
   onDirectRegenerate?: () => void;
-  onRegenerate?: (prompt: string, image?: File) => void;
+  onRegenerate?: (prompt: string, files: File[]) => void;
   index?: number; // Kept for reference if needed, but won't be displayed as rank
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -70,6 +81,15 @@ export function GeneratedQuestionCard({
   // Replaced modal state with popover state (controlled if needed, or just for inputs)
   const [prompt, setPrompt] = useState("");
   const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // New state for attachments
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [isAttaching, setIsAttaching] = useState(false);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const handleSave = () => {
     if (onUpdate) {
@@ -84,10 +104,109 @@ export function GeneratedQuestionCard({
   };
 
   const handleRegenerateSubmit = () => {
-    if (onRegenerate && prompt.trim()) {
-      onRegenerate(prompt);
+    if (onRegenerate && (prompt.trim() || attachedFiles.length > 0)) {
+      onRegenerate(prompt, attachedFiles);
       setPrompt("");
+      setAttachedFiles([]);
       setIsRegenerateOpen(false);
+    }
+  };
+
+  const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsAttaching(true);
+    // Simulate upload delay
+    setTimeout(() => {
+      setAttachedFiles((prev) => [...prev, ...files]);
+      setIsAttaching(false);
+      // Reset input
+      if (attachmentInputRef.current) {
+        attachmentInputRef.current.value = "";
+      }
+    }, 1500);
+  };
+
+  const handleRemoveAttachment = (indexToRemove: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== indexToRemove));
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const { imgUrl } = await uploadQuestionImage(file, question.id);
+
+      // Construct a new image object (optimistic or from result)
+      // Since the API doesn't return the full DB object, we mock strictly what's needed for display
+      const newImage = {
+        id: crypto.randomUUID(), // Temporary ID for React key
+        gen_question_id: question.id,
+        img_url: imgUrl,
+        position: (question.images?.length || 0) + 1,
+        created_at: new Date().toISOString(),
+        svg_string: null,
+      } as any;
+
+      const updatedQuestion = {
+        ...question,
+        images: [...(question.images || []), newImage],
+      };
+
+      // update local state
+      setEditedQuestion(updatedQuestion);
+
+      // notify parent
+      if (onUpdate) {
+        onUpdate(updatedQuestion);
+      }
+    } catch (error) {
+      console.error("Upload failed", error);
+      alert("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+      // clear input so same file can be selected again if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleBeautify = async () => {
+    try {
+      await fastApiService.beautifyQuestion(question.id);
+    } catch (error) {
+      console.error("Failed to auto-correct question", error);
+      alert("Failed to auto-correct question");
+    }
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    try {
+      if (!window.confirm("Are you sure you want to delete this image?")) {
+        return;
+      }
+
+      await deleteQuestionImage(imageId);
+
+      const updatedQuestion = {
+        ...question,
+        images: (question.images || []).filter((img) => img.id !== imageId),
+      };
+
+      // update local state
+      setEditedQuestion(updatedQuestion);
+
+      // notify parent
+      if (onUpdate) {
+        onUpdate(updatedQuestion);
+      }
+    } catch (error) {
+      console.error("Failed to delete image", error);
+      alert("Failed to delete image");
     }
   };
 
@@ -197,20 +316,20 @@ export function GeneratedQuestionCard({
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex items-end gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Marks</Label>
               <Input
                 type="number"
                 value={editedQuestion.marks}
                 onChange={(e) => updateField("marks", parseInt(e.target.value))}
-                className="w-20"
+                className="h-9 w-20"
               />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Hardness</Label>
               <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-auto min-w-[100px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 value={editedQuestion.hardness_level}
                 onChange={(e) =>
                   updateField("hardness_level", e.target.value as HardnessLevel)
@@ -221,6 +340,32 @@ export function GeneratedQuestionCard({
                 <option value="hard">Hard</option>
               </select>
             </div>
+
+            {/* hidden input for edit mode upload */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
+              // Note: We reuse the same ref and handler as the view mode
+              // ensuring checking isUploading works correctly
+            />
+
+            <Button
+              size="sm"
+              className="h-9 gap-2 px-3"
+              onClick={() => fileInputRef.current?.click()}
+              title="Attach Image"
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Paperclip className="h-4 w-4" />
+              )}
+              <span>Upload Image</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -245,6 +390,34 @@ export function GeneratedQuestionCard({
       )}
       {/* Header Actions */}
       <div className="absolute right-2 top-2 flex items-center rounded-md bg-background/80 p-1 backdrop-blur-sm">
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={handleBeautify}
+          title="Auto-Correct Question"
+        >
+          <Sparkles className="h-5 w-5 text-yellow-400" />
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => fileInputRef.current?.click()}
+          title="Attach Image"
+          disabled={isUploading}
+        >
+          {isUploading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          ) : (
+            <Paperclip className="h-4 w-4 text-muted-foreground hover:text-primary" />
+          )}
+        </Button>
         <Button
           size="icon"
           variant="ghost"
@@ -266,27 +439,76 @@ export function GeneratedQuestionCard({
               <MessageSquarePlus className="h-4 w-4 text-muted-foreground hover:text-primary" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-3" align="end">
-            <div className="flex w-full items-start gap-2">
-              <Textarea
-                placeholder="Instructions..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="h-16 resize-none py-2"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleRegenerateSubmit();
-                  }
-                }}
-              />
-              <Button
-                size="icon"
-                className="mt-1 h-8 w-8 shrink-0"
-                onClick={handleRegenerateSubmit}
-              >
-                <Send className="h-3 w-3" />
-              </Button>
+          <PopoverContent className="w-96 p-3" align="end">
+            <div className="flex w-full items-start gap-3">
+              <div className="flex flex-1 flex-col gap-2">
+                <Textarea
+                  placeholder="Ask AI to improve, modify, or extract this question from an image…"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="h-16 resize-none py-2 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleRegenerateSubmit();
+                    }
+                  }}
+                />
+
+                {/* File Chips */}
+                {attachedFiles.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {attachedFiles.map((file, i) => (
+                      <div
+                        key={i}
+                        className="flex max-w-[150px] items-center gap-1 rounded-full border bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+                        title={file.name}
+                      >
+                        <span className="truncate">{file.name}</span>
+                        <button
+                          className="ml-1 rounded-full p-0.5 hover:bg-black/10"
+                          onClick={() => handleRemoveAttachment(i)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Button
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={handleRegenerateSubmit}
+                  title="Send"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+
+                <input
+                  type="file"
+                  multiple
+                  ref={attachmentInputRef}
+                  className="hidden"
+                  onChange={handleAttachmentSelect}
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0 border"
+                  title="Attach file"
+                  disabled={isAttaching}
+                  onClick={() => attachmentInputRef.current?.click()}
+                >
+                  {isAttaching ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Paperclip className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
             </div>
           </PopoverContent>
         </Popover>
@@ -327,21 +549,23 @@ export function GeneratedQuestionCard({
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => {
-              if (
-                window.confirm(
-                  "Are you sure you want to delete this question? This cannot be undone."
-                )
-              ) {
-                onDelete(question.id);
-              }
-            }}
+            onClick={() => setIsDeleteModalOpen(true)}
             title="Delete Question"
           >
             <Trash2 className="h-4 w-4 text-red-500 hover:text-red-700" />
           </Button>
         )}
       </div>
+
+      <ConfirmDialog
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        title="Delete Question"
+        description="Are you sure you want to delete this question? This action cannot be undone."
+        onConfirm={() => onDelete && onDelete(question.id)}
+        variant="destructive"
+        confirmLabel="Delete"
+      />
 
       <div className={`mb-2 space-y-3 pr-16 ${onSelect ? "pl-6" : ""}`}>
         {/* Meta info (Type, Marks, Hardness) */}
@@ -353,6 +577,28 @@ export function GeneratedQuestionCard({
           <QuestionMarks marks={question.marks} />
           <span>•</span>
           <QuestionTags hardness={question.hardness_level} concepts={[]} />
+          <span>•</span>
+
+          <div className="mr-1 flex items-center gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-muted-foreground hover:text-primary"
+              title="Undo"
+              disabled
+            >
+              <Undo2 className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-muted-foreground hover:text-primary"
+              title="Redo"
+              disabled
+            >
+              <Redo2 className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
 
         {/* Reorder Buttons */}
@@ -400,7 +646,11 @@ export function GeneratedQuestionCard({
 
         {/* Question Images */}
         {question.images && question.images.length > 0 && (
-          <QuestionImages images={question.images} className="my-3" />
+          <QuestionImages
+            images={question.images}
+            className="my-3"
+            onDelete={handleDeleteImage}
+          />
         )}
 
         {/* Options / Answer */}

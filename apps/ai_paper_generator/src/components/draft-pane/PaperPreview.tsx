@@ -15,8 +15,17 @@ import {
   RotateCcw,
   FileText,
   CheckSquare,
+  FileDown,
+  ChevronDown,
 } from "lucide-react";
-import { Button } from "@skolist/ui";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  useToast,
+} from "@skolist/ui";
 import { cn } from "@skolist/utils";
 
 import { useDraftContext } from "../../context/DraftContext";
@@ -157,7 +166,7 @@ const PaperInstructions = ({
 }) => {
   if (!instructions || instructions.length === 0) return null;
   return (
-    <div className="mb-6 border-b-2 border-black pb-4">
+    <div className="mb-2 border-b-2 border-black pb-4">
       <h3 className="mb-1 text-sm font-bold text-black">
         General Instructions:
       </h3>
@@ -233,7 +242,7 @@ const QuestionItem = ({
                       key={image.id}
                       src={image.img_url}
                       alt={`Question image ${image.position ?? image.id}`}
-                      className="max-h-40 max-w-full object-contain"
+                      className="max-h-24 max-w-full object-contain"
                     />
                   );
                 }
@@ -314,7 +323,8 @@ const AnswerItem = ({
 export function PaperPreview() {
   const { draft, sections, instructions } = useDraftContext();
   const { questions } = useQuestionsContext();
-  const [scale, setScale] = useState<number>(1.0);
+  const { toast } = useToast();
+  const [scale, setScale] = useState<number>(0.9);
   const [previewMode, setPreviewMode] = useState<"paper" | "answer">("paper");
   const [pages, setPages] = useState<PageData[]>([]);
 
@@ -323,6 +333,51 @@ export function PaperPreview() {
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
   const scaleRef = useRef(scale);
+
+  // Helper to center the scrollbar
+  const centerScroll = useCallback(() => {
+    if (previewContainerRef.current) {
+      const { scrollWidth, clientWidth } = previewContainerRef.current;
+      if (scrollWidth > clientWidth) {
+        previewContainerRef.current.scrollTo({
+          left: (scrollWidth - clientWidth) / 2,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, []);
+
+  const centeredOnce = useRef(false);
+
+  // Reset centeredOnce when draft or previewMode changes
+  useEffect(() => {
+    centeredOnce.current = false;
+  }, [draft, previewMode]);
+
+  // Center on initial load or validity change
+  useEffect(() => {
+    const container = previewContainerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // If hidden/zero width, reset centered state so we center again when visible
+        if (entry.contentRect.width === 0) {
+          centeredOnce.current = false;
+        } else if (!centeredOnce.current && pages.length > 0) {
+          // If visible and needs centering
+          const { scrollWidth, clientWidth } = container;
+          if (scrollWidth > clientWidth) {
+            centerScroll();
+            centeredOnce.current = true;
+          }
+        }
+      }
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [pages, centerScroll]);
 
   // Update scaleRef whenever scale changes
   useEffect(() => {
@@ -437,7 +492,7 @@ export function PaperPreview() {
         container.removeEventListener("gesturechange", handleGestureChange);
       }
     };
-  }, []); // Empty dependency array to bind listeners only once
+  }, [draft]); // Re-bind when draft loads (component might render null initially)
 
   // 1. Flatten Data Structure
   const items: PaperItem[] = useMemo(() => {
@@ -630,9 +685,9 @@ export function PaperPreview() {
             </Button>
           </div>
 
-          <span className="hidden text-sm font-semibold text-gray-600 sm:inline-block">
+          {/* <span className="hidden text-sm font-semibold text-gray-600 sm:inline-block">
             ({pages.length} Pages)
-          </span>
+          </span> */}
 
           <div className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1">
             <button
@@ -660,17 +715,42 @@ export function PaperPreview() {
               {Math.round(scale * 100)}%
             </span>
             <button
-              onClick={() => setScale(1.0)}
+              onClick={() => {
+                setScale(0.9);
+                setTimeout(centerScroll, 100);
+              }}
               className="ml-1 border-l p-1 text-gray-400 hover:text-gray-600"
             >
               <RotateCcw className="h-3 w-3" />
             </button>
           </div>
         </div>
-        <Button onClick={() => handlePrint()} size="sm" className="gap-2">
-          <Printer className="h-4 w-4" />
-          Print {previewMode === "paper" ? "Paper" : "Answers"}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" className="gap-2">
+              Print / Download
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                toast({
+                  title: "Feature Coming Soon",
+                  description: "Download as Word file will be available soon!",
+                });
+              }}
+              className="gap-2"
+            >
+              <FileDown className="h-4 w-4" />
+              Download Word File
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handlePrint()} className="gap-2">
+              <Printer className="h-4 w-4" />
+              Print PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Preview Area */}

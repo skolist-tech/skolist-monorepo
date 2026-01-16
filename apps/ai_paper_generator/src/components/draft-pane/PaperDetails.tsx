@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { Button, Input, Label, Textarea, Switch } from "@skolist/ui";
-import type { QgenDraft, UpdateQgenDraft} from "@skolist/db";
-import type { QgenInstruction} from "../../services/draftService";
+import type { QgenDraft, UpdateQgenDraft } from "@skolist/db";
+import type { QgenInstruction } from "../../services/draftService";
 import { useDraftContext } from "../../context/DraftContext";
 
 interface PaperDetailsProps {
@@ -225,18 +225,22 @@ export function PaperDetails({
     <div className="space-y-6 p-4">
       {/* Basic Details */}
       <div className="space-y-4">
-        <EditableField
-          label="Institute Name"
-          value={draft.institute_name || ""}
-          placeholder="Enter Institute Name"
-          onSave={(val) => updateDraftSettings({ institute_name: String(val) })}
-        />
-        <EditableField
-          label="Paper Title"
-          value={draft.paper_title || ""}
-          placeholder="Enter Paper Title"
-          onSave={(val) => updateDraftSettings({ paper_title: String(val) })}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <EditableField
+            label="Institute Name"
+            value={draft.institute_name || ""}
+            placeholder="Enter Institute Name"
+            onSave={(val) =>
+              updateDraftSettings({ institute_name: String(val) })
+            }
+          />
+          <EditableField
+            label="Paper Title"
+            value={draft.paper_title || ""}
+            placeholder="Enter Paper Title"
+            onSave={(val) => updateDraftSettings({ paper_title: String(val) })}
+          />
+        </div>
 
         {/* New Metadata Fields */}
         <div className="grid grid-cols-2 gap-4">

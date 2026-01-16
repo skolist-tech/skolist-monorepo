@@ -345,6 +345,7 @@ export type Database = {
       gen_images: {
         Row: {
           created_at: string
+          file_path: string | null
           gen_question_id: string | null
           id: string
           img_url: string | null
@@ -353,6 +354,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          file_path?: string | null
           gen_question_id?: string | null
           id?: string
           img_url?: string | null
@@ -361,6 +363,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          file_path?: string | null
           gen_question_id?: string | null
           id?: string
           img_url?: string | null

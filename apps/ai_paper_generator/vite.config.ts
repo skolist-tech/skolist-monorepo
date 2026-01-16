@@ -13,6 +13,7 @@ export default defineConfig({
   },
   server: {
     port: 3001,
+    allowedHosts: true,
   },
   build: {
     outDir: "dist",
