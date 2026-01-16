@@ -247,20 +247,6 @@ export async function updateSection(
 export async function deleteSection(sectionId: string): Promise<void> {
   const client = getClient();
 
-  // First unassign questions from this section
-  const { error: updateError } = await client
-    .from("gen_questions")
-    .update({ qgen_draft_section_id: null })
-    .eq("qgen_draft_section_id", sectionId);
-
-  if (updateError) {
-    console.error(
-      "Failed to unassign questions before deleting section:",
-      updateError
-    );
-    throw updateError;
-  }
-
   const { error } = await client
     .from("qgen_draft_sections")
     .delete()
