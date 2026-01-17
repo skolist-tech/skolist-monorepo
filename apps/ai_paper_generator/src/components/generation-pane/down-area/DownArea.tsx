@@ -16,6 +16,7 @@ import {
 import { Filter } from "lucide-react";
 import { useQuestionsContext } from "../../../context/QuestionsContext";
 import { GeneratedQuestionCard } from "../../shared/Question/GeneratedQuestionCard";
+import { fastApiService } from "../../../services/fastApiService";
 import type { HardnessLevel } from "@skolist/db";
 import { GenerateMoreButton } from "./GenerateMoreButton";
 import { DraftProgress } from "../../shared/DraftProgress";
@@ -33,6 +34,7 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
     moveQuestionsToDraft,
     saveQuestion,
     deleteQuestion,
+    refetchQuestions,
   } = useQuestionsContext();
 
   // Filter questions not in draft
@@ -250,10 +252,18 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
               onMoveToDraft={moveQuestionToDraft}
               onUpdate={(updated) => saveQuestion(updated)}
               onDelete={deleteQuestion}
-              onDirectRegenerate={() => console.log("Direct regenerate")}
-              onRegenerate={(prompt, files) =>
-                console.log("Regenerate with prompt", prompt, files)
-              }
+              onRegenerate={async (prompt, files) => {
+                try {
+                  await fastApiService.regenerateQuestionWithPrompt(
+                    question.id,
+                    prompt,
+                    files
+                  );
+                  await refetchQuestions();
+                } catch (error) {
+                  console.error("Failed to regenerate question:", error);
+                }
+              }}
               isSelected={selectedIds.has(question.id)}
               onSelect={(selected) => handleToggleSelect(question.id, selected)}
             />

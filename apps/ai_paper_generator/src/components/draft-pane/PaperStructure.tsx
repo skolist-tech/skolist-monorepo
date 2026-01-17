@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   DndContext,
   closestCenter,
@@ -37,6 +37,7 @@ import { QUESTION_TYPE, type QuestionType } from "@skolist/db";
 import { useDraftContext } from "../../context/DraftContext";
 import { useQuestionsContext } from "../../context/QuestionsContext";
 import { GeneratedQuestionCard } from "../shared/Question/GeneratedQuestionCard";
+import { fastApiService } from "../../services/fastApiService";
 import type { QgenDraftSection } from "@skolist/db";
 import type { GeneratedQuestionWithConcepts } from "../../services/questionService";
 import { DraftProgress } from "../shared/DraftProgress";
@@ -177,6 +178,29 @@ function SortableSection({
 }) {
   const [isSectionExpanded, setIsSectionExpanded] = useState(true);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDisintegrating, setIsDisintegrating] = useState(false);
+
+  // Pre-generate random particle data for disintegration animation
+  const particleData = useMemo(() => 
+    Array.from({ length: 80 }).map(() => ({
+      size: Math.random() * 8 + 3,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 0.8 + Math.random() * 0.8,
+      delay: Math.random() * 0.6,
+      xOffset: (Math.random() > 0.5 ? 1 : -1) * (30 + Math.random() * 80),
+      yOffset: -(80 + Math.random() * 150),
+      rotation: Math.random() * 360,
+    })),
+  []);
+
+  const handleDeleteWithAnimation = async () => {
+    setIsDeleteModalOpen(false);
+    setIsDisintegrating(true);
+    // Wait for disintegration animation to complete
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    onDelete(section.id);
+  };
 
   const {
     attributes,
@@ -199,6 +223,7 @@ function SortableSection({
     addCustomQuestion,
     saveQuestion,
     deleteQuestion,
+    refetchQuestions,
   } = useQuestionsContext();
 
   // Filter questions belonging to this section
@@ -315,9 +340,109 @@ function SortableSection({
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      className="mb-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+      style={{
+        ...style,
+        animation: isDisintegrating ? 'sectionDisintegrate 1.5s ease-out forwards' : undefined,
+      }}
+      className={`mb-4 rounded-lg border bg-card text-card-foreground shadow-sm relative ${isDisintegrating ? 'pointer-events-none' : ''}`}
     >
+      {/* Disintegration Animation Styles */}
+      <style>{`
+        @keyframes sectionDisintegrate {
+          0% {
+            opacity: 1;
+            filter: blur(0px);
+            transform: scale(1);
+          }
+          30% {
+            opacity: 0.8;
+            filter: blur(1px);
+            transform: scale(1.02);
+          }
+          100% {
+            opacity: 0;
+            filter: blur(8px);
+            transform: scale(0.95) translateY(-20px);
+          }
+        }
+      `}</style>
+
+      {/* Disintegration Particle Animation Overlay */}
+      {isDisintegrating && (
+        <div className="absolute inset-0 z-50 rounded-lg overflow-visible pointer-events-none">
+          {particleData.map((particle, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: `${particle.size}px`,
+                height: `${particle.size}px`,
+                left: `${particle.left}%`,
+                top: `${particle.top}%`,
+                backgroundColor: `hsl(${Math.random() * 30 + 10}, 10%, ${50 + Math.random() * 30}%)`,
+                opacity: 0,
+                '--x-offset': `${particle.xOffset}px`,
+                '--y-offset': `${particle.yOffset}px`,
+                '--rotation': `${particle.rotation}deg`,
+                animation: `sectionParticle-${i % 4} ${particle.duration}s ease-out ${particle.delay}s forwards`,
+              } as React.CSSProperties}
+            />
+          ))}
+          <style>{`
+            @keyframes sectionParticle-0 {
+              0% {
+                opacity: 0.9;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+              }
+              100% {
+                opacity: 0;
+                transform: translate(var(--x-offset), var(--y-offset)) scale(0.2) rotate(180deg);
+              }
+            }
+            @keyframes sectionParticle-1 {
+              0% {
+                opacity: 0.85;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+              }
+              50% {
+                opacity: 0.5;
+              }
+              100% {
+                opacity: 0;
+                transform: translate(var(--x-offset), var(--y-offset)) scale(0.1) rotate(-180deg);
+              }
+            }
+            @keyframes sectionParticle-2 {
+              0% {
+                opacity: 0.9;
+                transform: translate(0, 0) scale(1);
+              }
+              30% {
+                opacity: 0.7;
+                transform: translate(calc(var(--x-offset) * 0.3), calc(var(--y-offset) * 0.2)) scale(0.8);
+              }
+              100% {
+                opacity: 0;
+                transform: translate(var(--x-offset), var(--y-offset)) scale(0);
+              }
+            }
+            @keyframes sectionParticle-3 {
+              0% {
+                opacity: 0.8;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+              }
+              60% {
+                opacity: 0.4;
+              }
+              100% {
+                opacity: 0;
+                transform: translate(var(--x-offset), var(--y-offset)) scale(0.15) rotate(270deg);
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 border-b bg-muted/30 p-3">
         <button
           {...attributes}
@@ -403,7 +528,7 @@ function SortableSection({
         onOpenChange={setIsDeleteModalOpen}
         title="Delete Section"
         description={`Are you sure you want to delete "${section.section_name || "this section"}"? All questions in this section will be moved to draft or deleted.`}
-        onConfirm={() => onDelete(section.id)}
+        onConfirm={handleDeleteWithAnimation}
         variant="destructive"
         confirmLabel="Delete"
       />
@@ -425,16 +550,18 @@ function SortableSection({
                       onRemoveFromDraft={() => moveQuestionToGeneration(q.id)}
                       onUpdate={saveQuestion}
                       onDelete={deleteQuestion}
-                      onDirectRegenerate={() =>
-                        console.log("Direct regenerate draft")
-                      }
-                      onRegenerate={(prompt, files) =>
-                        console.log(
-                          "Regenerate draft with prompt",
-                          prompt,
-                          files
-                        )
-                      }
+                      onRegenerate={async (prompt, files) => {
+                        try {
+                          await fastApiService.regenerateQuestionWithPrompt(
+                            q.id,
+                            prompt,
+                            files
+                          );
+                          await refetchQuestions();
+                        } catch (error) {
+                          console.error("Failed to regenerate question:", error);
+                        }
+                      }}
                       showReorder={true}
                       onMoveUp={() => moveQuestion(idx, "up")}
                       onMoveDown={() => moveQuestion(idx, "down")}

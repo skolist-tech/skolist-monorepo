@@ -1,4 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import Lottie from "lottie-react";
+import chatAnimationData from "../../../../public/Chat.json";
 import { formatQuestionType } from "../../../utils/formatters";
 import {
   Button,
@@ -21,7 +23,7 @@ import {
   ChevronUp,
   ChevronDown,
   RefreshCw,
-  MessageSquarePlus,
+  MessageSquare,
   Send,
   Info,
   Paperclip,
@@ -59,6 +61,8 @@ interface GeneratedQuestionCardProps {
   showReorder?: boolean;
   isSelected?: boolean;
   onSelect?: (selected: boolean) => void;
+  onAutoCorrect?: (questionId: string) => Promise<void>; // Optional override for auto-correct (useful for Storybook)
+  onRegenerateWithPrompt?: (questionId: string, prompt: string, files: File[]) => Promise<void>; // Optional override for regenerate with prompt (useful for Storybook)
 }
 
 export function GeneratedQuestionCard({
@@ -74,7 +78,14 @@ export function GeneratedQuestionCard({
   showReorder = false,
   isSelected = false,
   onSelect,
+  onAutoCorrect,
+  onRegenerateWithPrompt,
 }: GeneratedQuestionCardProps) {
+  // Refs for animation positioning
+  const cardRef = useRef<HTMLDivElement>(null);
+  const autoCorrectBtnRef = useRef<HTMLButtonElement>(null);
+  const regenerateBtnRef = useRef<HTMLButtonElement>(null);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedQuestion, setEditedQuestion] =
     useState<GeneratedQuestionWithConcepts>(question);
@@ -90,6 +101,69 @@ export function GeneratedQuestionCard({
   const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isAutoCorrecting, setIsAutoCorrecting] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
+  // State to store the calculated origin point for the sparkle
+  const [sparkleOrigin, setSparkleOrigin] = useState({ top: 12, right: 12 });
+
+  // Regenerate animation states
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isRegenerateReturning, setIsRegenerateReturning] = useState(false);
+  const [regenerateOrigin, setRegenerateOrigin] = useState({ top: 12, right: 12 });
+
+  // Chat prompt animation states
+  const [isChatPromptAnimating, setIsChatPromptAnimating] = useState(false);
+  // Store the question text when animation starts to detect actual changes
+  const questionTextAtAnimationStart = useRef<string | null>(null);
+
+  // Watch for question changes while chat prompt animation is running
+  // Stop animation 1 second after data actually updates
+  useEffect(() => {
+    // Only trigger if animation is running AND question has actually changed from when animation started
+    if (
+      isChatPromptAnimating && 
+      questionTextAtAnimationStart.current !== null &&
+      question.question_text !== questionTextAtAnimationStart.current
+    ) {
+      const timer = setTimeout(() => {
+        setIsChatPromptAnimating(false);
+        setPrompt("");
+        setAttachedFiles([]);
+        questionTextAtAnimationStart.current = null;
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [question.question_text, isChatPromptAnimating]);
+
+  // Slide animation states
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
+
+  // Disintegration animation state for delete
+  const [isDisintegrating, setIsDisintegrating] = useState(false);
+
+  // Pre-generate random particle data for disintegration animation
+  const particleData = useMemo(() => 
+    Array.from({ length: 60 }).map(() => ({
+      size: Math.random() * 6 + 2,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 0.8 + Math.random() * 0.7,
+      delay: Math.random() * 0.5,
+      xOffset: (Math.random() > 0.5 ? 1 : -1) * (20 + Math.random() * 60),
+      yOffset: -(60 + Math.random() * 120),
+      rotation: Math.random() * 360,
+    })),
+  []);
+
+  const handleDeleteWithAnimation = async () => {
+    setIsDeleteModalOpen(false);
+    setIsDisintegrating(true);
+    // Wait for disintegration animation to complete
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (onDelete) {
+      await onDelete(question.id);
+    }
+  };
 
   const handleSave = () => {
     if (onUpdate) {
@@ -103,12 +177,37 @@ export function GeneratedQuestionCard({
     setIsEditing(false);
   };
 
-  const handleRegenerateSubmit = () => {
+  const handleRegenerateSubmit = async () => {
     if (onRegenerate && (prompt.trim() || attachedFiles.length > 0)) {
-      onRegenerate(prompt, attachedFiles);
-      setPrompt("");
-      setAttachedFiles([]);
+      // Close the popover first
       setIsRegenerateOpen(false);
+      
+      try {
+        // Store current question text to detect when it changes
+        questionTextAtAnimationStart.current = question.question_text;
+        setIsChatPromptAnimating(true);
+        
+        // If there's an override for regenerate with prompt (Storybook), call it
+        if (onRegenerateWithPrompt) {
+          await onRegenerateWithPrompt(question.id, prompt, attachedFiles);
+          // For Storybook, wait 1 second then stop animation manually since question won't change
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setIsChatPromptAnimating(false);
+          setPrompt("");
+          setAttachedFiles([]);
+          questionTextAtAnimationStart.current = null;
+        } else {
+          // Call the actual regenerate function
+          // Animation will stop via useEffect when question prop changes
+          onRegenerate(prompt, attachedFiles);
+        }
+      } catch (error) {
+        console.error("Failed during regenerate with prompt", error);
+        setIsChatPromptAnimating(false);
+        setPrompt("");
+        setAttachedFiles([]);
+        questionTextAtAnimationStart.current = null;
+      }
     }
   };
 
@@ -175,13 +274,92 @@ export function GeneratedQuestionCard({
     }
   };
 
-  const handleBeautify = async () => {
+  const handleAutoCorrect = async () => {
+    // Calculate the position of the button relative to the card before starting animation
+    if (cardRef.current && autoCorrectBtnRef.current) {
+      const cardRect = cardRef.current.getBoundingClientRect();
+      const btnRect = autoCorrectBtnRef.current.getBoundingClientRect();
+
+      // Calculate relative top and right positions
+      // Adding a small offset to center it better over the icon itself
+      const relativeTop = btnRect.top - cardRect.top + 6;
+      const relativeRight = cardRect.right - btnRect.right + 6;
+
+      setSparkleOrigin({ top: relativeTop, right: relativeRight });
+    }
+
     try {
-      await fastApiService.beautifyQuestion(question.id);
+      setIsAutoCorrecting(true);
+      setIsReturning(false);
+      if (onAutoCorrect) {
+        await onAutoCorrect(question.id);
+      } else {
+        await fastApiService.autoCorrectQuestion(question.id);
+      }
+      // Trigger return animation
+      setIsReturning(true);
+      // Wait for return animation to complete before hiding
+      await new Promise((resolve) => setTimeout(resolve, 800));
     } catch (error) {
       console.error("Failed to auto-correct question", error);
       alert("Failed to auto-correct question");
+    } finally {
+      setIsAutoCorrecting(false);
+      setIsReturning(false);
     }
+  };
+
+  const handleDirectRegenerate = async () => {
+    // Calculate the position of the button relative to the card before starting animation
+    if (cardRef.current && regenerateBtnRef.current) {
+      const cardRect = cardRef.current.getBoundingClientRect();
+      const btnRect = regenerateBtnRef.current.getBoundingClientRect();
+
+      const relativeTop = btnRect.top - cardRect.top + 6;
+      const relativeRight = cardRect.right - btnRect.right + 6;
+
+      setRegenerateOrigin({ top: relativeTop, right: relativeRight });
+    }
+
+    try {
+      setIsRegenerating(true);
+      setIsRegenerateReturning(false);
+      
+      // Call the regenerate API or use the optional override
+      if (onDirectRegenerate) {
+        await Promise.resolve(onDirectRegenerate());
+      } else {
+        await fastApiService.regenerateQuestion(question.id);
+      }
+      
+      // Trigger return animation
+      setIsRegenerateReturning(true);
+      // Wait for return animation to complete before hiding
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    } catch (error) {
+      console.error("Failed to regenerate question", error);
+      alert("Failed to regenerate question");
+    } finally {
+      setIsRegenerating(false);
+      setIsRegenerateReturning(false);
+    }
+  };
+
+  const handleMoveToDraft = async () => {
+    setSlideDirection('right');
+    // Wait for animation to complete
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    onMoveToDraft(question.id);
+    // Don't reset slideDirection - let the component stay hidden until parent removes it
+  };
+
+  const handleRemoveFromDraft = async () => {
+    if (!onRemoveFromDraft) return;
+    setSlideDirection('left');
+    // Wait for animation to complete
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    onRemoveFromDraft(question.id);
+    // Don't reset slideDirection - let the component stay hidden until parent removes it
   };
 
   const handleDeleteImage = async (imageId: string) => {
@@ -374,10 +552,472 @@ export function GeneratedQuestionCard({
 
   return (
     <div
+      ref={cardRef}
       className={`group relative rounded-lg border bg-background p-4 shadow-sm transition-all hover:shadow-md ${
         isSelected ? "border-primary ring-2 ring-primary" : ""
-      }`}
+      } ${slideDirection ? 'pointer-events-none' : ''} ${isDisintegrating ? 'pointer-events-none' : ''}`}
+      style={{
+        animation: slideDirection === 'right' 
+          ? 'slideOutRight 0.4s ease-in forwards' 
+          : slideDirection === 'left' 
+            ? 'slideOutLeft 0.4s ease-in forwards' 
+            : isDisintegrating
+              ? 'disintegrate 1.5s ease-out forwards'
+              : 'none',
+      }}
     >
+      {/* Slide Animation Styles */}
+      <style>{`
+        @keyframes slideOutRight {
+          0% {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+        }
+        @keyframes slideOutLeft {
+          0% {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(-100%);
+            opacity: 0;
+          }
+        }
+        @keyframes disintegrate {
+          0% {
+            opacity: 1;
+            filter: blur(0px);
+            transform: scale(1);
+          }
+          30% {
+            opacity: 0.8;
+            filter: blur(1px);
+            transform: scale(1.02);
+          }
+          100% {
+            opacity: 0;
+            filter: blur(8px);
+            transform: scale(0.95) translateY(-20px);
+          }
+        }
+      `}</style>
+
+      {/* Disintegration Particle Animation Overlay */}
+      {isDisintegrating && (
+        <div className="absolute inset-0 z-50 rounded-lg overflow-visible pointer-events-none">
+          {/* Generate multiple particles */}
+          {particleData.map((particle, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: `${particle.size}px`,
+                height: `${particle.size}px`,
+                left: `${particle.left}%`,
+                top: `${particle.top}%`,
+                backgroundColor: `hsl(${Math.random() * 30 + 10}, 10%, ${50 + Math.random() * 30}%)`,
+                opacity: 0,
+                '--x-offset': `${particle.xOffset}px`,
+                '--y-offset': `${particle.yOffset}px`,
+                '--rotation': `${particle.rotation}deg`,
+                animation: `particle-float-${i % 4} ${particle.duration}s ease-out ${particle.delay}s forwards`,
+              } as React.CSSProperties}
+            />
+          ))}
+          <style>{`
+            @keyframes particle-float-0 {
+              0% {
+                opacity: 0.9;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+              }
+              100% {
+                opacity: 0;
+                transform: translate(var(--x-offset), var(--y-offset)) scale(0.2) rotate(180deg);
+              }
+            }
+            @keyframes particle-float-1 {
+              0% {
+                opacity: 0.85;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+              }
+              50% {
+                opacity: 0.5;
+              }
+              100% {
+                opacity: 0;
+                transform: translate(var(--x-offset), var(--y-offset)) scale(0.1) rotate(-180deg);
+              }
+            }
+            @keyframes particle-float-2 {
+              0% {
+                opacity: 0.9;
+                transform: translate(0, 0) scale(1);
+              }
+              30% {
+                opacity: 0.7;
+                transform: translate(calc(var(--x-offset) * 0.3), calc(var(--y-offset) * 0.2)) scale(0.8);
+              }
+              100% {
+                opacity: 0;
+                transform: translate(var(--x-offset), var(--y-offset)) scale(0);
+              }
+            }
+            @keyframes particle-float-3 {
+              0% {
+                opacity: 0.8;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+              }
+              60% {
+                opacity: 0.4;
+              }
+              100% {
+                opacity: 0;
+                transform: translate(var(--x-offset), var(--y-offset)) scale(0.15) rotate(270deg);
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* Auto-Correct Animation Overlay */}
+      {isAutoCorrecting && (
+        <div 
+          className="absolute inset-0 z-50 rounded-lg overflow-hidden"
+          style={{
+            '--origin-top': `${sparkleOrigin.top}px`,
+            '--origin-right': `${sparkleOrigin.right}px`,
+          } as React.CSSProperties}
+        >
+          {/* Glassy blur overlay with pulsing animation */}
+          <div 
+            className="absolute inset-0 bg-background/60"
+            style={{
+              animation: isReturning 
+                ? 'blurFadeOut 0.8s ease-out forwards' 
+                : 'blurPulse 2s ease-in-out infinite',
+              animationDelay: isReturning ? '0s' : '0.8s',
+            }}
+          />
+          {/* Sparkle with parabolic trajectory */}
+          <div 
+            className="absolute z-10"
+            style={{
+              top: `${sparkleOrigin.top}px`,
+              right: `${sparkleOrigin.right}px`,
+              animation: isReturning 
+                ? 'sparkleReturn 0.8s ease-in forwards' 
+                : 'sparkleTrajectory 0.8s ease-out forwards',
+            }}
+          >
+            <div
+              style={{
+                animation: isReturning 
+                  ? 'none' 
+                  : 'sparklePulse 1.5s ease-in-out infinite',
+                animationDelay: '0.8s',
+              }}
+            >
+              <Sparkles 
+                className="text-yellow-400 drop-shadow-lg" 
+                style={{
+                  width: isReturning ? '64px' : '20px',
+                  height: isReturning ? '64px' : '20px',
+                  filter: 'drop-shadow(0 0 10px rgba(250, 204, 21, 0.5))',
+                  animation: isReturning 
+                    ? 'sparkleShrink 0.8s ease-in forwards' 
+                    : 'sparkleGrow 0.8s ease-out forwards',
+                }}
+              />
+            </div>
+          </div>
+          <style>{`
+            @keyframes sparkleTrajectory {
+              0% {
+                top: var(--origin-top);
+                right: var(--origin-right);
+                transform: translate(0, 0);
+              }
+              30% {
+                transform: translate(-20%, 50%);
+              }
+              60% {
+                transform: translate(-35%, 70%);
+              }
+              100% {
+                top: 50%;
+                right: 50%;
+                transform: translate(50%, -50%);
+              }
+            }
+            @keyframes sparkleReturn {
+              0% {
+                top: 50%;
+                right: 50%;
+                transform: translate(50%, -50%);
+              }
+              40% {
+                transform: translate(35%, -70%);
+              }
+              70% {
+                transform: translate(20%, -50%);
+              }
+              100% {
+                top: var(--origin-top);
+                right: var(--origin-right);
+                transform: translate(0, 0);
+              }
+            }
+            @keyframes sparkleGrow {
+              0% {
+                width: 20px;
+                height: 20px;
+              }
+              100% {
+                width: 64px;
+                height: 64px;
+              }
+            }
+            @keyframes sparkleShrink {
+              0% {
+                width: 64px;
+                height: 64px;
+              }
+              100% {
+                width: 20px;
+                height: 20px;
+              }
+            }
+            @keyframes sparklePulse {
+              0%, 100% {
+                transform: scale(1);
+                opacity: 0.8;
+              }
+              50% {
+                transform: scale(1.25);
+                opacity: 1;
+                filter: drop-shadow(0 0 20px rgba(250, 204, 21, 0.8));
+              }
+            }
+            @keyframes blurPulse {
+              0%, 100% {
+                backdrop-filter: blur(2px);
+                background-color: rgba(255, 255, 255, 0.4);
+              }
+              50% {
+                backdrop-filter: blur(8px);
+                background-color: rgba(255, 255, 255, 0.7);
+              }
+            }
+            @keyframes blurFadeOut {
+              0% {
+                backdrop-filter: blur(8px);
+                background-color: rgba(255, 255, 255, 0.7);
+              }
+              100% {
+                backdrop-filter: blur(0px);
+                background-color: rgba(255, 255, 255, 0);
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* Regenerate Animation Overlay */}
+      {isRegenerating && (
+        <div 
+          className="absolute inset-0 z-50 rounded-lg overflow-hidden"
+          style={{
+            '--regen-origin-top': `${regenerateOrigin.top}px`,
+            '--regen-origin-right': `${regenerateOrigin.right}px`,
+          } as React.CSSProperties}
+        >
+          {/* Glassy blur overlay with pulsing animation */}
+          <div 
+            className="absolute inset-0 bg-background/60"
+            style={{
+              animation: isRegenerateReturning 
+                ? 'regenBlurFadeOut 0.8s ease-out forwards' 
+                : 'regenBlurPulse 2s ease-in-out infinite',
+              animationDelay: isRegenerateReturning ? '0s' : '0.8s',
+            }}
+          />
+          {/* RefreshCw with parabolic trajectory and rotation */}
+          <div 
+            className="absolute z-10"
+            style={{
+              top: `${regenerateOrigin.top}px`,
+              right: `${regenerateOrigin.right}px`,
+              animation: isRegenerateReturning 
+                ? 'regenReturn 0.8s ease-in forwards' 
+                : 'regenTrajectory 0.8s ease-out forwards',
+            }}
+          >
+            <div
+              style={{
+                animation: isRegenerateReturning 
+                  ? 'none' 
+                  : 'regenSpin 1s linear infinite',
+                animationDelay: '0.8s',
+              }}
+            >
+              <RefreshCw 
+                className="text-primary drop-shadow-lg" 
+                style={{
+                  width: isRegenerateReturning ? '64px' : '16px',
+                  height: isRegenerateReturning ? '64px' : '16px',
+                  filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))',
+                  animation: isRegenerateReturning 
+                    ? 'regenShrink 0.8s ease-in forwards' 
+                    : 'regenGrow 0.8s ease-out forwards',
+                }}
+              />
+            </div>
+          </div>
+          <style>{`
+            @keyframes regenTrajectory {
+              0% {
+                top: var(--regen-origin-top);
+                right: var(--regen-origin-right);
+                transform: translate(0, 0);
+              }
+              30% {
+                transform: translate(-20%, 50%);
+              }
+              60% {
+                transform: translate(-35%, 70%);
+              }
+              100% {
+                top: 50%;
+                right: 50%;
+                transform: translate(50%, -50%);
+              }
+            }
+            @keyframes regenReturn {
+              0% {
+                top: 50%;
+                right: 50%;
+                transform: translate(50%, -50%);
+              }
+              40% {
+                transform: translate(35%, -70%);
+              }
+              70% {
+                transform: translate(20%, -50%);
+              }
+              100% {
+                top: var(--regen-origin-top);
+                right: var(--regen-origin-right);
+                transform: translate(0, 0);
+              }
+            }
+            @keyframes regenGrow {
+              0% {
+                width: 16px;
+                height: 16px;
+              }
+              100% {
+                width: 64px;
+                height: 64px;
+              }
+            }
+            @keyframes regenShrink {
+              0% {
+                width: 64px;
+                height: 64px;
+              }
+              100% {
+                width: 16px;
+                height: 16px;
+              }
+            }
+            @keyframes regenSpin {
+              0% {
+                transform: rotate(0deg);
+              }
+              100% {
+                transform: rotate(360deg);
+              }
+            }
+            @keyframes regenBlurPulse {
+              0%, 100% {
+                backdrop-filter: blur(2px);
+                background-color: rgba(255, 255, 255, 0.4);
+              }
+              50% {
+                backdrop-filter: blur(8px);
+                background-color: rgba(255, 255, 255, 0.7);
+              }
+            }
+            @keyframes regenBlurFadeOut {
+              0% {
+                backdrop-filter: blur(8px);
+                background-color: rgba(255, 255, 255, 0.7);
+              }
+              100% {
+                backdrop-filter: blur(0px);
+                background-color: rgba(255, 255, 255, 0);
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* Chat Prompt Animation Overlay with Lottie */}
+      {isChatPromptAnimating && (
+        <div className="absolute inset-0 z-50 rounded-lg overflow-hidden">
+          {/* Glassy blur overlay with pulsing animation */}
+          <div 
+            className="absolute inset-0 bg-background/60 backdrop-blur-sm"
+            style={{
+              animation: 'chatBlurPulse 2s ease-in-out infinite',
+            }}
+          />
+          {/* Lottie animation centered */}
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div 
+              className="w-24 h-24"
+              style={{
+                animation: 'lottieScaleIn 0.3s ease-out forwards',
+              }}
+            >
+              <Lottie
+                animationData={chatAnimationData}
+                loop={true}
+                autoplay={true}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+          </div>
+          <style>{`
+            @keyframes chatBlurPulse {
+              0%, 100% {
+                backdrop-filter: blur(4px);
+                background-color: rgba(255, 255, 255, 0.5);
+              }
+              50% {
+                backdrop-filter: blur(8px);
+                background-color: rgba(255, 255, 255, 0.7);
+              }
+            }
+            @keyframes lottieScaleIn {
+              0% {
+                transform: scale(0.5);
+                opacity: 0;
+              }
+              100% {
+                transform: scale(1);
+                opacity: 1;
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
       {/* Selection Checkbox */}
       {onSelect && (
         <div className="absolute left-3 top-3.5 z-10">
@@ -398,12 +1038,14 @@ export function GeneratedQuestionCard({
           onChange={handleImageUpload}
         />
         <Button
+          ref={autoCorrectBtnRef}
           size="icon"
           variant="ghost"
-          onClick={handleBeautify}
+          onClick={handleAutoCorrect}
           title="Auto-Correct Question"
+          disabled={isAutoCorrecting}
         >
-          <Sparkles className="h-5 w-5 text-yellow-400" />
+          <Sparkles className={`h-5 w-5 text-yellow-400 ${isAutoCorrecting ? 'opacity-50' : ''}`} />
         </Button>
         <Button
           size="icon"
@@ -419,13 +1061,14 @@ export function GeneratedQuestionCard({
           )}
         </Button>
         <Button
+          ref={regenerateBtnRef}
           size="icon"
           variant="ghost"
-          onClick={onDirectRegenerate}
-          title="Direct Regenerate"
-          disabled={!onDirectRegenerate}
+          onClick={handleDirectRegenerate}
+          title="Regenerate Question"
+          disabled={isRegenerating}
         >
-          <RefreshCw className="h-4 w-4 text-muted-foreground hover:text-primary" />
+          <RefreshCw className={`h-4 w-4 text-muted-foreground hover:text-primary ${isRegenerating ? 'opacity-50' : ''}`} />
         </Button>
 
         <Popover open={isRegenerateOpen} onOpenChange={setIsRegenerateOpen}>
@@ -434,9 +1077,9 @@ export function GeneratedQuestionCard({
               size="icon"
               variant="ghost"
               title="Regenerate with Prompt"
-              disabled={!onRegenerate}
+              disabled={!onRegenerate || isChatPromptAnimating}
             >
-              <MessageSquarePlus className="h-4 w-4 text-muted-foreground hover:text-primary" />
+              <MessageSquare className={`h-4 w-4 text-muted-foreground hover:text-primary ${isChatPromptAnimating ? 'opacity-50' : ''}`} style={{ transform: 'scaleX(-1)' }} />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-96 p-3" align="end">
@@ -526,20 +1169,22 @@ export function GeneratedQuestionCard({
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => onRemoveFromDraft(question.id)}
+            onClick={handleRemoveFromDraft}
             title="Remove from Draft"
+            disabled={slideDirection !== null}
           >
-            <ArrowLeft className="h-4 w-4 text-red-500 hover:text-red-700" />
+            <ArrowLeft className={`h-4 w-4 text-red-500 hover:text-red-700 ${slideDirection ? 'opacity-50' : ''}`} />
           </Button>
         ) : (
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => onMoveToDraft(question.id)}
+            onClick={handleMoveToDraft}
             title="Move to Draft"
+            disabled={slideDirection !== null}
           >
             <ArrowRight
-              className="h-4 w-4 text-orange-500 hover:text-orange-700"
+              className={`h-4 w-4 text-orange-500 hover:text-orange-700 ${slideDirection ? 'opacity-50' : ''}`}
               strokeWidth={3}
             />
           </Button>
@@ -562,7 +1207,7 @@ export function GeneratedQuestionCard({
         onOpenChange={setIsDeleteModalOpen}
         title="Delete Question"
         description="Are you sure you want to delete this question? This action cannot be undone."
-        onConfirm={() => onDelete && onDelete(question.id)}
+        onConfirm={handleDeleteWithAnimation}
         variant="destructive"
         confirmLabel="Delete"
       />

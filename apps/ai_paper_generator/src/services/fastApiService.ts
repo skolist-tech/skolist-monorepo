@@ -64,10 +64,10 @@ export const fastApiService = {
     }
   },
   /**
-   * info: Calls the FastAPI backend to beautify the question
-   * endpoint: POST /api/v1/beautify_question
+   * info: Calls the FastAPI backend to auto correct the question
+   * endpoint: POST /api/v1/qgen/auto_correct_question
    */
-  async beautifyQuestion(gen_question_id: string) {
+  async autoCorrectQuestion(gen_question_id: string) {
     try {
       const {
         data: { session },
@@ -79,7 +79,7 @@ export const fastApiService = {
       }
 
       const response = await fetch(
-        `${API_URL}/api/v1/beautify_question?gen_question_id=${gen_question_id}`,
+        `${API_URL}/api/v1/qgen/auto_correct_question?gen_question_id=${gen_question_id}`,
         {
           method: "POST",
           headers: {
@@ -93,18 +93,125 @@ export const fastApiService = {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.detail ||
-            `Failed to beautify question: ${response.statusText}`
+            `Failed to Auto Correct question: ${response.statusText}`
         );
       }
 
       // 201 Created returns empty body, so don't try to parse JSON
-      if (response.status === 201) {
+      if (response.status === 201 || response.status === 200) {
         return { success: true };
       }
 
       return await response.json();
     } catch (error) {
-      console.error("Error beautifying question:", error);
+      console.error("Error Auto Correcting question:", error);
+      throw error;
+    }
+  },
+  /**
+   * info: Calls the FastAPI backend to regenerate a question with same concepts
+   * endpoint: POST /api/v1/qgen/regenerate_question
+   */
+  async regenerateQuestion(gen_question_id: string) {
+    try {
+      const {
+        data: { session },
+      } = await getClient().auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/v1/qgen/regenerate_question?gen_question_id=${gen_question_id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail ||
+            `Failed to regenerate question: ${response.statusText}`
+        );
+      }
+
+      if (response.status === 201 || response.status === 200) {
+        return { success: true };
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error regenerating question:", error);
+      throw error;
+    }
+  },
+  /**
+   * info: Calls the FastAPI backend to regenerate a question with custom prompt and files
+   * endpoint: POST /api/v1/qgen/regenerate_question_with_prompt
+   */
+  async regenerateQuestionWithPrompt(
+    gen_question_id: string,
+    prompt?: string,
+    files?: File[]
+  ) {
+    try {
+      const {
+        data: { session },
+      } = await getClient().auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error("User not authenticated");
+      }
+
+      // Use FormData for multipart/form-data request (required for file uploads)
+      const formData = new FormData();
+      formData.append("gen_question_id", gen_question_id);
+      
+      if (prompt) {
+        formData.append("prompt", prompt);
+      }
+      
+      if (files && files.length > 0) {
+        files.forEach((file) => {
+          formData.append("files", file);
+        });
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/v1/qgen/regenerate_question_with_prompt`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // Note: Don't set Content-Type for FormData, browser will set it with boundary
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail ||
+            `Failed to regenerate question with prompt: ${response.statusText}`
+        );
+      }
+
+      if (response.status === 201 || response.status === 200) {
+        return { success: true };
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error regenerating question with prompt:", error);
       throw error;
     }
   },

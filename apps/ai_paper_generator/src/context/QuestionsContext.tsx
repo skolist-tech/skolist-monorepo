@@ -39,6 +39,7 @@ interface QuestionsContextValue {
   saveQuestion: (question: GeneratedQuestionWithConcepts) => Promise<void>;
   deleteQuestion: (id: string) => Promise<void>;
   addCustomQuestion: (sectionId: string, type: QuestionType) => Promise<void>;
+  refetchQuestions: () => Promise<void>;
 }
 
 const QuestionsContext = createContext<QuestionsContextValue | undefined>(
@@ -421,6 +422,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     saveQuestion,
     deleteQuestion: handleDeleteQuestion,
     addCustomQuestion,
+    refetchQuestions: loadQuestions,
   };
 
   return (
