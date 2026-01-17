@@ -35,7 +35,7 @@ export const fastApiService = {
         throw new Error("User not authenticated");
       }
 
-      const response = await fetch(`${API_URL}/api/v1/generate_questions`, {
+      const response = await fetch(`${API_URL}/api/v1/qgen/generate_questions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
