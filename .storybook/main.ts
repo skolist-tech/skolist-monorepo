@@ -3,6 +3,9 @@ import { join, dirname } from "path";
 import { mergeConfig } from "vite";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
 
 /**
  * This function is used to resolve the absolute path of a package.
@@ -18,6 +21,8 @@ const config: StorybookConfig = {
     "../packages/ui/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     "../packages/auth/src/**/*.mdx",
     "../packages/auth/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../apps/ai_paper_generator/src/**/*.mdx",
+    "../apps/ai_paper_generator/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   addons: [
     getAbsolutePath("@storybook/addon-links"),
@@ -45,6 +50,7 @@ const config: StorybookConfig = {
           "@skolist/auth": join(__dirname, "../packages/auth/src"),
           "@skolist/utils": join(__dirname, "../packages/utils/src"),
           "@skolist/config": join(__dirname, "../packages/config"),
+          "@": join(__dirname, "../apps/ai_paper_generator/src"),
         },
       },
       optimizeDeps: {

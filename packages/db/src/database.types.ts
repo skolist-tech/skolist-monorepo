@@ -380,6 +380,77 @@ export type Database = {
           },
         ]
       }
+      gen_question_versions: {
+        Row: {
+          answer_text: string
+          correct_mcq_option: number | null
+          created_at: string
+          explanation: string | null
+          gen_question_id: string | null
+          hardness_level: Database["public"]["Enums"]["hardness_level_enum"]
+          id: string
+          marks: number
+          msq_option1_answer: boolean | null
+          msq_option2_answer: boolean | null
+          msq_option3_answer: boolean | null
+          msq_option4_answer: boolean | null
+          option1: string | null
+          option2: string | null
+          option3: string | null
+          option4: string | null
+          question_text: string | null
+          question_type: Database["public"]["Enums"]["question_type_enum"]
+        }
+        Insert: {
+          answer_text: string
+          correct_mcq_option?: number | null
+          created_at?: string
+          explanation?: string | null
+          gen_question_id?: string | null
+          hardness_level: Database["public"]["Enums"]["hardness_level_enum"]
+          id?: string
+          marks: number
+          msq_option1_answer?: boolean | null
+          msq_option2_answer?: boolean | null
+          msq_option3_answer?: boolean | null
+          msq_option4_answer?: boolean | null
+          option1?: string | null
+          option2?: string | null
+          option3?: string | null
+          option4?: string | null
+          question_text?: string | null
+          question_type: Database["public"]["Enums"]["question_type_enum"]
+        }
+        Update: {
+          answer_text?: string
+          correct_mcq_option?: number | null
+          created_at?: string
+          explanation?: string | null
+          gen_question_id?: string | null
+          hardness_level?: Database["public"]["Enums"]["hardness_level_enum"]
+          id?: string
+          marks?: number
+          msq_option1_answer?: boolean | null
+          msq_option2_answer?: boolean | null
+          msq_option3_answer?: boolean | null
+          msq_option4_answer?: boolean | null
+          option1?: string | null
+          option2?: string | null
+          option3?: string | null
+          option4?: string | null
+          question_text?: string | null
+          question_type?: Database["public"]["Enums"]["question_type_enum"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gen_question_versions_gen_question_id_fkey"
+            columns: ["gen_question_id"]
+            isOneToOne: false
+            referencedRelation: "gen_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gen_questions: {
         Row: {
           activity_id: string

@@ -8,6 +8,7 @@ const config: Config = {
     join(__dirname, "./**/*.{js,ts,jsx,tsx}"),
     join(__dirname, "../packages/ui/src/**/*.{js,ts,jsx,tsx}"),
     join(__dirname, "../packages/auth/src/**/*.{js,ts,jsx,tsx}"),
+    join(__dirname, "../apps/ai_paper_generator/src/**/*.{js,ts,jsx,tsx}"),
   ],
 };
 
