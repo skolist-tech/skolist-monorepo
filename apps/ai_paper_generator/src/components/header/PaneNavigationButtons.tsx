@@ -3,11 +3,9 @@ import { Button } from "@skolist/ui";
 import type { PaneType } from "../../types/pane";
 import { Sparkles, FileEdit, BarChart3 } from "lucide-react";
 import { cn } from "@skolist/utils";
-import { useUserCredits } from "../../hooks/useUserCredits";
 
 export function PaneNavigationButtons() {
   const { activePane, setActivePane } = usePaneContext();
-  const { credits } = useUserCredits();
 
   const panes: { type: PaneType; label: string; icon: React.ReactNode }[] = [
     {
@@ -39,11 +37,6 @@ export function PaneNavigationButtons() {
           </Button>
         ))}
       </div>
-      {credits !== null && (
-        <div className="flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
-          <span>Credits: {credits}</span>
-        </div>
-      )}
     </div>
   );
 }
