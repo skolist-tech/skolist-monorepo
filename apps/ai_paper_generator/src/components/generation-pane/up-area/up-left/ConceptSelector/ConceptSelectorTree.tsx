@@ -9,7 +9,6 @@ import "react-checkbox-tree/lib/react-checkbox-tree.css";
 import {
   ChevronRight,
   ChevronDown,
-  BookOpen,
   Lightbulb,
   Loader2,
   Search,
@@ -168,6 +167,37 @@ export function ConceptSelectorTree() {
           )}
         </div>
       </div>
+      <div className="mb-2 pl-6">
+        <label className="flex cursor-pointer items-center space-x-2">
+          <Checkbox
+            checked={
+              getAllNodeIds(displayNodes).length > 0 &&
+              getAllNodeIds(displayNodes).every((id) =>
+                selection.checked.includes(id)
+              )
+                ? true
+                : getAllNodeIds(displayNodes).some((id) =>
+                      selection.checked.includes(id)
+                    )
+                  ? "indeterminate"
+                  : false
+            }
+            onCheckedChange={() => {
+              const allIds = getAllNodeIds(displayNodes);
+              const isAllSelected = allIds.every((id) =>
+                selection.checked.includes(id)
+              );
+              const newChecked = isAllSelected
+                ? selection.checked.filter((id) => !allIds.includes(id))
+                : Array.from(new Set([...selection.checked, ...allIds]));
+              setChecked(newChecked);
+            }}
+          />
+          <span className="text-sm font-semibold text-[#16a34a]">
+            Select All Chapters
+          </span>
+        </label>
+      </div>
 
       {displayNodes.length === 0 ? (
         <div className="py-4 text-center text-sm text-muted-foreground">
@@ -195,8 +225,8 @@ export function ConceptSelectorTree() {
             expandOpen: <ChevronDown className="h-4 w-4" />,
             expandAll: null,
             collapseAll: null,
-            parentClose: <BookOpen className="h-4 w-4 text-blue-500" />,
-            parentOpen: <BookOpen className="h-4 w-4 text-blue-500" />,
+            parentClose: null,
+            parentOpen: null,
             leaf: <Lightbulb className="h-4 w-4 text-yellow-500" />,
           }}
           showNodeIcon={true}
@@ -219,9 +249,10 @@ export function ConceptSelectorTree() {
           display: flex;
           align-items: center;
           gap: 4px;
+          min-height: 24px; /* Fix height for consistent centering */
         }
         .concept-tree-container .rct-title {
-          padding-left: 4px;
+          padding-left: 2px;
         }
         .concept-tree-container .rct-collapse,
         .concept-tree-container .rct-checkbox {
@@ -229,7 +260,7 @@ export function ConceptSelectorTree() {
           cursor: pointer;
         }
         .concept-tree-container .rct-node-icon {
-          padding: 0 4px;
+          padding: 0 2px;
         }
         .concept-tree-container ol {
           padding-left: 20px;
