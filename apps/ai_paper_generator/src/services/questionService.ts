@@ -131,6 +131,29 @@ export async function updateQuestion(
 }
 
 /**
+ * Bulk update multiple questions with the same updates (single query)
+ */
+export async function bulkUpdateQuestions(
+  questionIds: string[],
+  updates: UpdateGeneratedQuestion
+): Promise<GeneratedQuestion[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from("gen_questions")
+    .update(updates)
+    .in("id", questionIds)
+    .select();
+
+  if (error) {
+    console.error("Failed to bulk update questions:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+/**
  * Delete a question
  */
 export async function deleteQuestion(questionId: string): Promise<void> {

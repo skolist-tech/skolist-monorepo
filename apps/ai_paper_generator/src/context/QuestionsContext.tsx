@@ -21,6 +21,7 @@ import type {
 import {
   fetchQuestions,
   updateQuestion,
+  bulkUpdateQuestions,
   createQuestion,
   deleteQuestion,
   type GeneratedQuestionWithConcepts,
@@ -270,31 +271,15 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
       if (!currentActivity?.id || ids.length === 0) return;
 
       try {
-        // Update All Questions
-        const updates = ids.map((id) => {
-          return {
-            id,
-            is_in_draft: true,
-          };
-        });
-
-        // Parallel update requests
-        await Promise.all(
-          updates.map((update) => updateQuestion(update.id, update))
-        );
+        // Single query to update all questions
+        await bulkUpdateQuestions(ids, { is_in_draft: true });
 
         // Optimistic update
+        const idSet = new Set(ids);
         setQuestions((prev) =>
-          prev.map((q) => {
-            const update = updates.find((u) => u.id === q.id);
-            if (update) {
-              return {
-                ...q,
-                is_in_draft: true,
-              };
-            }
-            return q;
-          })
+          prev.map((q) =>
+            idSet.has(q.id) ? { ...q, is_in_draft: true } : q
+          )
         );
       } catch (err) {
         console.error("Failed to bulk move to draft:", err);
