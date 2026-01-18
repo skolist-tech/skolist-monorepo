@@ -107,6 +107,68 @@ export async function fetchQuestions(
 }
 
 /**
+ * Fetch a single question by ID
+ */
+export async function fetchQuestion(
+  questionId: string
+): Promise<GeneratedQuestionWithConcepts | null> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from("gen_questions")
+    .select(
+      `
+      *,
+      gen_questions_concepts_maps (
+        concepts (
+          id,
+          name
+        )
+      ),
+      gen_images (
+        id,
+        gen_question_id,
+        svg_string,
+        img_url,
+        position,
+        created_at
+      )
+    `
+    )
+    .eq("id", questionId)
+    .single();
+
+  if (error) {
+    console.error("Failed to fetch question:", error);
+    return null;
+  }
+
+  // Transform to cleaner structure
+  const q = data as QuestionWithConceptsResponse;
+
+  // Destructure to remove the raw mapping properties matching the type
+  const {
+    gen_questions_concepts_maps: _maps,
+    gen_images: _imgs,
+    ...cleanQ
+  } = q;
+
+  return {
+    ...cleanQ,
+    concepts:
+      q.gen_questions_concepts_maps
+        ?.map((map) => map.concepts)
+        .filter(
+          (c): c is { id: string; name: string } =>
+            c !== null && c !== undefined
+        ) || [],
+    images: (q.gen_images || [])
+      .filter((img) => img.svg_string || img.img_url)
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
+  };
+}
+
+/**
  * Update a question
  */
 export async function updateQuestion(

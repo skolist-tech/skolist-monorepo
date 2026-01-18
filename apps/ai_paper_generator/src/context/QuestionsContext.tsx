@@ -20,6 +20,7 @@ import type {
 } from "@skolist/db";
 import {
   fetchQuestions,
+  fetchQuestion,
   updateQuestion,
   bulkUpdateQuestions,
   createQuestion,
@@ -230,6 +231,40 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           }
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "gen_questions_concepts_maps",
+        },
+        async (payload) => {
+          let questionId: string | undefined;
+
+          if (payload.eventType === "INSERT") {
+            questionId = (payload.new as any).gen_question_id;
+          } else if (payload.eventType === "DELETE") {
+            questionId = (payload.old as any).gen_question_id;
+          } else if (payload.eventType === "UPDATE") {
+            // For update, we might need to update both old and new questions if it moved,
+            // but usually concept maps are inserted/deleted.
+            // If relationship changes, it's safer to refresh.
+            questionId = (payload.new as any).gen_question_id;
+          }
+
+          if (questionId) {
+            // Fetch the fresh question with updated concepts
+            const updatedQuestion = await fetchQuestion(questionId);
+            if (updatedQuestion) {
+              setQuestions((prev) =>
+                prev.map((q) =>
+                  q.id === updatedQuestion.id ? updatedQuestion : q
+                )
+              );
+            }
+          }
+        }
+      )
       .subscribe();
 
     return () => {
@@ -277,9 +312,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
         // Optimistic update
         const idSet = new Set(ids);
         setQuestions((prev) =>
-          prev.map((q) =>
-            idSet.has(q.id) ? { ...q, is_in_draft: true } : q
-          )
+          prev.map((q) => (idSet.has(q.id) ? { ...q, is_in_draft: true } : q))
         );
       } catch (err) {
         console.error("Failed to bulk move to draft:", err);
