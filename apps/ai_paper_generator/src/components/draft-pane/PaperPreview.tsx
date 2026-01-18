@@ -324,7 +324,10 @@ export function PaperPreview() {
   const { draft, sections, instructions } = useDraftContext();
   const { questions } = useQuestionsContext();
   const { toast } = useToast();
-  const [scale, setScale] = useState<number>(0.9);
+  // Default 70% on mobile (<768px), 90% on desktop
+  const getInitialScale = () =>
+    typeof window !== "undefined" && window.innerWidth < 768 ? 0.7 : 0.9;
+  const [scale, setScale] = useState<number>(getInitialScale);
   const [previewMode, setPreviewMode] = useState<"paper" | "answer">("paper");
   const [pages, setPages] = useState<PageData[]>([]);
 
@@ -661,41 +664,45 @@ export function PaperPreview() {
   return (
     <div className="flex h-full flex-col bg-gray-100">
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b bg-white p-4 shadow-sm">
-        <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-white p-2 shadow-sm md:gap-4 md:p-4">
+        <div className="flex flex-wrap items-center gap-2 md:gap-4">
           {/* Mode Switcher */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             <Button
               variant={previewMode === "paper" ? "default" : "ghost"}
               size="sm"
               onClick={() => setPreviewMode("paper")}
-              className={cn("gap-2", previewMode === "paper" && "shadow-sm")}
+              className={cn(
+                "gap-1 px-2 md:gap-2 md:px-3",
+                previewMode === "paper" && "shadow-sm"
+              )}
             >
               <FileText className="h-4 w-4" />
-              Paper
+              <span className="hidden sm:inline">Paper</span>
             </Button>
             <Button
               variant={previewMode === "answer" ? "default" : "ghost"}
               size="sm"
               onClick={() => setPreviewMode("answer")}
-              className={cn("gap-2", previewMode === "answer" && "shadow-sm")}
+              className={cn(
+                "gap-1 px-2 md:gap-2 md:px-3",
+                previewMode === "answer" && "shadow-sm"
+              )}
             >
               <CheckSquare className="h-4 w-4" />
-              Answers
+              <span className="hidden sm:inline">Answers</span>
             </Button>
           </div>
 
-          {/* <span className="hidden text-sm font-semibold text-gray-600 sm:inline-block">
-            ({pages.length} Pages)
-          </span> */}
-
-          <div className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1">
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-1 rounded-md border bg-gray-50 px-1 py-1 md:gap-2 md:px-2">
             <button
               onClick={() => setScale((s) => Math.max(MIN_SCALE, s - 0.1))}
               className="p-1 hover:text-primary"
             >
               <ZoomOut className="h-4 w-4" />
             </button>
+            {/* Hide slider on mobile, show only on sm+ */}
             <input
               type="range"
               min={MIN_SCALE}
@@ -703,7 +710,7 @@ export function PaperPreview() {
               step={0.1}
               value={scale}
               onChange={(e) => setScale(parseFloat(e.target.value))}
-              className="w-24 accent-primary"
+              className="hidden w-16 accent-primary sm:block md:w-24"
             />
             <button
               onClick={() => setScale((s) => Math.min(MAX_SCALE, s + 0.1))}
@@ -711,12 +718,12 @@ export function PaperPreview() {
             >
               <ZoomIn className="h-4 w-4" />
             </button>
-            <span className="w-10 text-center text-xs font-medium">
+            <span className="w-8 text-center text-xs font-medium md:w-10">
               {Math.round(scale * 100)}%
             </span>
             <button
               onClick={() => {
-                setScale(0.9);
+                setScale(getInitialScale());
                 setTimeout(centerScroll, 100);
               }}
               className="ml-1 border-l p-1 text-gray-400 hover:text-gray-600"
@@ -725,11 +732,14 @@ export function PaperPreview() {
             </button>
           </div>
         </div>
+
+        {/* Print Button */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" className="gap-2">
-              Print / Download
-              <ChevronDown className="h-4 w-4" />
+            <Button size="sm" className="gap-1 px-2 md:gap-2 md:px-3">
+              <Printer className="h-4 w-4" />
+              <span className="hidden sm:inline">Print / Download</span>
+              <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -754,7 +764,10 @@ export function PaperPreview() {
       </div>
 
       {/* Preview Area */}
-      <div ref={previewContainerRef} className="flex-1 overflow-auto p-8">
+      <div
+        ref={previewContainerRef}
+        className="flex-1 overflow-auto p-4 md:p-8"
+      >
         <div className="mx-auto flex w-fit flex-col gap-8">
           <div
             style={{

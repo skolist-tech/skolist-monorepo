@@ -181,18 +181,20 @@ function SortableSection({
   const [isDisintegrating, setIsDisintegrating] = useState(false);
 
   // Pre-generate random particle data for disintegration animation
-  const particleData = useMemo(() => 
-    Array.from({ length: 80 }).map(() => ({
-      size: Math.random() * 8 + 3,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      duration: 0.8 + Math.random() * 0.8,
-      delay: Math.random() * 0.6,
-      xOffset: (Math.random() > 0.5 ? 1 : -1) * (30 + Math.random() * 80),
-      yOffset: -(80 + Math.random() * 150),
-      rotation: Math.random() * 360,
-    })),
-  []);
+  const particleData = useMemo(
+    () =>
+      Array.from({ length: 80 }).map(() => ({
+        size: Math.random() * 8 + 3,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        duration: 0.8 + Math.random() * 0.8,
+        delay: Math.random() * 0.6,
+        xOffset: (Math.random() > 0.5 ? 1 : -1) * (30 + Math.random() * 80),
+        yOffset: -(80 + Math.random() * 150),
+        rotation: Math.random() * 360,
+      })),
+    []
+  );
 
   const handleDeleteWithAnimation = async () => {
     setIsDeleteModalOpen(false);
@@ -342,9 +344,11 @@ function SortableSection({
       ref={setNodeRef}
       style={{
         ...style,
-        animation: isDisintegrating ? 'sectionDisintegrate 1.5s ease-out forwards' : undefined,
+        animation: isDisintegrating
+          ? "sectionDisintegrate 1.5s ease-out forwards"
+          : undefined,
       }}
-      className={`mb-4 rounded-lg border bg-card text-card-foreground shadow-sm relative ${isDisintegrating ? 'pointer-events-none' : ''}`}
+      className={`relative mb-4 rounded-lg border bg-card text-card-foreground shadow-sm ${isDisintegrating ? "pointer-events-none" : ""}`}
     >
       {/* Disintegration Animation Styles */}
       <style>{`
@@ -369,23 +373,25 @@ function SortableSection({
 
       {/* Disintegration Particle Animation Overlay */}
       {isDisintegrating && (
-        <div className="absolute inset-0 z-50 rounded-lg overflow-visible pointer-events-none">
+        <div className="pointer-events-none absolute inset-0 z-50 overflow-visible rounded-lg">
           {particleData.map((particle, i) => (
             <div
               key={i}
               className="absolute rounded-full"
-              style={{
-                width: `${particle.size}px`,
-                height: `${particle.size}px`,
-                left: `${particle.left}%`,
-                top: `${particle.top}%`,
-                backgroundColor: `hsl(${Math.random() * 30 + 10}, 10%, ${50 + Math.random() * 30}%)`,
-                opacity: 0,
-                '--x-offset': `${particle.xOffset}px`,
-                '--y-offset': `${particle.yOffset}px`,
-                '--rotation': `${particle.rotation}deg`,
-                animation: `sectionParticle-${i % 4} ${particle.duration}s ease-out ${particle.delay}s forwards`,
-              } as React.CSSProperties}
+              style={
+                {
+                  width: `${particle.size}px`,
+                  height: `${particle.size}px`,
+                  left: `${particle.left}%`,
+                  top: `${particle.top}%`,
+                  backgroundColor: `hsl(${Math.random() * 30 + 10}, 10%, ${50 + Math.random() * 30}%)`,
+                  opacity: 0,
+                  "--x-offset": `${particle.xOffset}px`,
+                  "--y-offset": `${particle.yOffset}px`,
+                  "--rotation": `${particle.rotation}deg`,
+                  animation: `sectionParticle-${i % 4} ${particle.duration}s ease-out ${particle.delay}s forwards`,
+                } as React.CSSProperties
+              }
             />
           ))}
           <style>{`
@@ -559,7 +565,10 @@ function SortableSection({
                           );
                           await refetchQuestions();
                         } catch (error) {
-                          console.error("Failed to regenerate question:", error);
+                          console.error(
+                            "Failed to regenerate question:",
+                            error
+                          );
                         }
                       }}
                       showReorder={true}
@@ -754,19 +763,22 @@ export function PaperStructure() {
         className="flex-1 overflow-auto bg-muted/10 px-4"
         onScroll={handleAutoClose}
       >
-        <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-6 flex items-center justify-between border-b bg-white px-4 py-2 shadow-sm">
+        <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex flex-wrap items-center justify-between gap-2 border-b bg-white px-3 py-2 shadow-sm md:mb-6 md:px-4">
           <span className="text-sm font-semibold">Sections</span>
-          <DraftProgress />
-          <div className="flex items-center gap-2">
+          <div className="hidden sm:block">
+            <DraftProgress />
+          </div>
+          <div className="flex items-center gap-1 md:gap-2">
             <AddCustomQuestionGlobal sections={sections} />
             <Button
               size="sm"
               variant="outline"
               onClick={() => addSection()}
-              className="h-7 text-xs"
+              className="h-7 px-2 text-xs md:px-3"
             >
               <Plus className="mr-1 h-3 w-3" />
-              Add Section
+              <span className="hidden sm:inline">Add Section</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </div>
         </div>

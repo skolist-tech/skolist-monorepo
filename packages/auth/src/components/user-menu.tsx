@@ -9,10 +9,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
   LogOut,
   User,
   Settings,
 } from "@skolist/ui";
+import { Moon, Sun, Monitor } from "lucide-react";
 import { useAuth } from "../context";
 
 interface UserMenuProps {
@@ -25,6 +30,19 @@ interface UserMenuProps {
    * Callback when settings is clicked
    */
   onSettingsClick?: () => void;
+  /**
+   * Show theme toggle in menu (for mobile)
+   * @default false
+   */
+  showThemeToggle?: boolean;
+  /**
+   * Current theme value
+   */
+  theme?: "light" | "dark" | "system";
+  /**
+   * Callback when theme changes
+   */
+  onThemeChange?: (theme: "light" | "dark" | "system") => void;
 }
 
 /**
@@ -34,6 +52,9 @@ interface UserMenuProps {
 export function UserMenu({
   showSettings = true,
   onSettingsClick,
+  showThemeToggle = false,
+  theme,
+  onThemeChange,
 }: UserMenuProps) {
   const { user, signOut } = useAuth();
 
@@ -86,6 +107,36 @@ export function UserMenu({
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </DropdownMenuItem>
+        )}
+        {showThemeToggle && onThemeChange && (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              {theme === "dark" ? (
+                <Moon className="mr-2 h-4 w-4" />
+              ) : theme === "light" ? (
+                <Sun className="mr-2 h-4 w-4" />
+              ) : (
+                <Monitor className="mr-2 h-4 w-4" />
+              )}
+              <span>Theme</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={() => onThemeChange("light")}>
+                  <Sun className="mr-2 h-4 w-4" />
+                  <span>Light</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onThemeChange("dark")}>
+                  <Moon className="mr-2 h-4 w-4" />
+                  <span>Dark</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onThemeChange("system")}>
+                  <Monitor className="mr-2 h-4 w-4" />
+                  <span>System</span>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>

@@ -136,29 +136,32 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
   }
 
   return (
-    <div className="sticky top-0 z-10 flex h-[calc(100vh-4rem)] flex-col p-6">
+    <div className="sticky top-0 z-10 flex h-[calc(100vh-4rem)] flex-col p-4 md:p-6">
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
         {/* Header */}
         <div
           id="generated-questions-header"
-          className="grid grid-cols-3 items-center border-b bg-card px-6 py-4"
+          className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-4 py-3 md:px-6 md:py-4"
         >
+          {/* Left: Select All + Title */}
           <div className="flex items-center gap-3">
             <Checkbox
               checked={isAllSelected}
               onCheckedChange={(checked) => handleSelectAll(checked === true)}
               aria-label="Select all questions"
             />
-            <h3 className="text-lg font-medium text-muted-foreground">
+            <h3 className="text-base font-medium text-muted-foreground md:text-lg">
               Generated Questions ({visibleQuestions.length})
             </h3>
           </div>
 
-          <div className="flex justify-center">
+          {/* Center: Draft Progress - hidden on very small screens */}
+          <div className="hidden sm:flex sm:flex-1 sm:justify-center">
             <DraftProgress />
           </div>
 
-          <div className="flex items-center justify-end gap-2">
+          {/* Right: Filter and action buttons */}
+          <div className="flex flex-wrap items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8 gap-2">
@@ -238,13 +241,20 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
               onClick={handleBulkMoveToDraft}
               disabled={selectedIds.size === 0 || isBulkMoving}
             >
-              Move To Draft {selectedIds.size > 0 && `(${selectedIds.size})`} →
+              <span className="hidden sm:inline">Move To Draft</span>
+              <span className="sm:hidden">Move</span>
+              {selectedIds.size > 0 && ` (${selectedIds.size})`} →
             </Button>
           </div>
         </div>
 
+        {/* Mobile Draft Progress - shown only on small screens */}
+        <div className="flex justify-center border-b bg-card px-4 py-2 sm:hidden">
+          <DraftProgress />
+        </div>
+
         {/* Scrollable Content */}
-        <div className="flex-1 space-y-4 overflow-y-auto p-6">
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
           {visibleQuestions.map((question) => (
             <GeneratedQuestionCard
               key={question.id}

@@ -224,15 +224,15 @@ export function UpArea({
   };
 
   return (
-    <div className="flex flex-col p-6">
-      <div className="grid grid-cols-1 gap-6 overflow-hidden rounded-xl border bg-card p-6 shadow-sm lg:grid-cols-2">
+    <div className="flex flex-col p-4 md:p-6">
+      <div className="grid grid-cols-1 gap-4 overflow-hidden rounded-xl border bg-card p-4 shadow-sm md:gap-6 md:p-6 lg:grid-cols-2">
         {/* Left Column: Selectors */}
-        <div className="h-full overflow-hidden lg:border-r lg:pr-6">
+        <div className="h-full overflow-hidden border-b pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-6">
           <UpLeftArea />
         </div>
 
         {/* Right Column: Auto-Decide & Question Types */}
-        <div className="h-full overflow-hidden">
+        <div className="h-full overflow-hidden pt-2 lg:pt-0">
           <UpRightArea
             questionCounts={questionCounts}
             onQuestionCountChange={handleQuestionCountChange}

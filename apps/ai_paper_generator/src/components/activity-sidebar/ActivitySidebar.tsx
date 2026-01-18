@@ -15,17 +15,22 @@ import {
   ArrowDownAZ,
   ArrowUpAZ,
   FileQuestion,
+  X,
 } from "lucide-react";
 import { subjectIcons } from "./thumbnail";
 
 interface ActivitySidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 export function ActivitySidebar({
   isCollapsed,
   onToggle,
+  isMobileOpen = false,
+  onMobileClose,
 }: ActivitySidebarProps) {
   const {
     activities,
@@ -81,13 +86,9 @@ export function ActivitySidebar({
     return FileQuestion;
   };
 
-  return (
-    <aside
-      className={cn(
-        "flex h-full flex-col border-r bg-card transition-all duration-300",
-        isCollapsed ? "w-[60px]" : "w-[260px]"
-      )}
-    >
+  // Sidebar content to render (shared between mobile and desktop)
+  const sidebarContent = (
+    <>
       {/* Header */}
       <div
         className={cn(
@@ -213,6 +214,52 @@ export function ActivitySidebar({
           </div>
         )}
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile backdrop overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={onMobileClose}
+        />
+      )}
+
+      {/* Mobile sidebar drawer */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r bg-card shadow-xl transition-transform duration-300 md:hidden",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Mobile header with close button */}
+        <div className="flex items-center justify-between border-b p-4">
+          <h2 className="text-lg font-bold text-foreground">Activities</h2>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            onClick={onMobileClose}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {sidebarContent}
+        </div>
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside
+        className={cn(
+          "hidden h-full flex-col border-r bg-card transition-all duration-300 md:flex",
+          isCollapsed ? "w-[60px]" : "w-[260px]"
+        )}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

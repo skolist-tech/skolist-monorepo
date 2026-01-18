@@ -4,8 +4,19 @@ import type { PaneType } from "../../types/pane";
 import { Sparkles, FileEdit, BarChart3 } from "lucide-react";
 import { cn } from "@skolist/utils";
 
-export function PaneNavigationButtons() {
+interface PaneNavigationButtonsProps {
+  onPaneChange?: () => void;
+}
+
+export function PaneNavigationButtons({
+  onPaneChange,
+}: PaneNavigationButtonsProps = {}) {
   const { activePane, setActivePane } = usePaneContext();
+
+  const handlePaneClick = (paneType: PaneType) => {
+    setActivePane(paneType);
+    onPaneChange?.();
+  };
 
   const panes: { type: PaneType; label: string; icon: React.ReactNode }[] = [
     {
@@ -23,13 +34,13 @@ export function PaneNavigationButtons() {
 
   return (
     <div className="flex items-center gap-6">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {panes.map((pane) => (
           <Button
             key={pane.type}
             variant={activePane === pane.type ? "default" : "ghost"}
             size="sm"
-            onClick={() => setActivePane(pane.type)}
+            onClick={() => handlePaneClick(pane.type)}
             className={cn("gap-2", activePane === pane.type && "shadow-sm")}
           >
             {pane.icon}
