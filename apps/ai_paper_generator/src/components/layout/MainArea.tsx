@@ -10,7 +10,7 @@ import { AnalysisPane } from "../analysis-pane/AnalysisPane";
 
 export function MainArea() {
   const { activePane } = usePaneContext();
-  const { currentActivity, createActivity, activities } = useActivityContext();
+  const { currentActivity, createActivity } = useActivityContext();
 
   if (!currentActivity) {
     return (
@@ -20,11 +20,7 @@ export function MainArea() {
           title="No Activity Selected"
           description="Select an activity from the sidebar to start working, or create a new one to begin generating question papers."
           action={
-            <Button
-              onClick={() =>
-                createActivity({ name: `Activity ${activities.length + 1}` })
-              }
-            >
+            <Button onClick={() => createActivity()}>
               Create New Activity
             </Button>
           }

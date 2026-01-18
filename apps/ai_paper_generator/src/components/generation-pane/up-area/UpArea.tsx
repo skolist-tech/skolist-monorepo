@@ -248,7 +248,7 @@ export function UpArea({
       // Rename activity if it has a default name
       if (
         currentActivity.name === "New Activity" ||
-        /^New Activity \(\d+\)$/.test(currentActivity.name)
+        /^New Activity \d+$/.test(currentActivity.name)
       ) {
         const className =
           schoolClasses.find((c) => c.id === selection.classId)?.name ||

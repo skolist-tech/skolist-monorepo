@@ -46,20 +46,7 @@ export function ActivitySidebar({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const handleCreateActivity = async () => {
-    let name = "New Activity";
-    let counter = 2;
-
-    // Check if "New Activity" exists
-    const baseExists = activities.some((a) => a.name === name);
-
-    if (baseExists) {
-      while (activities.some((a) => a.name === `New Activity (${counter})`)) {
-        counter++;
-      }
-      name = `New Activity (${counter})`;
-    }
-
-    await createActivity({ name });
+    await createActivity();
   };
 
   const filteredActivities = activities

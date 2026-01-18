@@ -25,7 +25,7 @@ interface ActivityContextValue {
   currentActivity: Activity | null;
   isLoading: boolean;
   error: string | null;
-  createActivity: (options: { name: string }) => Promise<Activity | null>;
+  createActivity: (options?: { name?: string }) => Promise<Activity | null>;
   selectActivity: (activityId: string) => void;
   deleteActivity: (activityId: string) => Promise<void>;
   renameActivity: (activityId: string, newName: string) => Promise<void>;
@@ -79,9 +79,18 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   }, [fetchActivities]);
 
   const createActivity = useCallback(
-    async (options: { name: string }): Promise<Activity | null> => {
+    async (options?: { name?: string }): Promise<Activity | null> => {
       try {
-        const newActivity = await createActivityService(options.name);
+        let name = options?.name;
+        if (!name) {
+          let i = 1;
+          while (activities.some((a) => a.name === `New Activity ${i}`)) {
+            i++;
+          }
+          name = `New Activity ${i}`;
+        }
+
+        const newActivity = await createActivityService(name);
         setActivities((prev) => [newActivity, ...prev]);
         setCurrentActivity(newActivity);
         return newActivity;
@@ -91,7 +100,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    []
+    [activities]
   );
 
   const selectActivity = useCallback(
