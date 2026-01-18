@@ -315,6 +315,33 @@ export function UpArea({
       return;
     }
 
+    if (totalQuestions < 1 || totalQuestions > 50) {
+      toast({
+        title: "Invalid Total Questions",
+        description: "Total Questions must be between 1 and 50.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (totalMarks < 1 || totalMarks > 500) {
+      toast({
+        title: "Invalid Total Marks",
+        description: "Total Marks must be between 1 and 500.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (totalTime < 1 || totalTime > 240) {
+      toast({
+        title: "Invalid Duration",
+        description: "Total Time must be between 1 and 240 minutes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Build question_types array with only non-zero counts
     const questionTypes = Object.entries(questionCounts)
       .filter(([, count]) => count > 0)

@@ -48,7 +48,7 @@ export function HardnessLevelSliders({
             value={sliderValue}
             max={100}
             step={1}
-            minStepsBetweenThumbs={5}
+            minStepsBetweenThumbs={0}
             onValueChange={handleSliderChange}
             className="w-full [&>span:first-child>span]:!bg-yellow-500 [&>span:first-child]:!bg-[linear-gradient(to_right,rgb(34,197,94)_0%,rgb(34,197,94)_var(--v1),transparent_var(--v1),transparent_var(--v2),rgb(249,115,22)_var(--v2),rgb(249,115,22)_100%)]"
             style={

@@ -25,7 +25,7 @@ export function TotalInputs({
           id="total-questions"
           type="number"
           min="1"
-          max="100"
+          max="50"
           value={totalQuestions || ""}
           onChange={(e) =>
             onTotalQuestionsChange(parseInt(e.target.value) || 0)
@@ -41,7 +41,7 @@ export function TotalInputs({
           id="total-marks"
           type="number"
           min="1"
-          max="1000"
+          max="500"
           value={totalMarks || ""}
           onChange={(e) => onTotalMarksChange(parseInt(e.target.value) || 0)}
           placeholder="0"
@@ -55,7 +55,7 @@ export function TotalInputs({
           id="total-time"
           type="number"
           min="1"
-          max="300"
+          max="240"
           value={totalTime || ""}
           onChange={(e) => onTotalTimeChange(parseInt(e.target.value) || 0)}
           placeholder="0"
