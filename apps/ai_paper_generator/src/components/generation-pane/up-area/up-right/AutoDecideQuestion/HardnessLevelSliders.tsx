@@ -33,10 +33,45 @@ export function HardnessLevelSliders({
     onLevelChange("hard", hard);
   };
 
-  const getCount = (percentage: number) => {
-    if (!totalQuestions) return 0;
-    return Math.round((percentage / 100) * totalQuestions);
+  // Calculate question counts properly summing to totalQuestions
+  const calculateCounts = () => {
+    if (!totalQuestions) return { easy: 0, medium: 0, hard: 0 };
+
+    const floatCounts = [
+      (levels.easy / 100) * totalQuestions,
+      (levels.medium / 100) * totalQuestions,
+      (levels.hard / 100) * totalQuestions,
+    ];
+
+    const floors = floatCounts.map(Math.floor);
+    const sumFloors = floors.reduce((a, b) => a + b, 0);
+    const remainder = totalQuestions - sumFloors;
+
+    // Distribute remainder to largest fractions
+    const fractions = floatCounts.map((val, idx) => ({
+      val: val - (floors[idx] ?? 0),
+      idx,
+    }));
+    fractions.sort((a, b) => b.val - a.val);
+
+    for (let i = 0; i < remainder; i++) {
+      const item = fractions[i % 3];
+      if (item) {
+        const current = floors[item.idx];
+        if (current !== undefined) {
+          floors[item.idx] = current + 1;
+        }
+      }
+    }
+
+    return {
+      easy: floors[0],
+      medium: floors[1],
+      hard: floors[2],
+    };
   };
+
+  const counts = calculateCounts();
 
   return (
     <div className="space-y-4">
@@ -73,7 +108,7 @@ export function HardnessLevelSliders({
               <span className="">Easy ({levels.easy}%)</span>
             </div>
             <span className="whitespace-nowrap text-muted-foreground">
-              {getCount(levels.easy)} Questions
+              {counts.easy} Questions
             </span>
           </div>
 
@@ -83,7 +118,7 @@ export function HardnessLevelSliders({
               <span className="">Medium ({levels.medium}%)</span>
             </div>
             <span className="whitespace-nowrap text-muted-foreground">
-              {getCount(levels.medium)} Questions
+              {counts.medium} Questions
             </span>
           </div>
 
@@ -93,7 +128,7 @@ export function HardnessLevelSliders({
               <span className="">Hard ({levels.hard}%)</span>
             </div>
             <span className="whitespace-nowrap text-muted-foreground">
-              {getCount(levels.hard)} Questions
+              {counts.hard} Questions
             </span>
           </div>
         </div>

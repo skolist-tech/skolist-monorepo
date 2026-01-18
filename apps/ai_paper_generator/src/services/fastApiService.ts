@@ -17,6 +17,8 @@ interface GenerateQuestionsPayload {
       hard: number;
     };
   };
+  // Optional custom instructions/prompt forwarded from the UI
+  instructions?: string;
 }
 
 export const fastApiService = {

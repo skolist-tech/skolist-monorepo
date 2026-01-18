@@ -413,6 +413,8 @@ export function UpArea({
           question_types: questionTypes,
           difficulty_distribution: hardnessLevels,
         },
+        // forward the custom prompt to backend as `instructions`
+        instructions: customPrompt || undefined,
       });
 
       toast({

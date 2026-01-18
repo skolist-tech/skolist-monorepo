@@ -27,9 +27,16 @@ export function TotalInputs({
           min="1"
           max="50"
           value={totalQuestions || ""}
-          onChange={(e) =>
-            onTotalQuestionsChange(parseInt(e.target.value) || 0)
-          }
+          onChange={(e) => {
+            const val = parseInt(e.target.value);
+            if (isNaN(val)) {
+              onTotalQuestionsChange(0);
+            } else if (val > 50) {
+              onTotalQuestionsChange(50);
+            } else {
+              onTotalQuestionsChange(val);
+            }
+          }}
           placeholder="0"
           className="[&::-webkit-inner-spin-button]:opacity-100 [&::-webkit-outer-spin-button]:opacity-100"
         />
@@ -43,7 +50,16 @@ export function TotalInputs({
           min="1"
           max="500"
           value={totalMarks || ""}
-          onChange={(e) => onTotalMarksChange(parseInt(e.target.value) || 0)}
+          onChange={(e) => {
+            const val = parseInt(e.target.value);
+            if (isNaN(val)) {
+              onTotalMarksChange(0);
+            } else if (val > 500) {
+              onTotalMarksChange(500);
+            } else {
+              onTotalMarksChange(val);
+            }
+          }}
           placeholder="0"
           className="[&::-webkit-inner-spin-button]:opacity-100 [&::-webkit-outer-spin-button]:opacity-100"
         />
@@ -57,7 +73,16 @@ export function TotalInputs({
           min="1"
           max="240"
           value={totalTime || ""}
-          onChange={(e) => onTotalTimeChange(parseInt(e.target.value) || 0)}
+          onChange={(e) => {
+            const val = parseInt(e.target.value);
+            if (isNaN(val)) {
+              onTotalTimeChange(0);
+            } else if (val > 240) {
+              onTotalTimeChange(240);
+            } else {
+              onTotalTimeChange(val);
+            }
+          }}
           placeholder="0"
           className="[&::-webkit-inner-spin-button]:opacity-100 [&::-webkit-outer-spin-button]:opacity-100"
         />

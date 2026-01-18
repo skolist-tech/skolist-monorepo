@@ -5,6 +5,7 @@ import { HardnessLevelSliders } from "./AutoDecideQuestion/HardnessLevelSliders"
 import { PromptBox } from "./AutoDecideQuestion/PromptBox";
 import { TotalInputs } from "./AutoDecideQuestion/TotalInputs";
 import type { QuestionType, HardnessLevel } from "@skolist/db";
+import { difficultySplitInt } from "../../../../utils/difficultySplit";
 // import { Separator } from "@skolist/ui";
 
 interface UpRightAreaProps {
@@ -29,7 +30,7 @@ interface UpRightAreaProps {
 export function UpRightArea({
   questionCounts,
   onQuestionCountChange,
-  onAutoDecide,
+  onAutoDecide: _onAutoDecide,
   onGenerate,
   isGenerating,
   hardnessLevels,
@@ -44,13 +45,15 @@ export function UpRightArea({
   onCustomPromptChange,
 }: UpRightAreaProps) {
   const handleAutoDecide = () => {
-    onAutoDecide({
-      totalQuestions,
-      totalMarks,
-      totalTime,
-      hardnessLevels,
-      customPrompt,
-    });
+    const split = difficultySplitInt(totalQuestions, totalMarks, totalTime);
+
+    // Batch updates? The parent `onHardnessLevelChange` takes one at a time.
+    // We should probably update them in sequence or check if we can update all at once.
+    // Looking at props: onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
+    // We execute them sequentially.
+    onHardnessLevelChange("easy", split.easy);
+    onHardnessLevelChange("medium", split.medium);
+    onHardnessLevelChange("hard", split.hard);
   };
 
   const isAutoDecideValid =

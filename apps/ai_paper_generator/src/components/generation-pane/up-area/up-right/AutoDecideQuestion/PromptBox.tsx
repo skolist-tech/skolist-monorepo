@@ -26,7 +26,10 @@ export function PromptBox({
           id="generation-prompt"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Custom Instructions (Optional) Example: &ldquo;Make 80% Objective and 20% Subjective&rdquo;"
+          placeholder="(Optional) Add any special requirements for the questions like:
+• Examples: NCERT-style wording, numercial/subjective questions only, include tricky ones.
+• Feel free to specify any constraints you need.
+"
           className={cn(
             "flex min-h-[110px] w-full rounded-md border border-input bg-background px-3 py-2",
             "text-sm ring-offset-background placeholder:text-muted-foreground",
