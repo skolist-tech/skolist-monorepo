@@ -112,7 +112,7 @@ function buildTreeNodes(
         value: `chapter:${chapter.id}`,
         label: chapter.name,
         icon: (
-          <span className="font-semibold text-green-600">
+          <span className="font-semibold pr-6 text-green-600">
             {chapter.position}.
           </span>
         ),
@@ -129,7 +129,7 @@ function buildTreeNodes(
               value: `topic:${topic.id}`,
               label: topic.name,
               icon: (
-                <span className="font-semibold text-amber-700 mr-2">
+                <span className="mr-6 font-semibold text-amber-700">
                   {chapter.position}.{topic.position}
                 </span>
               ),
