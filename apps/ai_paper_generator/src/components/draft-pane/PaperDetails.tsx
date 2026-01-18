@@ -2,8 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { Button, Input, Label, Textarea, Switch } from "@skolist/ui";
 import type { QgenDraft, UpdateQgenDraft } from "@skolist/db";
-import type { QgenInstruction } from "../../services/draftService";
+import {
+  getSignedLogoUrl,
+  type QgenInstruction,
+} from "../../services/draftService";
 import { useDraftContext } from "../../context/DraftContext";
+import { ConfirmDialog } from "../shared/ConfirmDialog";
 
 interface PaperDetailsProps {
   draft: QgenDraft;
@@ -119,11 +123,48 @@ export function PaperDetails({
   draft,
   updateDraftSettings,
 }: PaperDetailsProps) {
-  const { instructions, addInstruction, editInstruction, removeInstruction } =
-    useDraftContext();
+  const {
+    instructions,
+    addInstruction,
+    editInstruction,
+    removeInstruction,
+    refreshLogo,
+    logoVersion,
+  } = useDraftContext();
   const [newInstructionText, setNewInstructionText] = useState("");
   const [isAddingInstruction, setIsAddingInstruction] = useState(false);
   const [isLogoSectionOpen, setIsLogoSectionOpen] = useState(!!draft.logo_url);
+  const [logoSignedUrl, setLogoSignedUrl] = useState<string | null>(null);
+  const [isDeleteLogoModalOpen, setIsDeleteLogoModalOpen] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchLogo() {
+      if (draft.logo_url && draft.logo_url.startsWith("http")) {
+        // Legacy support if URL is stored
+        if (isMounted) setLogoSignedUrl(draft.logo_url);
+        return;
+      }
+      if (draft.logo_url) {
+        const url = await getSignedLogoUrl(draft.logo_url);
+        // Append a cache buster to the image request itself if needed,
+        // but typically a fresh Signed URL minifies caching issues.
+        // If Supabase returns the EXACT same URL for same path+expiry, we might need &t=...
+        // But let's just assume getting a fresh URL is enough for now.
+        // Actually, let's append a client-side timestamp to be safe for the <img> tag
+        // No, signed URLs have signatures. Modifying them invalidates them.
+        // However, Supabase Storage usually respects cache-control.
+
+        if (isMounted) setLogoSignedUrl(url);
+      } else {
+        if (isMounted) setLogoSignedUrl(null);
+      }
+    }
+    fetchLogo();
+    return () => {
+      isMounted = false;
+    };
+  }, [draft.logo_url, logoVersion]);
 
   useEffect(() => {
     if (draft.logo_url) setIsLogoSectionOpen(true);
@@ -153,6 +194,18 @@ export function PaperDetails({
       await editInstruction(id, text);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleDeleteLogo = async () => {
+    if (!draft.activity_id) return;
+    try {
+      const { deleteLogo } = await import("../../services/draftService");
+      await deleteLogo(draft.activity_id);
+      updateDraftSettings({ logo_url: null });
+      setIsDeleteLogoModalOpen(false);
+    } catch (err) {
+      console.error("Failed to delete logo", err);
     }
   };
 
@@ -290,10 +343,28 @@ export function PaperDetails({
             <div className="flex h-5 items-center">
               <Switch
                 checked={!!draft.logo_url || isLogoSectionOpen}
-                onCheckedChange={(checked) => {
+                onCheckedChange={async (checked) => {
                   setIsLogoSectionOpen(checked);
                   if (!checked) {
                     updateDraftSettings({ logo_url: null });
+                  } else {
+                    // Restore path ONLY if file exists
+                    if (draft.activity_id) {
+                      try {
+                        const { hasLogo } =
+                          await import("../../services/draftService");
+                        const exists = await hasLogo(draft.activity_id);
+
+                        if (exists) {
+                          updateDraftSettings({
+                            logo_url: `${draft.activity_id}/logo.png`,
+                          });
+                          refreshLogo();
+                        }
+                      } catch (err) {
+                        console.error("Failed to check logo existence", err);
+                      }
+                    }
                   }
                 }}
               />
@@ -303,19 +374,20 @@ export function PaperDetails({
           {(!!draft.logo_url || isLogoSectionOpen) && (
             <div className="mt-2">
               <div className="flex items-center gap-3">
-                {draft.logo_url ? (
+                {logoSignedUrl ? (
                   <div className="relative h-12 w-12 overflow-hidden rounded border bg-white p-1">
                     <img
-                      src={draft.logo_url}
+                      src={logoSignedUrl}
                       alt="Logo"
                       className="h-full w-full object-contain"
+                      onError={() => setLogoSignedUrl(null)}
                     />
                   </div>
                 ) : (
                   <div className="h-12 w-12 rounded border border-dashed bg-muted/20" />
                 )}
 
-                <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
                   <Label
                     htmlFor="logo-upload"
                     className="flex cursor-pointer items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700"
@@ -330,17 +402,20 @@ export function PaperDetails({
                     accept="image/*"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
-                      if (file) {
+                      if (file && draft.activity_id) {
                         try {
                           const { uploadLogo } =
                             await import("../../services/draftService");
-                          const { getCurrentUserId } =
-                            await import("../../services/supabase");
-                          const userId = await getCurrentUserId();
 
-                          const url = await uploadLogo(file, userId);
-                          if (url) {
-                            updateDraftSettings({ logo_url: url });
+                          // uploadLogo now returns { status, path }
+                          const { path } = await uploadLogo(
+                            file,
+                            draft.activity_id
+                          );
+
+                          if (path) {
+                            updateDraftSettings({ logo_url: path });
+                            refreshLogo();
                           }
                         } catch (err) {
                           console.error("Upload failed", err);
@@ -349,10 +424,31 @@ export function PaperDetails({
                       }
                     }}
                   />
+                  {/* Delete Button */}
+                  {draft.logo_url && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                      onClick={() => setIsDeleteLogoModalOpen(true)}
+                    >
+                      <Trash2 className="mr-1 h-3 w-3" />
+                      Remove
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
           )}
+          <ConfirmDialog
+            open={isDeleteLogoModalOpen}
+            onOpenChange={setIsDeleteLogoModalOpen}
+            title="Remove Logo"
+            description="Are you sure you want to remove the logo from this paper?"
+            onConfirm={handleDeleteLogo}
+            variant="destructive"
+            confirmLabel="Remove"
+          />
         </div>
       </div>
 

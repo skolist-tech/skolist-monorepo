@@ -37,7 +37,7 @@ import type {
   QgenDraft,
   UpdateQgenDraft,
   QgenDraftSection,
-  UpdateQgenDraftSection
+  UpdateQgenDraftSection,
 } from "@skolist/db";
 
 interface DraftContextValue {
@@ -47,10 +47,7 @@ interface DraftContextValue {
   isLoading: boolean;
   updateDraftSettings: (updates: UpdateQgenDraft) => Promise<void>;
   addSection: (name?: string) => Promise<void>;
-  editSection: (
-    id: string,
-    updates: UpdateQgenDraftSection
-  ) => Promise<void>;
+  editSection: (id: string, updates: UpdateQgenDraftSection) => Promise<void>;
   removeSection: (id: string) => Promise<void>;
   moveSection: (activeId: string, overId: string) => Promise<void>;
   moveQuestionToSection: (
@@ -63,6 +60,8 @@ interface DraftContextValue {
   addInstruction: (text: string) => Promise<void>;
   editInstruction: (id: string, text: string) => Promise<void>;
   removeInstruction: (id: string) => Promise<void>;
+  logoVersion: number;
+  refreshLogo: () => void;
 }
 
 const DraftContext = createContext<DraftContextValue | undefined>(undefined);
@@ -74,6 +73,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   const [sections, setSections] = useState<QgenDraftSection[]>([]);
   const [instructions, setInstructions] = useState<QgenInstruction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [logoVersion, setLogoVersion] = useState(0);
 
   // Initialize Draft and Sections
   const initDraft = useCallback(async () => {
@@ -113,6 +113,10 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     initDraft();
   }, [initDraft]);
+
+  const refreshLogo = useCallback(() => {
+    setLogoVersion((v) => v + 1);
+  }, []);
 
   const updateDraftSettings = useCallback(
     async (updates: UpdateQgenDraft) => {
@@ -348,6 +352,8 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       sections,
       instructions,
       isLoading,
+      logoVersion,
+      refreshLogo,
       updateDraftSettings,
       addSection,
       editSection,
@@ -363,6 +369,8 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       sections,
       instructions,
       isLoading,
+      logoVersion,
+      refreshLogo,
       updateDraftSettings,
       addSection,
       editSection,

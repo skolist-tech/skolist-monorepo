@@ -9,10 +9,8 @@ import type {
   QgenDraft,
   UpdateQgenDraft,
   QgenDraftSection,
-  UpdateQgenDraftSection
+  UpdateQgenDraftSection,
 } from "@skolist/db";
-
-;
 
 export type QgenInstruction = QgenDraftInstructionAndQgenDraft;
 
@@ -263,23 +261,105 @@ export async function deleteSection(sectionId: string): Promise<void> {
  */
 export async function uploadLogo(
   file: File,
-  userId: string
-): Promise<string | null> {
+  activityId: string
+): Promise<{ status: string; path: string; message?: string }> {
   const client = getClient();
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-  const filePath = `${fileName}`;
+  const filePath = `${activityId}/logo.png`;
 
+  // 1. Upload file (upsert: true to replace)
   const { error: uploadError } = await client.storage
-    .from("logo_bucket")
-    .upload(filePath, file);
+    .from("draft_logo_bucket")
+    .upload(filePath, file, {
+      upsert: true,
+    });
 
   if (uploadError) {
     console.error("Error uploading logo:", uploadError);
     throw uploadError;
   }
 
-  const { data } = client.storage.from("logo_bucket").getPublicUrl(filePath);
+  // 2. Update qgen_drafts table
+  const { error: dbError } = await client
+    .from("qgen_drafts")
+    .update({ logo_url: filePath })
+    .eq("activity_id", activityId);
 
-  return data.publicUrl;
+  if (dbError) {
+    console.error("Error updating draft logo_url:", dbError);
+    throw dbError;
+  }
+
+  return { status: "success", path: filePath };
+}
+
+/**
+ * Delete logo from storage
+ */
+export async function deleteLogo(activityId: string): Promise<void> {
+  const client = getClient();
+  const filePath = `${activityId}/logo.png`;
+
+  // 1. Remove from storage
+  const { error: removeError } = await client.storage
+    .from("draft_logo_bucket")
+    .remove([filePath]);
+
+  if (removeError) {
+    console.error("Error deleting logo:", removeError);
+    throw removeError;
+  }
+
+  // 2. Update qgen_drafts table
+  const { error: dbError } = await client
+    .from("qgen_drafts")
+    .update({ logo_url: null })
+    .eq("activity_id", activityId);
+
+  if (dbError) {
+    console.error("Error updating draft logo_url:", dbError);
+    throw dbError;
+  }
+}
+
+/**
+ * Get signed URL for logo (valid for 1 hour)
+ */
+export async function getSignedLogoUrl(
+  path: string | null
+): Promise<string | null> {
+  if (!path) return null;
+  const client = getClient();
+  const { data, error } = await client.storage
+    .from("draft_logo_bucket")
+    .createSignedUrl(path, 3600); // 1 hour
+
+  if (error) {
+    console.error("Error creating signed URL:", error);
+    return null;
+  }
+  return data.signedUrl;
+}
+
+/**
+ * Check if logo exists in storage
+ */
+export async function hasLogo(activityId: string): Promise<boolean> {
+  const client = getClient();
+  const filePath = "logo.png";
+
+  // List files in the folder
+  const { data, error } = await client.storage
+    .from("draft_logo_bucket")
+    .list(activityId, {
+      limit: 1,
+      search: filePath,
+    });
+
+  if (error) {
+    console.error("Error checking logo existence:", error);
+    return false;
+  }
+
+  // Check if file exists in the list
+  return data && data.length > 0 && data[0]!.name === "logo.png";
 }
