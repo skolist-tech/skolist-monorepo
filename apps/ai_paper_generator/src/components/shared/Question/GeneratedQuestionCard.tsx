@@ -62,7 +62,11 @@ interface GeneratedQuestionCardProps {
   isSelected?: boolean;
   onSelect?: (selected: boolean) => void;
   onAutoCorrect?: (questionId: string) => Promise<void>; // Optional override for auto-correct (useful for Storybook)
-  onRegenerateWithPrompt?: (questionId: string, prompt: string, files: File[]) => Promise<void>; // Optional override for regenerate with prompt (useful for Storybook)
+  onRegenerateWithPrompt?: (
+    questionId: string,
+    prompt: string,
+    files: File[]
+  ) => Promise<void>; // Optional override for regenerate with prompt (useful for Storybook)
 }
 
 export function GeneratedQuestionCard({
@@ -109,7 +113,10 @@ export function GeneratedQuestionCard({
   // Regenerate animation states
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isRegenerateReturning, setIsRegenerateReturning] = useState(false);
-  const [regenerateOrigin, setRegenerateOrigin] = useState({ top: 12, right: 12 });
+  const [regenerateOrigin, setRegenerateOrigin] = useState({
+    top: 12,
+    right: 12,
+  });
 
   // Chat prompt animation states
   const [isChatPromptAnimating, setIsChatPromptAnimating] = useState(false);
@@ -121,7 +128,7 @@ export function GeneratedQuestionCard({
   useEffect(() => {
     // Only trigger if animation is running AND question has actually changed from when animation started
     if (
-      isChatPromptAnimating && 
+      isChatPromptAnimating &&
       questionTextAtAnimationStart.current !== null &&
       question.question_text !== questionTextAtAnimationStart.current
     ) {
@@ -136,24 +143,28 @@ export function GeneratedQuestionCard({
   }, [question.question_text, isChatPromptAnimating]);
 
   // Slide animation states
-  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(
+    null
+  );
 
   // Disintegration animation state for delete
   const [isDisintegrating, setIsDisintegrating] = useState(false);
 
   // Pre-generate random particle data for disintegration animation
-  const particleData = useMemo(() => 
-    Array.from({ length: 60 }).map(() => ({
-      size: Math.random() * 6 + 2,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      duration: 0.8 + Math.random() * 0.7,
-      delay: Math.random() * 0.5,
-      xOffset: (Math.random() > 0.5 ? 1 : -1) * (20 + Math.random() * 60),
-      yOffset: -(60 + Math.random() * 120),
-      rotation: Math.random() * 360,
-    })),
-  []);
+  const particleData = useMemo(
+    () =>
+      Array.from({ length: 60 }).map(() => ({
+        size: Math.random() * 6 + 2,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        duration: 0.8 + Math.random() * 0.7,
+        delay: Math.random() * 0.5,
+        xOffset: (Math.random() > 0.5 ? 1 : -1) * (20 + Math.random() * 60),
+        yOffset: -(60 + Math.random() * 120),
+        rotation: Math.random() * 360,
+      })),
+    []
+  );
 
   const handleDeleteWithAnimation = async () => {
     setIsDeleteModalOpen(false);
@@ -181,12 +192,12 @@ export function GeneratedQuestionCard({
     if (onRegenerate && (prompt.trim() || attachedFiles.length > 0)) {
       // Close the popover first
       setIsRegenerateOpen(false);
-      
+
       try {
         // Store current question text to detect when it changes
         questionTextAtAnimationStart.current = question.question_text;
         setIsChatPromptAnimating(true);
-        
+
         // If there's an override for regenerate with prompt (Storybook), call it
         if (onRegenerateWithPrompt) {
           await onRegenerateWithPrompt(question.id, prompt, attachedFiles);
@@ -324,14 +335,14 @@ export function GeneratedQuestionCard({
     try {
       setIsRegenerating(true);
       setIsRegenerateReturning(false);
-      
+
       // Call the regenerate API or use the optional override
       if (onDirectRegenerate) {
         await Promise.resolve(onDirectRegenerate());
       } else {
         await fastApiService.regenerateQuestion(question.id);
       }
-      
+
       // Trigger return animation
       setIsRegenerateReturning(true);
       // Wait for return animation to complete before hiding
@@ -346,7 +357,7 @@ export function GeneratedQuestionCard({
   };
 
   const handleMoveToDraft = async () => {
-    setSlideDirection('right');
+    setSlideDirection("right");
     // Wait for animation to complete
     await new Promise((resolve) => setTimeout(resolve, 400));
     onMoveToDraft(question.id);
@@ -355,7 +366,7 @@ export function GeneratedQuestionCard({
 
   const handleRemoveFromDraft = async () => {
     if (!onRemoveFromDraft) return;
-    setSlideDirection('left');
+    setSlideDirection("left");
     // Wait for animation to complete
     await new Promise((resolve) => setTimeout(resolve, 400));
     onRemoveFromDraft(question.id);
@@ -555,15 +566,16 @@ export function GeneratedQuestionCard({
       ref={cardRef}
       className={`group relative rounded-lg border bg-background p-4 shadow-sm transition-all hover:shadow-md ${
         isSelected ? "border-primary ring-2 ring-primary" : ""
-      } ${slideDirection ? 'pointer-events-none' : ''} ${isDisintegrating ? 'pointer-events-none' : ''}`}
+      } ${slideDirection ? "pointer-events-none" : ""} ${isDisintegrating ? "pointer-events-none" : ""}`}
       style={{
-        animation: slideDirection === 'right' 
-          ? 'slideOutRight 0.4s ease-in forwards' 
-          : slideDirection === 'left' 
-            ? 'slideOutLeft 0.4s ease-in forwards' 
-            : isDisintegrating
-              ? 'disintegrate 1.5s ease-out forwards'
-              : 'none',
+        animation:
+          slideDirection === "right"
+            ? "slideOutRight 0.4s ease-in forwards"
+            : slideDirection === "left"
+              ? "slideOutLeft 0.4s ease-in forwards"
+              : isDisintegrating
+                ? "disintegrate 1.5s ease-out forwards"
+                : "none",
       }}
     >
       {/* Slide Animation Styles */}
@@ -605,28 +617,40 @@ export function GeneratedQuestionCard({
             transform: scale(0.95) translateY(-20px);
           }
         }
+        @keyframes delayedFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes dots {
+          0% { content: ''; }
+          25% { content: '.'; }
+          50% { content: '..'; }
+          75% { content: '...'; }
+        }
       `}</style>
 
       {/* Disintegration Particle Animation Overlay */}
       {isDisintegrating && (
-        <div className="absolute inset-0 z-50 rounded-lg overflow-visible pointer-events-none">
+        <div className="pointer-events-none absolute inset-0 z-50 overflow-visible rounded-lg">
           {/* Generate multiple particles */}
           {particleData.map((particle, i) => (
             <div
               key={i}
               className="absolute rounded-full"
-              style={{
-                width: `${particle.size}px`,
-                height: `${particle.size}px`,
-                left: `${particle.left}%`,
-                top: `${particle.top}%`,
-                backgroundColor: `hsl(${Math.random() * 30 + 10}, 10%, ${50 + Math.random() * 30}%)`,
-                opacity: 0,
-                '--x-offset': `${particle.xOffset}px`,
-                '--y-offset': `${particle.yOffset}px`,
-                '--rotation': `${particle.rotation}deg`,
-                animation: `particle-float-${i % 4} ${particle.duration}s ease-out ${particle.delay}s forwards`,
-              } as React.CSSProperties}
+              style={
+                {
+                  width: `${particle.size}px`,
+                  height: `${particle.size}px`,
+                  left: `${particle.left}%`,
+                  top: `${particle.top}%`,
+                  backgroundColor: `hsl(${Math.random() * 30 + 10}, 10%, ${50 + Math.random() * 30}%)`,
+                  opacity: 0,
+                  "--x-offset": `${particle.xOffset}px`,
+                  "--y-offset": `${particle.yOffset}px`,
+                  "--rotation": `${particle.rotation}deg`,
+                  animation: `particle-float-${i % 4} ${particle.duration}s ease-out ${particle.delay}s forwards`,
+                } as React.CSSProperties
+              }
             />
           ))}
           <style>{`
@@ -686,51 +710,69 @@ export function GeneratedQuestionCard({
 
       {/* Auto-Correct Animation Overlay */}
       {isAutoCorrecting && (
-        <div 
-          className="absolute inset-0 z-50 rounded-lg overflow-hidden"
-          style={{
-            '--origin-top': `${sparkleOrigin.top}px`,
-            '--origin-right': `${sparkleOrigin.right}px`,
-          } as React.CSSProperties}
+        <div
+          className="absolute inset-0 z-50 overflow-hidden rounded-lg"
+          style={
+            {
+              "--origin-top": `${sparkleOrigin.top}px`,
+              "--origin-right": `${sparkleOrigin.right}px`,
+            } as React.CSSProperties
+          }
         >
+          {/* Text Below Icon */}
+          {!isReturning && (
+            <div
+              className="absolute left-1/2 z-20 -translate-x-1/2 text-center"
+              style={{
+                top: "calc(50% + 40px)",
+                animation: "delayedFadeIn 0.3s ease-out 0.8s forwards",
+                opacity: 0,
+              }}
+            >
+              <span className="text-lg font-bold text-foreground">
+                We Are correcting
+              </span>
+              <span className="text-lg font-bold text-foreground after:inline-block after:min-w-[1.5em] after:animate-[dots_2s_infinite_steps(1)] after:text-left after:content-['']" />
+            </div>
+          )}
           {/* Glassy blur overlay with pulsing animation */}
-          <div 
+          <div
             className="absolute inset-0 bg-background/60"
             style={{
-              animation: isReturning 
-                ? 'blurFadeOut 0.8s ease-out forwards' 
-                : 'blurPulse 2s ease-in-out infinite',
-              animationDelay: isReturning ? '0s' : '0.8s',
+              animation: isReturning
+                ? "blurFadeOut 0.8s ease-out forwards"
+                : "blurPulse 2s ease-in-out infinite",
+              animationDelay: isReturning ? "0s" : "0.8s",
             }}
           />
           {/* Sparkle with parabolic trajectory */}
-          <div 
+          <div
             className="absolute z-10"
             style={{
               top: `${sparkleOrigin.top}px`,
               right: `${sparkleOrigin.right}px`,
-              animation: isReturning 
-                ? 'sparkleReturn 0.8s ease-in forwards' 
-                : 'sparkleTrajectory 0.8s ease-out forwards',
+              animation: isReturning
+                ? "sparkleReturn 0.8s ease-in forwards"
+                : "sparkleTrajectory 0.8s ease-out forwards",
             }}
           >
             <div
               style={{
-                animation: isReturning 
-                  ? 'none' 
-                  : 'sparklePulse 1.5s ease-in-out infinite',
-                animationDelay: '0.8s',
+                animation: isReturning
+                  ? "none"
+                  : "sparklePulse 1.5s ease-in-out infinite",
+                animationDelay: "0.8s",
               }}
             >
-              <Sparkles 
-                className="text-yellow-400 drop-shadow-lg" 
+              <Sparkles
+                className="text-yellow-400 drop-shadow-lg"
                 style={{
-                  width: isReturning ? '64px' : '20px',
-                  height: isReturning ? '64px' : '20px',
-                  filter: 'drop-shadow(0 0 10px rgba(250, 204, 21, 0.5))',
-                  animation: isReturning 
-                    ? 'sparkleShrink 0.8s ease-in forwards' 
-                    : 'sparkleGrow 0.8s ease-out forwards',
+                  width: isReturning ? "64px" : "20px",
+                  height: isReturning ? "64px" : "20px",
+                  filter: "drop-shadow(0 0 10px rgba(250, 204, 21, 0.5))",
+                  animation: isReturning
+                    ? "sparkleShrink 0.8s ease-in forwards"
+                    : "sparkleGrow 0.8s ease-out forwards",
                 }}
               />
             </div>
@@ -829,51 +871,69 @@ export function GeneratedQuestionCard({
 
       {/* Regenerate Animation Overlay */}
       {isRegenerating && (
-        <div 
-          className="absolute inset-0 z-50 rounded-lg overflow-hidden"
-          style={{
-            '--regen-origin-top': `${regenerateOrigin.top}px`,
-            '--regen-origin-right': `${regenerateOrigin.right}px`,
-          } as React.CSSProperties}
+        <div
+          className="absolute inset-0 z-50 overflow-hidden rounded-lg"
+          style={
+            {
+              "--regen-origin-top": `${regenerateOrigin.top}px`,
+              "--regen-origin-right": `${regenerateOrigin.right}px`,
+            } as React.CSSProperties
+          }
         >
+          {/* Text Below Icon */}
+          {!isRegenerateReturning && (
+            <div
+              className="absolute left-1/2 z-20 -translate-x-1/2 text-center"
+              style={{
+                top: "calc(50% + 40px)",
+                animation: "delayedFadeIn 0.3s ease-out 0.8s forwards",
+                opacity: 0,
+              }}
+            >
+              <span className="text-lg font-bold text-foreground">
+                Regenerating
+              </span>
+              <span className="text-lg font-bold text-foreground after:inline-block after:min-w-[1.5em] after:animate-[dots_2s_infinite_steps(1)] after:text-left after:content-['']" />
+            </div>
+          )}
           {/* Glassy blur overlay with pulsing animation */}
-          <div 
+          <div
             className="absolute inset-0 bg-background/60"
             style={{
-              animation: isRegenerateReturning 
-                ? 'regenBlurFadeOut 0.8s ease-out forwards' 
-                : 'regenBlurPulse 2s ease-in-out infinite',
-              animationDelay: isRegenerateReturning ? '0s' : '0.8s',
+              animation: isRegenerateReturning
+                ? "regenBlurFadeOut 0.8s ease-out forwards"
+                : "regenBlurPulse 2s ease-in-out infinite",
+              animationDelay: isRegenerateReturning ? "0s" : "0.8s",
             }}
           />
           {/* RefreshCw with parabolic trajectory and rotation */}
-          <div 
+          <div
             className="absolute z-10"
             style={{
               top: `${regenerateOrigin.top}px`,
               right: `${regenerateOrigin.right}px`,
-              animation: isRegenerateReturning 
-                ? 'regenReturn 0.8s ease-in forwards' 
-                : 'regenTrajectory 0.8s ease-out forwards',
+              animation: isRegenerateReturning
+                ? "regenReturn 0.8s ease-in forwards"
+                : "regenTrajectory 0.8s ease-out forwards",
             }}
           >
             <div
               style={{
-                animation: isRegenerateReturning 
-                  ? 'none' 
-                  : 'regenSpin 1s linear infinite',
-                animationDelay: '0.8s',
+                animation: isRegenerateReturning
+                  ? "none"
+                  : "regenSpin 1s linear infinite",
+                animationDelay: "0.8s",
               }}
             >
-              <RefreshCw 
-                className="text-primary drop-shadow-lg" 
+              <RefreshCw
+                className="text-primary drop-shadow-lg"
                 style={{
-                  width: isRegenerateReturning ? '64px' : '16px',
-                  height: isRegenerateReturning ? '64px' : '16px',
-                  filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))',
-                  animation: isRegenerateReturning 
-                    ? 'regenShrink 0.8s ease-in forwards' 
-                    : 'regenGrow 0.8s ease-out forwards',
+                  width: isRegenerateReturning ? "64px" : "16px",
+                  height: isRegenerateReturning ? "64px" : "16px",
+                  filter: "drop-shadow(0 0 10px rgba(59, 130, 246, 0.5))",
+                  animation: isRegenerateReturning
+                    ? "regenShrink 0.8s ease-in forwards"
+                    : "regenGrow 0.8s ease-out forwards",
                 }}
               />
             </div>
@@ -969,27 +1029,42 @@ export function GeneratedQuestionCard({
 
       {/* Chat Prompt Animation Overlay with Lottie */}
       {isChatPromptAnimating && (
-        <div className="absolute inset-0 z-50 rounded-lg overflow-hidden">
+        <div className="absolute inset-0 z-50 overflow-hidden rounded-lg">
+          {/* Text Below Icon */}
+          <div
+            className="absolute left-1/2 z-20 -translate-x-1/2 text-center"
+            style={{
+              top: "calc(50% + 40px)",
+              animation: "delayedFadeIn 0.3s ease-out 0.5s forwards",
+              opacity: 0,
+            }}
+          >
+            <span className="text-lg font-bold text-foreground">
+              Regenerating with prompt
+            </span>
+            <span className="text-lg font-bold text-foreground after:inline-block after:min-w-[1.5em] after:animate-[dots_2s_infinite_steps(1)] after:text-left after:content-['']" />
+          </div>
+
           {/* Glassy blur overlay with pulsing animation */}
-          <div 
+          <div
             className="absolute inset-0 bg-background/60 backdrop-blur-sm"
             style={{
-              animation: 'chatBlurPulse 2s ease-in-out infinite',
+              animation: "chatBlurPulse 2s ease-in-out infinite",
             }}
           />
           {/* Lottie animation centered */}
-          <div className="absolute inset-0 flex items-center justify-center z-10">
-            <div 
-              className="w-24 h-24"
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+            <div
+              className="h-24 w-24"
               style={{
-                animation: 'lottieScaleIn 0.3s ease-out forwards',
+                animation: "lottieScaleIn 0.3s ease-out forwards",
               }}
             >
               <Lottie
                 animationData={chatAnimationData}
                 loop={true}
                 autoplay={true}
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: "100%", height: "100%" }}
               />
             </div>
           </div>
@@ -1045,7 +1120,9 @@ export function GeneratedQuestionCard({
           title="Auto-Correct Question"
           disabled={isAutoCorrecting}
         >
-          <Sparkles className={`h-5 w-5 text-yellow-400 ${isAutoCorrecting ? 'opacity-50' : ''}`} />
+          <Sparkles
+            className={`h-5 w-5 text-yellow-400 ${isAutoCorrecting ? "opacity-50" : ""}`}
+          />
         </Button>
         <Button
           size="icon"
@@ -1068,7 +1145,9 @@ export function GeneratedQuestionCard({
           title="Regenerate Question"
           disabled={isRegenerating}
         >
-          <RefreshCw className={`h-4 w-4 text-muted-foreground hover:text-primary ${isRegenerating ? 'opacity-50' : ''}`} />
+          <RefreshCw
+            className={`h-4 w-4 text-muted-foreground hover:text-primary ${isRegenerating ? "opacity-50" : ""}`}
+          />
         </Button>
 
         <Popover open={isRegenerateOpen} onOpenChange={setIsRegenerateOpen}>
@@ -1079,7 +1158,10 @@ export function GeneratedQuestionCard({
               title="Regenerate with Prompt"
               disabled={!onRegenerate || isChatPromptAnimating}
             >
-              <MessageSquare className={`h-4 w-4 text-muted-foreground hover:text-primary ${isChatPromptAnimating ? 'opacity-50' : ''}`} style={{ transform: 'scaleX(-1)' }} />
+              <MessageSquare
+                className={`h-4 w-4 text-muted-foreground hover:text-primary ${isChatPromptAnimating ? "opacity-50" : ""}`}
+                style={{ transform: "scaleX(-1)" }}
+              />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-96 p-3" align="end">
@@ -1173,7 +1255,9 @@ export function GeneratedQuestionCard({
             title="Remove from Draft"
             disabled={slideDirection !== null}
           >
-            <ArrowLeft className={`h-4 w-4 text-red-500 hover:text-red-700 ${slideDirection ? 'opacity-50' : ''}`} />
+            <ArrowLeft
+              className={`h-4 w-4 text-red-500 hover:text-red-700 ${slideDirection ? "opacity-50" : ""}`}
+            />
           </Button>
         ) : (
           <Button
@@ -1184,7 +1268,7 @@ export function GeneratedQuestionCard({
             disabled={slideDirection !== null}
           >
             <ArrowRight
-              className={`h-4 w-4 text-orange-500 hover:text-orange-700 ${slideDirection ? 'opacity-50' : ''}`}
+              className={`h-4 w-4 text-orange-500 hover:text-orange-700 ${slideDirection ? "opacity-50" : ""}`}
               strokeWidth={3}
             />
           </Button>

@@ -731,12 +731,18 @@ export function PaperStructure() {
           }
         }}
       >
-        <div className="flex items-center justify-between">
+        <div
+          className="flex cursor-pointer items-center justify-between"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
           <h2 className="text-sm font-semibold">Paper Details</h2>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
             className="h-9 w-9 border p-0"
           >
             {isExpanded ? (
