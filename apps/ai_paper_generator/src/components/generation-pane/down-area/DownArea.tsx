@@ -127,7 +127,7 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading && questions.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center p-6 text-muted-foreground">
         Loading questions...

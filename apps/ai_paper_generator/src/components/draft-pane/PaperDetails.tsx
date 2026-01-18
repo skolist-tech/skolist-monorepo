@@ -285,7 +285,7 @@ export function PaperDetails({
         <div className="pt-2">
           <div className="flex items-center justify-between">
             <Label className="text-xs text-muted-foreground">
-              Show Logo on Paper
+              SHOW LOGO ON PAPER
             </Label>
             <div className="flex h-5 items-center">
               <Switch
