@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import type { AuthError, Provider } from "@supabase/supabase-js";
@@ -61,7 +62,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const supabase = getSupabaseClient();
+  // Memoize supabase client to ensure stable reference
+  const supabase = useMemo(() => getSupabaseClient(), []);
 
   // Initialize auth state
   useEffect(() => {
