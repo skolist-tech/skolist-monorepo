@@ -580,6 +580,42 @@ export type Database = {
           },
         ]
       }
+      generation_pane_concepts_maps: {
+        Row: {
+          concept_id: string
+          created_at: string
+          id: string
+          qgen_generation_pane_id: string
+        }
+        Insert: {
+          concept_id: string
+          created_at?: string
+          id?: string
+          qgen_generation_pane_id: string
+        }
+        Update: {
+          concept_id?: string
+          created_at?: string
+          id?: string
+          qgen_generation_pane_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_pane_concepts_maps_concept_id_fkey"
+            columns: ["concept_id"]
+            isOneToOne: false
+            referencedRelation: "concepts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generation_pane_concepts_maps_qgen_generation_pane_id_fkey"
+            columns: ["qgen_generation_pane_id"]
+            isOneToOne: false
+            referencedRelation: "qgen_generation_panes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orgs: {
         Row: {
           address: string | null
@@ -821,7 +857,7 @@ export type Database = {
           {
             foreignKeyName: "qgen_generation_panes_activity_id_fkey"
             columns: ["activity_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "activities"
             referencedColumns: ["id"]
           },

@@ -15,6 +15,8 @@ import { upsertActivityConcepts } from "../../../services/activityService";
 import {
   fetchGenerationPaneStatus,
   upsertGenerationPaneStatus,
+  fetchGenerationPaneConcepts,
+  replaceGenerationPaneConcepts,
 } from "../../../services/generationPaneService";
 import { useToast } from "@skolist/ui";
 
@@ -57,6 +59,7 @@ export function UpArea({
     subjects,
     selectSchoolClass,
     selectSubject,
+    setSelectedConcepts,
   } = useConceptContext();
   const { toast } = useToast();
 
@@ -72,7 +75,14 @@ export function UpArea({
   const [totalTime, setTotalTime] = useState(60);
   const [customPrompt, setCustomPrompt] = useState("");
 
-  // Load saved generation pane status when activity changes
+  // State for staged restoration of dependent data (Class -> Subject -> Tree)
+  const [pendingRestoration, setPendingRestoration] = useState<{
+    subjectId: string | null;
+    conceptIds: string[];
+    isSubjectRestored: boolean; // Flag to prevent enforcing subject restoration repeatedly
+  } | null>(null);
+
+  // Effect 1: Load saved status and restore independent state + Class
   useEffect(() => {
     if (!currentActivity?.id) return;
 
@@ -122,29 +132,113 @@ export function UpArea({
             );
           }
 
-          // Restore class and subject selection
+          // Restore class immediately
           if (savedStatus.school_class_id) {
             selectSchoolClass(savedStatus.school_class_id);
           }
-          if (savedStatus.subject_id) {
-            // We need to wait for subjects to load after class selection
-            // Using a timeout to ensure the class selection has propagated
-            setTimeout(() => {
-              if (savedStatus.subject_id) {
-                selectSubject(savedStatus.subject_id);
-              }
-            }, 100);
+
+          // Prepare for staged restoration of Subject and Concepts
+          let conceptIds: string[] = [];
+          try {
+            conceptIds = await fetchGenerationPaneConcepts(savedStatus.id);
+          } catch (e) {
+            console.error("Failed to load saved concepts:", e);
           }
+
+          setPendingRestoration({
+            subjectId: savedStatus.subject_id,
+            conceptIds: conceptIds,
+            isSubjectRestored: false,
+          });
         }
       } catch (error) {
         console.error("Failed to load saved generation pane status:", error);
-        // Don't show toast for this, just use defaults
       }
     };
 
     loadSavedStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentActivity?.id]);
+
+  // Effect 2: Restore Subject once Classes/Subjects are ready
+  const { isLoadingSubjects, isLoadingTree } = useConceptContext();
+
+  useEffect(() => {
+    if (
+      pendingRestoration?.subjectId &&
+      !pendingRestoration.isSubjectRestored && // Only run if not already restored
+      !isLoadingSubjects &&
+      selection.subjectId !== pendingRestoration.subjectId
+    ) {
+      // Check if the subject actually exists in the loaded list
+      const subjectExists = subjects.some(
+        (s) => s.id === pendingRestoration.subjectId
+      );
+      if (subjectExists) {
+        selectSubject(pendingRestoration.subjectId);
+        // Mark as restored so we don't force it again if user changes it later
+        setPendingRestoration((prev) =>
+          prev ? { ...prev, isSubjectRestored: true } : null
+        );
+      } else {
+        // Subject doesn't exist in the list (maybe deleted?), assume restored/failed to stop loop
+        setPendingRestoration((prev) =>
+          prev ? { ...prev, isSubjectRestored: true } : null
+        );
+      }
+    } else if (
+      pendingRestoration?.subjectId &&
+      !pendingRestoration.isSubjectRestored &&
+      !isLoadingSubjects &&
+      selection.subjectId === pendingRestoration.subjectId
+    ) {
+      // If it's already selected (maybe auto-selected or matching), mark as restored
+      setPendingRestoration((prev) =>
+        prev ? { ...prev, isSubjectRestored: true } : null
+      );
+    }
+  }, [
+    pendingRestoration,
+    isLoadingSubjects,
+    subjects,
+    selection.subjectId,
+    selectSubject,
+  ]);
+
+  // Effect 3: Restore Concepts once Subject is selected and Tree is ready
+  useEffect(() => {
+    if (
+      pendingRestoration &&
+      pendingRestoration.conceptIds.length > 0 &&
+      selection.subjectId === pendingRestoration.subjectId &&
+      !isLoadingTree
+    ) {
+      // Only attempt restore if we actually have a valid tree loaded or if we determine the tree is ready
+      // We check !isLoadingTree, but to be safe against the initial "false" state before fetch starts,
+      // we could check if we have concepts, but empty subjects are possible.
+      // Given ConceptContext logic, if subjectId matches, it triggers fetch.
+      // We rely on isLoadingTree being accurate during the fetch phase.
+
+      // Delay slightly to ensure tree checkbox state is ready?
+      // Actually with controlled component pattern in ConceptContext (checked array),
+      // we can set it anytime.
+
+      setSelectedConcepts(pendingRestoration.conceptIds);
+
+      // Clear pending restoration to prevent re-running
+      setPendingRestoration((prev) => {
+        if (prev?.subjectId === selection.subjectId) {
+          return null;
+        }
+        return prev;
+      });
+    }
+  }, [
+    pendingRestoration,
+    selection.subjectId,
+    isLoadingTree,
+    setSelectedConcepts,
+  ]);
 
   const handleQuestionCountChange = (type: QuestionType, count: number) => {
     setQuestionCounts((prev) => {
@@ -301,7 +395,7 @@ export function UpArea({
 
       // Persist generation pane status after successful generation
       try {
-        await upsertGenerationPaneStatus({
+        const savedPane = await upsertGenerationPaneStatus({
           activity_id: currentActivity.id,
           school_class_id: selection.classId,
           subject_id: selection.subjectId,
@@ -319,9 +413,12 @@ export function UpArea({
           total_time_count: totalTime,
           custom_instructions: customPrompt || null,
         });
+
+        // Persist selected concepts for this pane
+        await replaceGenerationPaneConcepts(savedPane.id, conceptIds);
       } catch (persistError) {
         console.error(
-          "Failed to persist generation pane status:",
+          "Failed to persist generation pane status or concepts:",
           persistError
         );
         // Don't block UI for this error

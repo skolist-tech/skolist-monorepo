@@ -99,6 +99,10 @@ export type QgenGenerationPaneStatus = Tables["qgen_generation_panes"]["Row"]
 export type InsertQgenGenerationPaneStatus = Tables["qgen_generation_panes"]["Insert"]
 export type UpdateQgenGenerationPaneStatus = Tables["qgen_generation_panes"]["Update"]
 
+export type QgenGenerationPaneConcept = Tables["generation_pane_concepts_maps"]["Row"]
+export type InsertQgenGenerationPaneConcept = Tables["generation_pane_concepts_maps"]["Insert"]
+export type UpdateQgenGenerationPaneConcept = Tables["generation_pane_concepts_maps"]["Update"]
+
 export type ConceptAndActivity = Tables["concepts_activities_maps"]["Row"];
 export type InsertConceptAndActivity = Tables["concepts_activities_maps"]["Insert"];
 export type UpdateConceptAndActivity = Tables["concepts_activities_maps"]["Update"];

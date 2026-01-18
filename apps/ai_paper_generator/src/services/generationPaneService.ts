@@ -7,6 +7,7 @@ import { getClient } from "./supabase";
 import type {
   QgenGenerationPaneStatus,
   InsertQgenGenerationPaneStatus,
+  InsertQgenGenerationPaneConcept,
 } from "@skolist/db";
 
 /**
@@ -54,4 +55,66 @@ export async function upsertGenerationPaneStatus(
   }
 
   return data;
+}
+
+/**
+ * Fetch concept IDs associated with a generation pane
+ */
+export async function fetchGenerationPaneConcepts(
+  paneId: string
+): Promise<string[]> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from("generation_pane_concepts_maps")
+    .select("concept_id")
+    .eq("qgen_generation_pane_id", paneId);
+
+  if (error) {
+    console.error("Failed to fetch generation pane concepts:", error);
+    throw error;
+  }
+
+  return data.map((row) => row.concept_id);
+}
+
+/**
+ * Replace concepts associated with a generation pane
+ * Deletes all existing mappings and inserts new ones
+ */
+export async function replaceGenerationPaneConcepts(
+  paneId: string,
+  conceptIds: string[]
+): Promise<void> {
+  const client = getClient();
+
+  // 1. Delete existing mappings
+  const { error: deleteError } = await client
+    .from("generation_pane_concepts_maps")
+    .delete()
+    .eq("qgen_generation_pane_id", paneId);
+
+  if (deleteError) {
+    console.error("Failed to clear previous concepts:", deleteError);
+    throw deleteError;
+  }
+
+  if (conceptIds.length === 0) return;
+
+  // 2. Insert new mappings
+  const records: InsertQgenGenerationPaneConcept[] = conceptIds.map(
+    (conceptId) => ({
+      qgen_generation_pane_id: paneId,
+      concept_id: conceptId,
+    })
+  );
+
+  const { error: insertError } = await client
+    .from("generation_pane_concepts_maps")
+    .insert(records);
+
+  if (insertError) {
+    console.error("Failed to insert new concepts:", insertError);
+    throw insertError;
+  }
 }
