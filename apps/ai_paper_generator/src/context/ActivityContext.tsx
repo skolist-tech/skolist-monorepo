@@ -104,25 +104,37 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     [activities]
   );
 
-  const deleteActivity = useCallback(
-    async (activityId: string) => {
-      try {
-        await deleteActivityService(activityId);
-        setActivities((prev) => prev.filter((a) => a.id !== activityId));
+  const deleteActivity = useCallback(async (activityId: string) => {
+    try {
+      await deleteActivityService(activityId);
 
-        // If deleted activity was current, select another
-        if (currentActivity?.id === activityId) {
-          const remaining = activities.filter((a) => a.id !== activityId);
-          setCurrentActivity(remaining[0] ?? null);
-        }
-      } catch (err) {
-        console.error("Failed to delete activity:", err);
-        setError("Failed to delete activity");
-        throw err;
-      }
-    },
-    [activities, currentActivity]
-  );
+      // Use functional updates to avoid stale closure issues
+      setActivities((prevActivities) => {
+        const remaining = prevActivities.filter((a) => a.id !== activityId);
+
+        // Also update currentActivity based on the new activities list
+        setCurrentActivity((prevCurrent) => {
+          // If the deleted activity was the current one, select the first remaining
+          if (prevCurrent?.id === activityId) {
+            return remaining[0] ?? null;
+          }
+          // If current activity still exists in remaining, keep it
+          // Otherwise (edge case), select first remaining or null
+          const stillExists = remaining.some((a) => a.id === prevCurrent?.id);
+          if (stillExists) {
+            return prevCurrent;
+          }
+          return remaining[0] ?? null;
+        });
+
+        return remaining;
+      });
+    } catch (err) {
+      console.error("Failed to delete activity:", err);
+      setError("Failed to delete activity");
+      throw err;
+    }
+  }, []);
 
   const renameActivity = useCallback(
     async (activityId: string, newName: string) => {

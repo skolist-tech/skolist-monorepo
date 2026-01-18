@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Input, Label } from "@skolist/ui";
 import { cn } from "@skolist/utils";
 import { ChevronDown, Search, Loader2 } from "lucide-react";
@@ -20,8 +20,10 @@ export function SubjectSelector({
   const { subjects, isLoadingSubjects, selectSubject } = useConceptContext();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const isDisabled = disabled || !classId || isLoadingSubjects;
 
@@ -34,8 +36,12 @@ export function SubjectSelector({
 
   const selectedSubject = subjects.find((subject) => subject.id === value);
 
-  const filteredSubjects = subjects.filter((subject) =>
-    subject.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredSubjects = React.useMemo(
+    () =>
+      subjects.filter((subject) =>
+        subject.name.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [subjects, searchQuery]
   );
 
   // Close dropdown when clicking outside
@@ -54,12 +60,62 @@ export function SubjectSelector({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Focus search input when dropdown opens
+  // Focus search input and reset highlight when dropdown opens
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    if (isOpen) {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+      const selectedIndex = filteredSubjects.findIndex((s) => s.id === value);
+      setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : 0);
     }
-  }, [isOpen]);
+  }, [isOpen, filteredSubjects, value]);
+
+  // Reset highlight when search changes
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [searchQuery]);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (isOpen && listRef.current) {
+      const highlightedElement = listRef.current.children[
+        highlightedIndex
+      ] as HTMLElement;
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({
+          block: "nearest",
+        });
+      }
+    }
+  }, [highlightedIndex, isOpen]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if ((e.key === "ArrowDown" || e.key === "Enter") && !isDisabled) {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) =>
+        prev < filteredSubjects.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredSubjects[highlightedIndex]) {
+        handleChange(filteredSubjects[highlightedIndex].id);
+      }
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+    }
+  };
 
   const getPlaceholderText = () => {
     if (!classId) return "Select class first";
@@ -75,6 +131,7 @@ export function SubjectSelector({
         <button
           type="button"
           onClick={() => !isDisabled && setIsOpen(!isOpen)}
+          onKeyDown={handleKeyDown}
           disabled={isDisabled}
           className={cn(
             "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2",
@@ -114,24 +171,26 @@ export function SubjectSelector({
                   placeholder="Search subjects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="h-8 pl-8"
                 />
               </div>
             </div>
-            <div className="max-h-60 overflow-y-auto">
+            <div className="max-h-60 overflow-y-auto" ref={listRef}>
               {filteredSubjects.length === 0 ? (
                 <div className="px-3 py-4 text-center text-sm text-muted-foreground">
                   No results found
                 </div>
               ) : (
-                filteredSubjects.map((subject) => (
+                filteredSubjects.map((subject, index) => (
                   <button
                     key={subject.id}
                     type="button"
                     onClick={() => handleChange(subject.id)}
                     className={cn(
                       "flex w-full items-center px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
-                      value === subject.id && "bg-accent text-accent-foreground"
+                      index === highlightedIndex &&
+                        "bg-accent text-accent-foreground"
                     )}
                   >
                     {subject.name}
