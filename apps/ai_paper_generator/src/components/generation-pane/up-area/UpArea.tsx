@@ -449,7 +449,7 @@ export function UpArea({
         </div>
 
         {/* Right Column: Auto-Decide & Question Types */}
-        <div className="h-full overflow-hidden pt-2 lg:pt-0">
+        <div className="h-full pt-2 lg:pt-0">
           <UpRightArea
             questionCounts={questionCounts}
             onQuestionCountChange={handleQuestionCountChange}

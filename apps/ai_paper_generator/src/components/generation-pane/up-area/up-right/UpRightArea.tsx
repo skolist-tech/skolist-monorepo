@@ -60,7 +60,7 @@ export function UpRightArea({
     hardnessLevels.easy + hardnessLevels.medium + hardnessLevels.hard === 100;
 
   return (
-    <div className="h-full w-full max-w-5xl space-y-4 overflow-y-auto md:space-y-6">
+    <div className="h-full w-full max-w-5xl space-y-4 overflow-y-auto p-1 md:space-y-6">
       {/* 1] Top three selectors, arranged horizontally */}
       <TotalInputs
         totalQuestions={totalQuestions}
