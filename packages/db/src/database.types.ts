@@ -210,7 +210,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
-          position?: string
+          position: string
           subject_id: string
           updated_at?: string
         }
@@ -651,14 +651,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "qgen_draft_instructions_users_maps_qgen _draft_id_fkey"
-            columns: ["qgen_draft_id"]
-            isOneToOne: false
-            referencedRelation: "qgen_drafts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "qgen_draft_instructions_users_maps_qgen _draft_id_fkey1"
+            foreignKeyName: "qgen_draft_instructions_drafts_maps_qgen_draft_id_fkey"
             columns: ["qgen_draft_id"]
             isOneToOne: false
             referencedRelation: "qgen_drafts"
@@ -708,6 +701,7 @@ export type Database = {
           id: string
           institute_name: string | null
           logo_url: string | null
+          max_position: number
           maximum_marks: number | null
           paper_datetime: string | null
           paper_duration: string | null
@@ -723,6 +717,7 @@ export type Database = {
           id?: string
           institute_name?: string | null
           logo_url?: string | null
+          max_position?: number
           maximum_marks?: number | null
           paper_datetime?: string | null
           paper_duration?: string | null
@@ -738,6 +733,7 @@ export type Database = {
           id?: string
           institute_name?: string | null
           logo_url?: string | null
+          max_position?: number
           maximum_marks?: number | null
           paper_datetime?: string | null
           paper_duration?: string | null
@@ -753,6 +749,94 @@ export type Database = {
             columns: ["activity_id"]
             isOneToOne: true
             referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qgen_generation_panes: {
+        Row: {
+          activity_id: string | null
+          created_at: string
+          custom_instructions: string | null
+          difficulty_level_easy_count: number | null
+          difficulty_level_hard_count: number | null
+          difficulty_level_medium_count: number | null
+          fill_in_the_blanks_count: number | null
+          id: string
+          long_answer_count: number | null
+          mcq_count: number | null
+          msq_count: number | null
+          school_class_id: string | null
+          short_answer_count: number | null
+          subject_id: string | null
+          total_marks_count: number | null
+          total_questions_count: number | null
+          total_time_count: number | null
+          true_false_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          activity_id?: string | null
+          created_at?: string
+          custom_instructions?: string | null
+          difficulty_level_easy_count?: number | null
+          difficulty_level_hard_count?: number | null
+          difficulty_level_medium_count?: number | null
+          fill_in_the_blanks_count?: number | null
+          id?: string
+          long_answer_count?: number | null
+          mcq_count?: number | null
+          msq_count?: number | null
+          school_class_id?: string | null
+          short_answer_count?: number | null
+          subject_id?: string | null
+          total_marks_count?: number | null
+          total_questions_count?: number | null
+          total_time_count?: number | null
+          true_false_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          activity_id?: string | null
+          created_at?: string
+          custom_instructions?: string | null
+          difficulty_level_easy_count?: number | null
+          difficulty_level_hard_count?: number | null
+          difficulty_level_medium_count?: number | null
+          fill_in_the_blanks_count?: number | null
+          id?: string
+          long_answer_count?: number | null
+          mcq_count?: number | null
+          msq_count?: number | null
+          school_class_id?: string | null
+          short_answer_count?: number | null
+          subject_id?: string | null
+          total_marks_count?: number | null
+          total_questions_count?: number | null
+          total_time_count?: number | null
+          true_false_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qgen_generation_panes_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qgen_generation_panes_school_class_id_fkey"
+            columns: ["school_class_id"]
+            isOneToOne: false
+            referencedRelation: "school_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qgen_generation_panes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -846,7 +930,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
-          position?: string
+          position: string
           updated_at?: string
         }
         Update: {

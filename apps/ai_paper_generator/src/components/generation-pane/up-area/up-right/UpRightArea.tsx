@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { QuestionTypeSelector } from "./QuestionTypeSelector/QuestionTypeSelector";
 import type { AutoDecideParams } from "./AutoDecideQuestion/AutoDecideQuestion";
 import { AutoDecideButton } from "./AutoDecideQuestion/AutoDecideButton";
@@ -18,6 +17,13 @@ interface UpRightAreaProps {
   onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
   totalQuestions: number;
   onTotalQuestionsChange: (value: number) => void;
+  // Lifted state for persistence
+  totalMarks: number;
+  onTotalMarksChange: (value: number) => void;
+  totalTime: number;
+  onTotalTimeChange: (value: number) => void;
+  customPrompt: string;
+  onCustomPromptChange: (value: string) => void;
 }
 
 export function UpRightArea({
@@ -30,13 +36,13 @@ export function UpRightArea({
   onHardnessLevelChange,
   totalQuestions,
   onTotalQuestionsChange,
+  totalMarks,
+  onTotalMarksChange,
+  totalTime,
+  onTotalTimeChange,
+  customPrompt,
+  onCustomPromptChange,
 }: UpRightAreaProps) {
-  // Lifted state from AutoDecideQuestion
-  // const [totalQuestions, setTotalQuestions] = useState(10); // Moved to parent
-  const [totalMarks, setTotalMarks] = useState(30);
-  const [totalTime, setTotalTime] = useState(60);
-  const [customPrompt, setCustomPrompt] = useState("");
-
   const handleAutoDecide = () => {
     onAutoDecide({
       totalQuestions,
@@ -61,8 +67,8 @@ export function UpRightArea({
         totalMarks={totalMarks}
         totalTime={totalTime}
         onTotalQuestionsChange={onTotalQuestionsChange}
-        onTotalMarksChange={setTotalMarks}
-        onTotalTimeChange={setTotalTime}
+        onTotalMarksChange={onTotalMarksChange}
+        onTotalTimeChange={onTotalTimeChange}
       />
 
       {/* <Separator /> */}
@@ -103,7 +109,7 @@ export function UpRightArea({
       {/* 8] Prompt Box and Generate Button */}
       <PromptBox
         value={customPrompt}
-        onChange={setCustomPrompt}
+        onChange={onCustomPromptChange}
         onGenerate={onGenerate}
         isGenerating={isGenerating}
         disabled={false} // Can add logic here if needed, e.g. check if total questions > 0 from counts

@@ -3,7 +3,7 @@
  * Uses ConceptContext for state management
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UpLeftArea } from "./up-left/UpLeftArea";
 import { UpRightArea } from "./up-right/UpRightArea";
 import type { QuestionType, HardnessLevel } from "@skolist/db";
@@ -12,6 +12,10 @@ import { useActivityContext } from "../../../context/ActivityContext";
 import { useConceptContext } from "../../../context/ConceptContext";
 import { fastApiService } from "../../../services/fastApiService";
 import { upsertActivityConcepts } from "../../../services/activityService";
+import {
+  fetchGenerationPaneStatus,
+  upsertGenerationPaneStatus,
+} from "../../../services/generationPaneService";
 import { useToast } from "@skolist/ui";
 
 // Mapping from frontend QuestionType to API question type
@@ -22,6 +26,16 @@ const QUESTION_TYPE_API_MAP: Record<QuestionType, string> = {
   long_answer: "long_answer",
   true_or_false: "true_false",
   fill_in_the_blanks: "fill_in_the_blank",
+};
+
+// Default values for generation pane
+const DEFAULT_QUESTION_COUNTS: Record<QuestionType, number> = {
+  mcq4: 2,
+  msq4: 2,
+  short_answer: 2,
+  long_answer: 2,
+  true_or_false: 2,
+  fill_in_the_blanks: 2,
 };
 
 interface UpAreaProps {
@@ -36,23 +50,101 @@ export function UpArea({
   onGenerationComplete,
 }: UpAreaProps) {
   const { currentActivity, activities, renameActivity } = useActivityContext();
-  const { getSelectedLeafConceptIds, selection, schoolClasses, subjects } =
-    useConceptContext();
+  const {
+    getSelectedLeafConceptIds,
+    selection,
+    schoolClasses,
+    subjects,
+    selectSchoolClass,
+    selectSubject,
+  } = useConceptContext();
   const { toast } = useToast();
 
   const [questionCounts, setQuestionCounts] = useState<
     Record<QuestionType, number>
-  >({
-    mcq4: 2,
-    msq4: 2,
-    short_answer: 2,
-    long_answer: 2,
-    true_or_false: 2,
-    fill_in_the_blanks: 2,
-  });
+  >(DEFAULT_QUESTION_COUNTS);
 
   const [totalQuestions, setTotalQuestions] = useState(12);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Lifted state from UpRightArea for persistence
+  const [totalMarks, setTotalMarks] = useState(30);
+  const [totalTime, setTotalTime] = useState(60);
+  const [customPrompt, setCustomPrompt] = useState("");
+
+  // Load saved generation pane status when activity changes
+  useEffect(() => {
+    if (!currentActivity?.id) return;
+
+    const loadSavedStatus = async () => {
+      try {
+        const savedStatus = await fetchGenerationPaneStatus(currentActivity.id);
+        if (savedStatus) {
+          // Restore question counts
+          setQuestionCounts({
+            mcq4: savedStatus.mcq_count ?? DEFAULT_QUESTION_COUNTS.mcq4,
+            msq4: savedStatus.msq_count ?? DEFAULT_QUESTION_COUNTS.msq4,
+            short_answer:
+              savedStatus.short_answer_count ??
+              DEFAULT_QUESTION_COUNTS.short_answer,
+            long_answer:
+              savedStatus.long_answer_count ??
+              DEFAULT_QUESTION_COUNTS.long_answer,
+            true_or_false:
+              savedStatus.true_false_count ??
+              DEFAULT_QUESTION_COUNTS.true_or_false,
+            fill_in_the_blanks:
+              savedStatus.fill_in_the_blanks_count ??
+              DEFAULT_QUESTION_COUNTS.fill_in_the_blanks,
+          });
+          setTotalQuestions(savedStatus.total_questions_count ?? 12);
+          setTotalMarks(savedStatus.total_marks_count ?? 30);
+          setTotalTime(savedStatus.total_time_count ?? 60);
+          setCustomPrompt(savedStatus.custom_instructions ?? "");
+
+          // Restore difficulty levels via the parent callback
+          if (savedStatus.difficulty_level_easy_count != null) {
+            onHardnessLevelChange(
+              "easy",
+              savedStatus.difficulty_level_easy_count
+            );
+          }
+          if (savedStatus.difficulty_level_medium_count != null) {
+            onHardnessLevelChange(
+              "medium",
+              savedStatus.difficulty_level_medium_count
+            );
+          }
+          if (savedStatus.difficulty_level_hard_count != null) {
+            onHardnessLevelChange(
+              "hard",
+              savedStatus.difficulty_level_hard_count
+            );
+          }
+
+          // Restore class and subject selection
+          if (savedStatus.school_class_id) {
+            selectSchoolClass(savedStatus.school_class_id);
+          }
+          if (savedStatus.subject_id) {
+            // We need to wait for subjects to load after class selection
+            // Using a timeout to ensure the class selection has propagated
+            setTimeout(() => {
+              if (savedStatus.subject_id) {
+                selectSubject(savedStatus.subject_id);
+              }
+            }, 100);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load saved generation pane status:", error);
+        // Don't show toast for this, just use defaults
+      }
+    };
+
+    loadSavedStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentActivity?.id]);
 
   const handleQuestionCountChange = (type: QuestionType, count: number) => {
     setQuestionCounts((prev) => {
@@ -207,6 +299,34 @@ export function UpArea({
         description: `Successfully generated questions for ${conceptIds.length} concept(s).`,
       });
 
+      // Persist generation pane status after successful generation
+      try {
+        await upsertGenerationPaneStatus({
+          activity_id: currentActivity.id,
+          school_class_id: selection.classId,
+          subject_id: selection.subjectId,
+          mcq_count: questionCounts.mcq4,
+          msq_count: questionCounts.msq4,
+          short_answer_count: questionCounts.short_answer,
+          long_answer_count: questionCounts.long_answer,
+          true_false_count: questionCounts.true_or_false,
+          fill_in_the_blanks_count: questionCounts.fill_in_the_blanks,
+          difficulty_level_easy_count: hardnessLevels.easy,
+          difficulty_level_medium_count: hardnessLevels.medium,
+          difficulty_level_hard_count: hardnessLevels.hard,
+          total_questions_count: totalQuestions,
+          total_marks_count: totalMarks,
+          total_time_count: totalTime,
+          custom_instructions: customPrompt || null,
+        });
+      } catch (persistError) {
+        console.error(
+          "Failed to persist generation pane status:",
+          persistError
+        );
+        // Don't block UI for this error
+      }
+
       onGenerationComplete?.();
     } catch (error) {
       console.error("Failed to generate questions:", error);
@@ -243,6 +363,12 @@ export function UpArea({
             onHardnessLevelChange={onHardnessLevelChange}
             totalQuestions={totalQuestions}
             onTotalQuestionsChange={handleTotalQuestionsChange}
+            totalMarks={totalMarks}
+            onTotalMarksChange={setTotalMarks}
+            totalTime={totalTime}
+            onTotalTimeChange={setTotalTime}
+            customPrompt={customPrompt}
+            onCustomPromptChange={setCustomPrompt}
           />
         </div>
       </div>
