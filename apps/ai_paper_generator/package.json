@@ -21,7 +21,7 @@
     "@skolist/ui": "workspace:*",
     "@skolist/utils": "workspace:*",
     "@types/katex": "^0.16.8",
-    "html2canvas": "^1.4.1",
+    "html-to-image": "^1.11.13",
     "katex": "^0.16.27",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.469.0",

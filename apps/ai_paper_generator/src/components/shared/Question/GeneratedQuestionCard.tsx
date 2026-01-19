@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import html2canvas from "html2canvas";
+import { toBlob } from 'html-to-image';
 import Lottie from "lottie-react";
 import chatAnimationData from "../../../../public/Chat.json";
 import { formatQuestionType } from "../../../utils/formatters";
@@ -291,62 +291,63 @@ export function GeneratedQuestionCard({
       }
     }
   };
-
   const handleAutoCorrect = async () => {
-    // Calculate the position of the button relative to the card before starting animation
-    if (cardRef.current && autoCorrectBtnRef.current) {
-      const cardRect = cardRef.current.getBoundingClientRect();
-      const btnRect = autoCorrectBtnRef.current.getBoundingClientRect();
+  // 1. Calculate animation origin
+  if (cardRef.current && autoCorrectBtnRef.current) {
+    const cardRect = cardRef.current.getBoundingClientRect();
+    const btnRect = autoCorrectBtnRef.current.getBoundingClientRect();
+    setSparkleOrigin({ 
+      top: btnRect.top - cardRect.top + 6, 
+      right: cardRect.right - btnRect.right + 6 
+    });
+  }
 
-      // Calculate relative top and right positions
-      // Adding a small offset to center it better over the icon itself
-      const relativeTop = btnRect.top - cardRect.top + 6;
-      const relativeRight = cardRect.right - btnRect.right + 6;
+  try {
+    // 2. Start Animation
+    setIsAutoCorrecting(true);
+    setIsReturning(false);
 
-      setSparkleOrigin({ top: relativeTop, right: relativeRight });
+    // 3. Tiny yield to let the browser paint the "start" of the animation
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // 4. Capture Image using html-to-image (Faster & Lighter)
+    let imageBlob: Blob | undefined;
+    if (cardRef.current) {
+      try {
+        // html-to-image is much faster because it uses SVG foreignObject
+        imageBlob = await toBlob(cardRef.current, {
+          cacheBust: true,
+          skipAutoScale: true,
+          backgroundColor: '#ffffff', // Ensure white bg if transparent
+          filter: (node) => {
+             // Exclude elements with the ignore class
+             return !node.hasAttribute?.('data-html2canvas-ignore'); 
+          }
+        }) ?? undefined; // Handle potential null return
+      } catch (error) {
+        console.warn("Failed to capture screenshot:", error);
+      }
     }
 
-    try {
-      // Capture screenshot of the card before starting animation
-      let imageBlob: Blob | undefined;
-      if (cardRef.current) {
-        try {
-          const canvas = await html2canvas(cardRef.current, {
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: null,
-          });
-          imageBlob = await new Promise<Blob | undefined>((resolve) => {
-            canvas.toBlob(
-              (blob) => resolve(blob ?? undefined),
-              "image/png"
-            );
-          });
-        } catch (screenshotError) {
-          console.warn("Failed to capture card screenshot:", screenshotError);
-          // Continue without the image - it's optional
-        }
-      }
-
-      setIsAutoCorrecting(true);
-      setIsReturning(false);
-      if (onAutoCorrect) {
-        await onAutoCorrect(question.id);
-      } else {
-        await fastApiService.autoCorrectQuestion(question.id, imageBlob);
-      }
-      // Trigger return animation
-      setIsReturning(true);
-      // Wait for return animation to complete before hiding
-      await new Promise((resolve) => setTimeout(resolve, 800));
-    } catch (error) {
-      console.error("Failed to auto-correct question", error);
-      alert("Failed to auto-correct question");
-    } finally {
-      setIsAutoCorrecting(false);
-      setIsReturning(false);
+    // 5. API Call
+    if (onAutoCorrect) {
+      await onAutoCorrect(question.id);
+    } else {
+      await fastApiService.autoCorrectQuestion(question.id, imageBlob);
     }
-  };
+
+    // 6. Finish Animation
+    setIsReturning(true);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+  } catch (error) {
+    console.error("Failed to auto-correct question", error);
+    alert("Failed to auto-correct question");
+  } finally {
+    setIsAutoCorrecting(false);
+    setIsReturning(false);
+  }
+};
 
   const handleDirectRegenerate = async () => {
     // Calculate the position of the button relative to the card before starting animation
@@ -747,6 +748,7 @@ export function GeneratedQuestionCard({
       {/* Auto-Correct Animation Overlay */}
       {isAutoCorrecting && (
         <div
+          data-html2canvas-ignore
           className="absolute inset-0 z-50 overflow-hidden rounded-lg"
           style={
             {
