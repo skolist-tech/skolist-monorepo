@@ -35,6 +35,7 @@ import {
   Sparkles,
   Undo2,
   Redo2,
+  MoreVertical,
 } from "lucide-react";
 import type { GeneratedQuestion, HardnessLevel } from "@skolist/db";
 import {
@@ -42,6 +43,7 @@ import {
   deleteQuestionImage,
   type GeneratedQuestionWithConcepts,
 } from "../../../services/questionService";
+import { CARD_ACTIONS_CONFIG, type ActionId } from "./card-actions-config";
 import { fastApiService } from "../../../services/fastApiService";
 import { QuestionMarks } from "./QuestionMarks";
 import { QuestionTags } from "./QuestionTags";
@@ -1116,7 +1118,8 @@ export function GeneratedQuestionCard({
         </div>
       )}
       {/* Header Actions */}
-      <div className="absolute right-2 top-2 flex items-center rounded-md bg-background/80 p-1 backdrop-blur-sm">
+      {/* Dynamic Header Actions */}
+      <div className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-background/80 p-1 backdrop-blur-sm">
         <input
           type="file"
           ref={fileInputRef}
@@ -1124,258 +1127,480 @@ export function GeneratedQuestionCard({
           accept="image/*"
           onChange={handleImageUpload}
         />
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                ref={autoCorrectBtnRef}
-                size="icon"
-                variant="ghost"
-                onClick={handleAutoCorrect}
-                disabled={isAutoCorrecting}
-              >
-                <Sparkles
-                  className={`h-5 w-5 text-yellow-400 ${isAutoCorrecting ? "opacity-50" : ""}`}
-                />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Auto-Correct Question</p>
-            </TooltipContent>
-          </Tooltip>
+        <input
+          type="file"
+          multiple
+          ref={attachmentInputRef}
+          className="hidden"
+          onChange={handleAttachmentSelect}
+        />
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                ) : (
-                  <Paperclip className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Attach Image</p>
-            </TooltipContent>
-          </Tooltip>
+        {/* Helper function content would be here, but we can't define functions inside render. 
+            We'll inline the logic or use a render function defined above. 
+            Actually, let's map over the config. */}
+        {(() => {
+          // Sort actions for desktop
+          const desktopActions = [...CARD_ACTIONS_CONFIG].sort(
+            (a, b) => a.desktop.order - b.desktop.order
+          );
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                ref={regenerateBtnRef}
-                size="icon"
-                variant="ghost"
-                onClick={handleDirectRegenerate}
-                disabled={isRegenerating}
-              >
-                <RefreshCw
-                  className={`h-4 w-4 text-muted-foreground hover:text-primary ${isRegenerating ? "opacity-50" : ""}`}
-                />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Regenerate Question</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+          // Sort actions for mobile
+          const mobileCardActions = [...CARD_ACTIONS_CONFIG]
+            .filter((a) => a.mobile.location === "card")
+            .sort((a, b) => a.mobile.order - b.mobile.order);
 
-        <Popover open={isRegenerateOpen} onOpenChange={setIsRegenerateOpen}>
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <PopoverTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    disabled={!onRegenerate || isChatPromptAnimating}
+          const mobileMenuActions = [...CARD_ACTIONS_CONFIG]
+            .filter((a) => a.mobile.location === "menu")
+            .sort((a, b) => a.mobile.order - b.mobile.order);
+
+          // Component for rendering a single action
+          const ActionButton = ({
+            actionId,
+            mode,
+          }: {
+            actionId: ActionId;
+            mode: "icon" | "menu";
+          }) => {
+            const btnClass =
+              mode === "menu"
+                ? "flex w-full cursor-pointer items-center justify-start gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
+                : "";
+            const iconSizeClass = mode === "menu" ? "h-4 w-4" : "h-4 w-4"; // 16px is standard for both usually
+
+            switch (actionId) {
+              case "undo":
+                return (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size={mode === "menu" ? "default" : "icon"}
+                          className={
+                            mode === "menu"
+                              ? btnClass
+                              : "h-8 w-8 text-muted-foreground hover:text-primary"
+                          }
+                          disabled // Currently disabled as per original code
+                          onClick={(e) => {
+                            if (mode === "menu") e.stopPropagation();
+                            // Add handler when available
+                          }}
+                        >
+                          <Undo2 className={iconSizeClass} />
+                          {mode === "menu" && <span>Undo</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      {mode === "icon" && (
+                        <TooltipContent>
+                          <p>Undo</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              case "redo":
+                return (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size={mode === "menu" ? "default" : "icon"}
+                          className={
+                            mode === "menu"
+                              ? btnClass
+                              : "h-8 w-8 text-muted-foreground hover:text-primary"
+                          }
+                          disabled // Currently disabled
+                          onClick={(e) => {
+                            if (mode === "menu") e.stopPropagation();
+                          }}
+                        >
+                          <Redo2 className={iconSizeClass} />
+                          {mode === "menu" && <span>Redo</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      {mode === "icon" && (
+                        <TooltipContent>
+                          <p>Redo</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              case "auto_correct":
+                return (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          ref={mode === "icon" ? autoCorrectBtnRef : undefined}
+                          size={mode === "menu" ? "default" : "icon"}
+                          variant="ghost"
+                          className={mode === "menu" ? btnClass : undefined}
+                          onClick={(e) => {
+                            if (mode === "menu") e.stopPropagation();
+                            handleAutoCorrect();
+                          }}
+                          disabled={isAutoCorrecting}
+                        >
+                          <Sparkles
+                            className={`${iconSizeClass} text-yellow-400 ${isAutoCorrecting ? "opacity-50" : ""}`}
+                          />
+                          {mode === "menu" && <span>Auto-Correct</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      {mode === "icon" && (
+                        <TooltipContent>
+                          <p>Auto-Correct Question</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              case "attachment":
+                return (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size={mode === "menu" ? "default" : "icon"}
+                          variant="ghost"
+                          className={mode === "menu" ? btnClass : undefined}
+                          onClick={(e) => {
+                            if (mode === "menu") e.stopPropagation();
+                            fileInputRef.current?.click();
+                          }}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? (
+                            <Loader2
+                              className={`${iconSizeClass} animate-spin text-muted-foreground`}
+                            />
+                          ) : (
+                            <Paperclip
+                              className={`${iconSizeClass} text-muted-foreground hover:text-primary`}
+                            />
+                          )}
+                          {mode === "menu" && <span>Attach Image</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      {mode === "icon" && (
+                        <TooltipContent>
+                          <p>Attach Image</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              case "regenerate":
+                return (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          ref={mode === "icon" ? regenerateBtnRef : undefined}
+                          size={mode === "menu" ? "default" : "icon"}
+                          variant="ghost"
+                          className={mode === "menu" ? btnClass : undefined}
+                          onClick={(e) => {
+                            if (mode === "menu") e.stopPropagation();
+                            handleDirectRegenerate();
+                          }}
+                          disabled={isRegenerating}
+                        >
+                          <RefreshCw
+                            className={`${iconSizeClass} text-muted-foreground hover:text-primary ${isRegenerating ? "opacity-50" : ""}`}
+                          />
+                          {mode === "menu" && <span>Regenerate</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      {mode === "icon" && (
+                        <TooltipContent>
+                          <p>Regenerate Question</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              case "regenerate_with_prompt":
+                return (
+                  <Popover
+                    open={isRegenerateOpen}
+                    onOpenChange={setIsRegenerateOpen}
                   >
-                    <MessageSquare
-                      className={`h-4 w-4 text-muted-foreground hover:text-primary ${isChatPromptAnimating ? "opacity-50" : ""}`}
-                      style={{ transform: "scaleX(-1)" }}
-                    />
-                  </Button>
-                </PopoverTrigger>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Regenerate with Prompt</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <PopoverContent className="w-96 p-3" align="end">
-            <div className="flex w-full items-start gap-3">
-              <div className="flex flex-1 flex-col gap-2">
-                <Textarea
-                  placeholder="Ask AI to improve, modify, or extract this question from an image…"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="h-16 resize-none py-2 text-sm"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleRegenerateSubmit();
-                    }
-                  }}
-                />
-
-                {/* File Chips */}
-                {attachedFiles.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {attachedFiles.map((file, i) => (
-                      <TooltipProvider key={i} delayDuration={0}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div
-                              key={i}
-                              className="flex max-w-[150px] items-center gap-1 rounded-full border bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <PopoverTrigger asChild>
+                            <Button
+                              size={mode === "menu" ? "default" : "icon"}
+                              variant="ghost"
+                              className={mode === "menu" ? btnClass : undefined}
+                              disabled={!onRegenerate || isChatPromptAnimating}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
                             >
-                              <span className="truncate">{file.name}</span>
-                              <button
-                                className="ml-1 rounded-full p-0.5 hover:bg-black/10"
-                                onClick={() => handleRemoveAttachment(i)}
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </div>
-                          </TooltipTrigger>
+                              <MessageSquare
+                                className={`${iconSizeClass} text-muted-foreground hover:text-primary ${isChatPromptAnimating ? "opacity-50" : ""}`}
+                                style={{ transform: "scaleX(-1)" }}
+                              />
+                              {mode === "menu" && (
+                                <span>Regenerate with Prompt</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                        </TooltipTrigger>
+                        {mode === "icon" && (
                           <TooltipContent>
-                            <p>{file.name}</p>
+                            <p>Regenerate with Prompt</p>
                           </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ))}
-                  </div>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                    <PopoverContent
+                      className="w-96 p-3"
+                      align="end"
+                      side="bottom"
+                      collisionPadding={10}
+                    >
+                      <div className="flex w-full items-start gap-3">
+                        <div className="flex flex-1 flex-col gap-2">
+                          <Textarea
+                            placeholder="Ask AI to improve, modify, or extract this question from an image…"
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            className="h-16 resize-none py-2 text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleRegenerateSubmit();
+                              }
+                            }}
+                          />
+
+                          {attachedFiles.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {attachedFiles.map((file, i) => (
+                                <div
+                                  key={i}
+                                  className="flex max-w-[150px] items-center gap-1 rounded-full border bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+                                >
+                                  <span className="truncate">{file.name}</span>
+                                  <button
+                                    className="ml-1 rounded-full p-0.5 hover:bg-black/10"
+                                    onClick={() => handleRemoveAttachment(i)}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={handleRegenerateSubmit}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          {/* Input is hoisted */}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 shrink-0 border"
+                            disabled={isAttaching}
+                            onClick={() => attachmentInputRef.current?.click()}
+                          >
+                            {isAttaching ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : (
+                              <Paperclip className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                );
+              case "edit":
+                return (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size={mode === "menu" ? "default" : "icon"}
+                          variant="ghost"
+                          className={mode === "menu" ? btnClass : undefined}
+                          onClick={(e) => {
+                            if (mode === "menu") e.stopPropagation();
+                            setIsEditing(true);
+                          }}
+                        >
+                          <Edit2
+                            className={`${iconSizeClass} text-muted-foreground hover:text-primary`}
+                          />
+                          {mode === "menu" && <span>Edit Question</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      {mode === "icon" && (
+                        <TooltipContent>
+                          <p>Edit Question</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              case "move":
+                if (question.is_in_draft && onRemoveFromDraft) {
+                  return (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size={mode === "menu" ? "default" : "icon"}
+                            variant="ghost"
+                            className={mode === "menu" ? btnClass : undefined}
+                            onClick={(e) => {
+                              if (mode === "menu") e.stopPropagation();
+                              handleRemoveFromDraft();
+                            }}
+                            disabled={slideDirection !== null}
+                          >
+                            <ArrowLeft
+                              className={`${iconSizeClass} text-red-500 hover:text-red-700 ${slideDirection ? "opacity-50" : ""}`}
+                            />
+                            {mode === "menu" && <span>Remove from Draft</span>}
+                          </Button>
+                        </TooltipTrigger>
+                        {mode === "icon" && (
+                          <TooltipContent>
+                            <p>Remove from Draft</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                } else if (!question.is_in_draft) {
+                  return (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size={mode === "menu" ? "default" : "icon"}
+                            variant="ghost"
+                            className={mode === "menu" ? btnClass : undefined}
+                            onClick={(e) => {
+                              if (mode === "menu") e.stopPropagation();
+                              handleMoveToDraft();
+                            }}
+                            disabled={slideDirection !== null}
+                          >
+                            <ArrowRight
+                              className={`${iconSizeClass} text-orange-500 hover:text-orange-700 ${slideDirection ? "opacity-50" : ""}`}
+                              strokeWidth={3}
+                            />
+                            {mode === "menu" && <span>Move to Draft</span>}
+                          </Button>
+                        </TooltipTrigger>
+                        {mode === "icon" && (
+                          <TooltipContent>
+                            <p>Move to Draft</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                }
+                return null;
+              case "delete":
+                if (!onDelete) return null;
+                return (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size={mode === "menu" ? "default" : "icon"}
+                          variant="ghost"
+                          className={mode === "menu" ? btnClass : undefined}
+                          onClick={(e) => {
+                            if (mode === "menu") e.stopPropagation();
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
+                          <Trash2
+                            className={`${iconSizeClass} text-red-500 hover:text-red-700`}
+                          />
+                          {mode === "menu" && <span>Delete Question</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      {mode === "icon" && (
+                        <TooltipContent>
+                          <p>Delete Question</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              default:
+                return null;
+            }
+          };
+
+          return (
+            <>
+              {/* DESKTOP VIEW: Show all configured actions, sorted by desktop order */}
+              <div className="hidden items-center md:flex">
+                {desktopActions.map((action) => (
+                  <ActionButton
+                    key={action.id}
+                    actionId={action.id}
+                    mode="icon"
+                  />
+                ))}
+              </div>
+
+              {/* MOBILE VIEW: Split between card icons and 3-dot menu */}
+              <div className="flex items-center md:hidden">
+                {/* 1. Mobile Card Actions (Visible) */}
+                {mobileCardActions.map((action) => (
+                  <ActionButton
+                    key={action.id}
+                    actionId={action.id}
+                    mode="icon"
+                  />
+                ))}
+
+                {/* 2. Mobile Menu Actions (Inside 3-dots) */}
+                {mobileMenuActions.length > 0 && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-2" align="end">
+                      <div className="flex flex-col gap-1">
+                        {mobileMenuActions.map((action) => (
+                          <ActionButton
+                            key={action.id}
+                            actionId={action.id}
+                            mode="menu"
+                          />
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 )}
               </div>
-
-              <div className="flex flex-col gap-2">
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        className="h-8 w-8 shrink-0"
-                        onClick={handleRegenerateSubmit}
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Send</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <input
-                  type="file"
-                  multiple
-                  ref={attachmentInputRef}
-                  className="hidden"
-                  onChange={handleAttachmentSelect}
-                />
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 shrink-0 border"
-                        disabled={isAttaching}
-                        onClick={() => attachmentInputRef.current?.click()}
-                      >
-                        {isAttaching ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        ) : (
-                          <Paperclip className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Attach file</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setIsEditing(true)}
-              >
-                <Edit2 className="h-4 w-4 text-muted-foreground hover:text-primary" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Edit Question</p>
-            </TooltipContent>
-          </Tooltip>
-
-          {question.is_in_draft && onRemoveFromDraft ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={handleRemoveFromDraft}
-                  disabled={slideDirection !== null}
-                >
-                  <ArrowLeft
-                    className={`h-4 w-4 text-red-500 hover:text-red-700 ${slideDirection ? "opacity-50" : ""}`}
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Remove from Draft</p>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={handleMoveToDraft}
-                  disabled={slideDirection !== null}
-                >
-                  <ArrowRight
-                    className={`h-4 w-4 text-orange-500 hover:text-orange-700 ${slideDirection ? "opacity-50" : ""}`}
-                    strokeWidth={3}
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Move to Draft</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {onDelete && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setIsDeleteModalOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4 text-red-500 hover:text-red-700" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete Question</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </TooltipProvider>
+            </>
+          );
+        })()}
       </div>
 
       <ConfirmDialog
@@ -1399,41 +1624,6 @@ export function GeneratedQuestionCard({
           <span>•</span>
           <QuestionTags hardness={question.hardness_level} concepts={[]} />
           <span>•</span>
-
-          <div className="mr-1 flex items-center gap-0.5">
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 text-muted-foreground hover:text-primary"
-                    disabled
-                  >
-                    <Undo2 className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Undo</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 text-muted-foreground hover:text-primary"
-                    disabled
-                  >
-                    <Redo2 className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Redo</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
         </div>
 
         {/* Reorder Buttons */}
