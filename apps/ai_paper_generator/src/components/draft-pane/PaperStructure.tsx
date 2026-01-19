@@ -51,6 +51,7 @@ import {
 } from "@skolist/ui";
 import { ArrowLeft } from "lucide-react";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
+import { usePrevious } from "../../hooks/usePrevious";
 
 function AddCustomQuestionGlobal({
   sections,
@@ -233,6 +234,40 @@ function SortableSection({
     .filter((q) => q.is_in_draft && q.qgen_draft_section_id === section.id)
     .sort((a, b) => (a.position_in_draft || 0) - (b.position_in_draft || 0));
 
+  const prevQuestions = usePrevious(sectionQuestions);
+
+  useEffect(() => {
+    if (!prevQuestions) return;
+
+    if (sectionQuestions.length > prevQuestions.length) {
+      // Find the added question
+      const addedQuestion = sectionQuestions.find(
+        (q) => !prevQuestions.find((pq) => pq.id === q.id)
+      );
+
+      if (addedQuestion) {
+        // Wait a tick for DOM update
+        setTimeout(() => {
+          const element = document.getElementById(
+            `question-node-${addedQuestion.id}`
+          );
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Add a temporary highlight effect class if desired
+            element.classList.add("ring-2", "ring-primary", "ring-offset-2");
+            setTimeout(() => {
+              element.classList.remove(
+                "ring-2",
+                "ring-primary",
+                "ring-offset-2"
+              );
+            }, 2000);
+          }
+        }, 100);
+      }
+    }
+  }, [sectionQuestions, prevQuestions]);
+
   const moveQuestion = async (
     currentIndex: number,
     direction: "up" | "down"
@@ -349,6 +384,7 @@ function SortableSection({
           : undefined,
       }}
       className={`relative mb-4 rounded-lg border bg-card text-card-foreground shadow-sm ${isDisintegrating ? "pointer-events-none" : ""}`}
+      id={`section-node-${section.id}`}
     >
       {/* Disintegration Animation Styles */}
       <style>{`
@@ -547,7 +583,11 @@ function SortableSection({
               </div>
             ) : (
               sectionQuestions.map((q, idx) => (
-                <div key={q.id} className="group relative">
+                <div
+                  key={q.id}
+                  className="group relative"
+                  id={`question-node-${q.id}`}
+                >
                   {/* Re-using prepared card */}
                   <div className="w-[105%] origin-top-left scale-[0.95]">
                     <GeneratedQuestionCard
@@ -678,6 +718,38 @@ export function PaperStructure() {
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
+
+  const prevSections = usePrevious(sections);
+
+  useEffect(() => {
+    if (!prevSections || !sections) return;
+
+    if (sections.length > prevSections.length) {
+      // Find the added section
+      const addedSection = sections.find(
+        (s) => !prevSections.find((ps) => ps.id === s.id)
+      );
+
+      if (addedSection) {
+        setTimeout(() => {
+          const element = document.getElementById(
+            `section-node-${addedSection.id}`
+          );
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            element.classList.add("ring-2", "ring-primary", "ring-offset-2");
+            setTimeout(() => {
+              element.classList.remove(
+                "ring-2",
+                "ring-primary",
+                "ring-offset-2"
+              );
+            }, 2000);
+          }
+        }, 100);
+      }
+    }
+  }, [sections, prevSections]);
 
   if (isLoading || !draft) {
     return <div className="p-4 text-center">Loading draft structure...</div>;
