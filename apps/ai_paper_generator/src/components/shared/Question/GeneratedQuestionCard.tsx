@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import html2canvas from "html2canvas";
 import Lottie from "lottie-react";
 import chatAnimationData from "../../../../public/Chat.json";
 import { formatQuestionType } from "../../../utils/formatters";
@@ -306,12 +307,33 @@ export function GeneratedQuestionCard({
     }
 
     try {
+      // Capture screenshot of the card before starting animation
+      let imageBlob: Blob | undefined;
+      if (cardRef.current) {
+        try {
+          const canvas = await html2canvas(cardRef.current, {
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+          });
+          imageBlob = await new Promise<Blob | undefined>((resolve) => {
+            canvas.toBlob(
+              (blob) => resolve(blob ?? undefined),
+              "image/png"
+            );
+          });
+        } catch (screenshotError) {
+          console.warn("Failed to capture card screenshot:", screenshotError);
+          // Continue without the image - it's optional
+        }
+      }
+
       setIsAutoCorrecting(true);
       setIsReturning(false);
       if (onAutoCorrect) {
         await onAutoCorrect(question.id);
       } else {
-        await fastApiService.autoCorrectQuestion(question.id);
+        await fastApiService.autoCorrectQuestion(question.id, imageBlob);
       }
       // Trigger return animation
       setIsReturning(true);
