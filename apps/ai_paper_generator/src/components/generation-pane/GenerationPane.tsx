@@ -12,6 +12,7 @@ export function GenerationPane() {
     hard: 20,
   });
 
+  const [isGenerating, setIsGenerating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleLevelChange = (level: HardnessLevel, value: number) => {
@@ -49,12 +50,21 @@ export function GenerationPane() {
 
   return (
     <div ref={containerRef} className="flex h-full flex-col overflow-y-auto">
-      <UpArea
-        hardnessLevels={hardnessLevels}
-        onHardnessLevelChange={handleLevelChange}
-        onGenerationComplete={handleScrollToQuestions}
-      />
-      <DownArea hardnessLevels={hardnessLevels} />
+      <div
+        className={`transition-all duration-500 ease-in-out ${
+          isGenerating ? "-mt-[400px] opacity-0" : "mt-0 opacity-100"
+        }`}
+      >
+        <UpArea
+          hardnessLevels={hardnessLevels}
+          onHardnessLevelChange={handleLevelChange}
+          onGenerationComplete={handleScrollToQuestions}
+          isGenerating={isGenerating}
+          onGenerateStart={() => setIsGenerating(true)}
+          onGenerateEnd={() => setIsGenerating(false)}
+        />
+      </div>
+      <DownArea hardnessLevels={hardnessLevels} isGenerating={isGenerating} />
     </div>
   );
 }

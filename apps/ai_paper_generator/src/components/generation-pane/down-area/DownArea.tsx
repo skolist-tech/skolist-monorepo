@@ -1,5 +1,6 @@
 /**
  * Down Area - Display generated questions
+ * Shows LoadingQuestionCard when generating
  */
 
 import { useState } from "react";
@@ -16,6 +17,7 @@ import {
 import { Filter } from "lucide-react";
 import { useQuestionsContext } from "../../../context/QuestionsContext";
 import { GeneratedQuestionCard } from "../../shared/Question/GeneratedQuestionCard";
+import { LoadingQuestionCard } from "../../shared/Question/LoadingQuestionCard";
 import { fastApiService } from "../../../services/fastApiService";
 import type { HardnessLevel } from "@skolist/db";
 import { GenerateMoreButton } from "./GenerateMoreButton";
@@ -24,9 +26,13 @@ import { formatQuestionType } from "../../../utils/formatters";
 
 interface DownAreaProps {
   hardnessLevels: Record<HardnessLevel, number>;
+  isGenerating?: boolean;
 }
 
-export function DownArea({ hardnessLevels }: DownAreaProps) {
+export function DownArea({
+  hardnessLevels,
+  isGenerating = false,
+}: DownAreaProps) {
   const {
     questions,
     isLoading,
@@ -255,6 +261,9 @@ export function DownArea({ hardnessLevels }: DownAreaProps) {
 
         {/* Scrollable Content */}
         <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
+          {/* Loading Card */}
+          {isGenerating && <LoadingQuestionCard />}
+
           {visibleQuestions.map((question) => (
             <GeneratedQuestionCard
               key={question.id}

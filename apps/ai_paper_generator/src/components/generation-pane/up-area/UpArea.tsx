@@ -44,12 +44,18 @@ interface UpAreaProps {
   hardnessLevels: Record<HardnessLevel, number>;
   onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
   onGenerationComplete?: () => void;
+  isGenerating?: boolean;
+  onGenerateStart?: () => void;
+  onGenerateEnd?: () => void;
 }
 
 export function UpArea({
   hardnessLevels,
   onHardnessLevelChange,
   onGenerationComplete,
+  isGenerating = false,
+  onGenerateStart,
+  onGenerateEnd,
 }: UpAreaProps) {
   const { currentActivity, activities, renameActivity } = useActivityContext();
   const {
@@ -68,7 +74,10 @@ export function UpArea({
   >(DEFAULT_QUESTION_COUNTS);
 
   const [totalQuestions, setTotalQuestions] = useState(12);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [internalIsGenerating, setInternalIsGenerating] = useState(false);
+
+  // Use prop if available, otherwise local state
+  const isBusy = isGenerating || internalIsGenerating;
 
   // Lifted state from UpRightArea for persistence
   const [totalMarks, setTotalMarks] = useState(30);
@@ -359,7 +368,12 @@ export function UpArea({
       return;
     }
 
-    setIsGenerating(true);
+    // If parent manages state, notify start, else set local
+    if (onGenerateStart) {
+      onGenerateStart();
+    } else {
+      setInternalIsGenerating(true);
+    }
 
     try {
       // Save selected concepts to the current activity context
@@ -465,7 +479,11 @@ export function UpArea({
         variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      if (onGenerateEnd) {
+        onGenerateEnd();
+      } else {
+        setInternalIsGenerating(false);
+      }
     }
   };
 
@@ -484,7 +502,7 @@ export function UpArea({
             onQuestionCountChange={handleQuestionCountChange}
             onAutoDecide={handleAutoDecide}
             onGenerate={handleGenerateQuestions}
-            isGenerating={isGenerating}
+            isGenerating={isBusy}
             hardnessLevels={hardnessLevels}
             onHardnessLevelChange={onHardnessLevelChange}
             totalQuestions={totalQuestions}

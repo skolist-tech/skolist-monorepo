@@ -453,7 +453,7 @@ function SortableSection({
         <button
           {...attributes}
           {...listeners}
-          className="cursor-move rounded p-1 hover:bg-muted"
+          className="cursor-move touch-none rounded p-1 hover:bg-muted"
         >
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </button>
