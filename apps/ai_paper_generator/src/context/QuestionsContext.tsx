@@ -31,7 +31,7 @@ export type { GeneratedQuestionWithConcepts };
 import { getClient } from "../services/supabase";
 
 interface QuestionsContextValue {
-  questions: GeneratedQuestionWithConcepts[];
+  questions: (GeneratedQuestionWithConcepts & { is_old_local?: boolean })[];
   isLoading: boolean;
   error: string | null;
   moveQuestionToDraft: (id: string) => Promise<void>;
@@ -42,6 +42,7 @@ interface QuestionsContextValue {
   deleteQuestion: (id: string) => Promise<void>;
   addCustomQuestion: (sectionId: string, type: QuestionType) => Promise<void>;
   refetchQuestions: () => Promise<void>;
+  markAllQuestionsOld: () => void;
 }
 
 const QuestionsContext = createContext<QuestionsContextValue | undefined>(
@@ -50,9 +51,9 @@ const QuestionsContext = createContext<QuestionsContextValue | undefined>(
 
 export function QuestionsProvider({ children }: { children: ReactNode }) {
   const { currentActivity } = useActivityContext();
-  const [questions, setQuestions] = useState<GeneratedQuestionWithConcepts[]>(
-    []
-  );
+  const [questions, setQuestions] = useState<
+    (GeneratedQuestionWithConcepts & { is_old_local?: boolean })[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,7 +67,8 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
       const data = await fetchQuestions(currentActivity.id);
-      setQuestions(data);
+      // Mark all loaded questions as old
+      setQuestions(data.map((q) => ({ ...q, is_old_local: true })));
     } catch (err) {
       console.error("Failed to load questions:", err);
       setError("Failed to load questions");
@@ -96,12 +98,14 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
+            // Append new questions, mark as not old (new during generation)
             setQuestions((prev) => [
               ...prev,
               {
                 ...(payload.new as GeneratedQuestion),
                 concepts: [],
                 images: [],
+                is_old_local: false,
               },
             ]);
           } else if (payload.eventType === "UPDATE") {
@@ -112,6 +116,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
                       ...(payload.new as GeneratedQuestion),
                       concepts: q.concepts,
                       images: q.images,
+                      is_old_local: q.is_old_local, // Preserve the is_old_local flag
                     }
                   : q
               )
@@ -258,7 +263,9 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
             if (updatedQuestion) {
               setQuestions((prev) =>
                 prev.map((q) =>
-                  q.id === updatedQuestion.id ? updatedQuestion : q
+                  q.id === updatedQuestion.id
+                    ? { ...updatedQuestion, is_old_local: q.is_old_local } // Preserve is_old_local
+                    : q
                 )
               );
             }
@@ -429,6 +436,11 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Mark all questions as old (called when generation completes)
+  const markAllQuestionsOld = useCallback(() => {
+    setQuestions((prev) => prev.map((q) => ({ ...q, is_old_local: true })));
+  }, []);
+
   const value: QuestionsContextValue = {
     questions,
     isLoading,
@@ -441,6 +453,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     deleteQuestion: handleDeleteQuestion,
     addCustomQuestion,
     refetchQuestions: loadQuestions,
+    markAllQuestionsOld,
   };
 
   return (

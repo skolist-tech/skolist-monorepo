@@ -28,42 +28,35 @@ export function GenerationPane() {
       const containerElement = containerRef.current;
 
       if (headerElement && containerElement) {
-        // Calculate the top position of the header relative to the container
+        // Calculate position to scroll header to top of container
         const headerRect = headerElement.getBoundingClientRect();
         const containerRect = containerElement.getBoundingClientRect();
-
-        // Target scroll position: Center the header in the viewport
-        // Current scroll + (header top relative to viewport - container top relative to viewport) - (half viewport height - half header height)
         const relativeTop = headerRect.top - containerRect.top;
-        const targetScrollTop =
-          containerElement.scrollTop +
-          relativeTop -
-          (containerElement.clientHeight / 2 - headerRect.height / 2);
+        const targetScrollTop = containerElement.scrollTop + relativeTop - 16; // 16px padding
 
         containerElement.scrollTo({
-          top: Math.max(0, targetScrollTop), // Ensure we don't scroll past top
+          top: Math.max(0, targetScrollTop),
           behavior: "smooth",
         });
       }
     }, 100);
   };
 
+  const handleGenerateStart = () => {
+    setIsGenerating(true);
+    handleScrollToQuestions();
+  };
+
   return (
     <div ref={containerRef} className="flex h-full flex-col overflow-y-auto">
-      <div
-        className={`transition-all duration-500 ease-in-out ${
-          isGenerating ? "-mt-[400px] opacity-0" : "mt-0 opacity-100"
-        }`}
-      >
-        <UpArea
-          hardnessLevels={hardnessLevels}
-          onHardnessLevelChange={handleLevelChange}
-          onGenerationComplete={handleScrollToQuestions}
-          isGenerating={isGenerating}
-          onGenerateStart={() => setIsGenerating(true)}
-          onGenerateEnd={() => setIsGenerating(false)}
-        />
-      </div>
+      {/* UpArea stays visible during generation */}
+      <UpArea
+        hardnessLevels={hardnessLevels}
+        onHardnessLevelChange={handleLevelChange}
+        isGenerating={isGenerating}
+        onGenerateStart={handleGenerateStart}
+        onGenerateEnd={() => setIsGenerating(false)}
+      />
       <DownArea hardnessLevels={hardnessLevels} isGenerating={isGenerating} />
     </div>
   );
