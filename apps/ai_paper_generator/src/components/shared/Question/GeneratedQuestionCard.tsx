@@ -1119,7 +1119,7 @@ export function GeneratedQuestionCard({
       )}
       {/* Header Actions */}
       {/* Dynamic Header Actions */}
-      <div className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-background/80 p-1 backdrop-blur-sm">
+      <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md bg-background/80 p-1 backdrop-blur-sm">
         <input
           type="file"
           ref={fileInputRef}
@@ -1584,7 +1584,11 @@ export function GeneratedQuestionCard({
                         <MoreVertical className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-56 p-2" align="end">
+                    <PopoverContent
+                      className="w-56 bg-background p-2"
+                      align="end"
+                      portal={false}
+                    >
                       <div className="flex flex-col gap-1">
                         {mobileMenuActions.map((action) => (
                           <ActionButton
