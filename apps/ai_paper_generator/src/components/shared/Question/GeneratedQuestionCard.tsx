@@ -1139,18 +1139,18 @@ export function GeneratedQuestionCard({
             We'll inline the logic or use a render function defined above. 
             Actually, let's map over the config. */}
         {(() => {
-          // Sort actions for desktop
-          const desktopActions = [...CARD_ACTIONS_CONFIG].sort(
-            (a, b) => a.desktop.order - b.desktop.order
-          );
+          // Sort actions for desktop (filter by visibility)
+          const desktopActions = [...CARD_ACTIONS_CONFIG]
+            .filter((a) => a.desktop.visible)
+            .sort((a, b) => a.desktop.order - b.desktop.order);
 
-          // Sort actions for mobile
+          // Sort actions for mobile (filter by visibility and location)
           const mobileCardActions = [...CARD_ACTIONS_CONFIG]
-            .filter((a) => a.mobile.location === "card")
+            .filter((a) => a.mobile.visible && a.mobile.location === "card")
             .sort((a, b) => a.mobile.order - b.mobile.order);
 
           const mobileMenuActions = [...CARD_ACTIONS_CONFIG]
-            .filter((a) => a.mobile.location === "menu")
+            .filter((a) => a.mobile.visible && a.mobile.location === "menu")
             .sort((a, b) => a.mobile.order - b.mobile.order);
 
           // Component for rendering a single action
