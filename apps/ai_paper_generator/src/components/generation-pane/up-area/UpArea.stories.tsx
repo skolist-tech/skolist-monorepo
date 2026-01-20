@@ -7,7 +7,13 @@ import {
 } from "../../../context/ConceptContext";
 import { QuestionsContext } from "../../../context/QuestionsContext";
 import { fn } from "@storybook/test";
-import type { Activity, SchoolClass, Subject } from "@skolist/db";
+import type {
+  Activity,
+  SchoolClass,
+  Subject,
+  HardnessLevel,
+} from "@skolist/db";
+import { useState } from "react";
 
 const meta: Meta<typeof UpArea> = {
   title: "Generation Pane/Up Area/UpArea",
@@ -21,7 +27,6 @@ export default meta;
 type Story = StoryObj<typeof UpArea>;
 
 // Mock Data
-// Mock Data matches SchoolClass
 const mockActivity: Activity = {
   id: "act1",
   name: "New Activity 1",
@@ -70,15 +75,181 @@ const mockSubjects: Subject[] = [
   } as unknown as Subject,
 ];
 
-const mockConceptsDefault: ConceptSelection = {
-  boardId: "b1",
-  classId: "c1",
-  subjectId: "s1",
-  checked: [],
-  expanded: [],
+// Interactive wrapper component with full state management
+function InteractiveUpArea() {
+  const [selection, setSelection] = useState<ConceptSelection>({
+    boardId: "b1",
+    classId: "c1",
+    subjectId: "s1",
+    checked: [],
+    expanded: [],
+  });
+
+  const [hardnessLevels, setHardnessLevels] = useState<
+    Record<HardnessLevel, number>
+  >({
+    easy: 30,
+    medium: 40,
+    hard: 30,
+  });
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const activityContextValue = {
+    activities: [mockActivity],
+    currentActivity: mockActivity,
+    isLoading: false,
+    error: null,
+    createActivity: async () => mockActivity,
+    selectActivity: fn(),
+    deleteActivity: async () => {},
+    renameActivity: async () => {},
+    refreshActivities: async () => {},
+  };
+
+  const conceptContextValue = {
+    selection,
+    schoolClasses: mockClasses,
+    subjects: mockSubjects,
+    treeNodes: [
+      {
+        value: "chapter:ch1",
+        label: "Algebra",
+        icon: <span className="pr-6 font-semibold text-green-600">1.</span>,
+        children: [
+          {
+            value: "topic:t1",
+            label: "Linear Equations",
+            icon: (
+              <span className="mr-6 font-semibold text-amber-700">1.1</span>
+            ),
+            children: [
+              { value: "concept:con1", label: "Solving for x" },
+              { value: "concept:con2", label: "Graphing lines" },
+            ],
+          },
+          {
+            value: "topic:t2",
+            label: "Quadratic Equations",
+            icon: (
+              <span className="mr-6 font-semibold text-amber-700">1.2</span>
+            ),
+            children: [
+              { value: "concept:con3", label: "Factoring" },
+              { value: "concept:con4", label: "Completing the square" },
+            ],
+          },
+        ],
+      },
+      {
+        value: "chapter:ch2",
+        label: "Geometry",
+        icon: <span className="pr-6 font-semibold text-green-600">2.</span>,
+        children: [
+          {
+            value: "topic:t3",
+            label: "Triangles",
+            icon: (
+              <span className="mr-6 font-semibold text-amber-700">2.1</span>
+            ),
+            children: [
+              { value: "concept:con5", label: "Pythagorean theorem" },
+              { value: "concept:con6", label: "Triangle congruence" },
+            ],
+          },
+        ],
+      },
+    ],
+    isLoadingBoard: false,
+    isLoadingSchoolClasses: false,
+    isLoadingSubjects: false,
+    isLoadingTree: false,
+    error: null,
+    selectSchoolClass: (classId: string) => {
+      setSelection((prev) => ({
+        ...prev,
+        classId: classId || null,
+        subjectId: null,
+        checked: [],
+        expanded: [],
+      }));
+    },
+    selectSubject: (subjectId: string) => {
+      setSelection((prev) => ({
+        ...prev,
+        subjectId: subjectId || null,
+        checked: [],
+        expanded: [],
+      }));
+    },
+    setChecked: (checked: string[]) => {
+      setSelection((prev) => ({ ...prev, checked }));
+    },
+    setExpanded: (expanded: string[]) => {
+      setSelection((prev) => ({ ...prev, expanded }));
+    },
+    setSelectedConcepts: (conceptIds: string[]) => {
+      const checked = conceptIds.map((id) => `concept:${id}`);
+      setSelection((prev) => ({ ...prev, checked }));
+    },
+    getSelectedConceptIds: () => selection.checked,
+    getSelectedLeafConceptIds: () =>
+      selection.checked
+        .filter((id) => id.startsWith("concept:"))
+        .map((id) => id.replace("concept:", "")),
+  };
+
+  const questionsContextValue = {
+    questions: [],
+    isLoading: false,
+    error: null,
+    moveQuestionToDraft: async () => {},
+    moveQuestionsToDraft: async () => {},
+    moveQuestionToGeneration: async () => {},
+    updateQuestionLocal: () => {},
+    saveQuestion: async () => {},
+    deleteQuestion: async () => {},
+    addCustomQuestion: async () => {},
+    refetchQuestions: async () => {},
+    markAllQuestionsOld: () => {},
+  };
+
+  const handleHardnessLevelChange = (level: HardnessLevel, value: number) => {
+    setHardnessLevels((prev) => ({ ...prev, [level]: value }));
+  };
+
+  const handleGenerateStart = () => {
+    setIsGenerating(true);
+    // Simulate generation
+    setTimeout(() => {
+      setIsGenerating(false);
+    }, 3000);
+  };
+
+  return (
+    <ActivityContext.Provider value={activityContextValue}>
+      <QuestionsContext.Provider value={questionsContextValue}>
+        <ConceptContext.Provider value={conceptContextValue}>
+          <div className="bg-background p-4">
+            <UpArea
+              hardnessLevels={hardnessLevels}
+              onHardnessLevelChange={handleHardnessLevelChange}
+              isGenerating={isGenerating}
+              onGenerateStart={handleGenerateStart}
+              onGenerateEnd={() => setIsGenerating(false)}
+            />
+          </div>
+        </ConceptContext.Provider>
+      </QuestionsContext.Provider>
+    </ActivityContext.Provider>
+  );
+}
+
+export const Interactive: Story = {
+  render: () => <InteractiveUpArea />,
 };
 
-// Generic Context Mocks
+// Keep the static stories for reference
 const activityContextDefault = {
   activities: [mockActivity],
   currentActivity: mockActivity,
@@ -92,7 +263,13 @@ const activityContextDefault = {
 };
 
 const conceptContextDefault = {
-  selection: mockConceptsDefault,
+  selection: {
+    boardId: "b1",
+    classId: "c1",
+    subjectId: "s1",
+    checked: [],
+    expanded: [],
+  },
   schoolClasses: mockClasses,
   subjects: mockSubjects,
   treeNodes: [
@@ -122,7 +299,7 @@ const conceptContextDefault = {
   setExpanded: fn(),
   setSelectedConcepts: fn(),
   getSelectedConceptIds: () => [],
-  getSelectedLeafConceptIds: () => ["con1"], // Mock having some concepts selected
+  getSelectedLeafConceptIds: () => ["con1"],
 };
 
 const questionsContextDefault = {

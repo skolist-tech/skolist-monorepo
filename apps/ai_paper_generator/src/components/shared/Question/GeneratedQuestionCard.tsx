@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { toBlob } from 'html-to-image';
+import { toBlob } from "html-to-image";
 import Lottie from "lottie-react";
 import chatAnimationData from "../../../../public/Chat.json";
 import { formatQuestionType } from "../../../utils/formatters";
@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  useToast,
 } from "@skolist/ui";
 import {
   ArrowRight,
@@ -68,6 +69,7 @@ interface GeneratedQuestionCardProps {
   showReorder?: boolean;
   isSelected?: boolean;
   onSelect?: (selected: boolean) => void;
+  isAnimating?: boolean; // External trigger for slide animation (used for bulk moves)
   onAutoCorrect?: (questionId: string) => Promise<void>; // Optional override for auto-correct (useful for Storybook)
   onRegenerateWithPrompt?: (
     questionId: string,
@@ -89,6 +91,7 @@ export function GeneratedQuestionCard({
   showReorder = false,
   isSelected = false,
   onSelect,
+  isAnimating = false,
   onAutoCorrect,
   onRegenerateWithPrompt,
 }: GeneratedQuestionCardProps) {
@@ -96,6 +99,7 @@ export function GeneratedQuestionCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const autoCorrectBtnRef = useRef<HTMLButtonElement>(null);
   const regenerateBtnRef = useRef<HTMLButtonElement>(null);
+  const { toast } = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedQuestion, setEditedQuestion] =
@@ -153,6 +157,13 @@ export function GeneratedQuestionCard({
   const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(
     null
   );
+
+  // Watch for external animation trigger (bulk moves)
+  useEffect(() => {
+    if (isAnimating && !slideDirection) {
+      setSlideDirection("right");
+    }
+  }, [isAnimating, slideDirection]);
 
   // Disintegration animation state for delete
   const [isDisintegrating, setIsDisintegrating] = useState(false);
@@ -292,62 +303,62 @@ export function GeneratedQuestionCard({
     }
   };
   const handleAutoCorrect = async () => {
-  // 1. Calculate animation origin
-  if (cardRef.current && autoCorrectBtnRef.current) {
-    const cardRect = cardRef.current.getBoundingClientRect();
-    const btnRect = autoCorrectBtnRef.current.getBoundingClientRect();
-    setSparkleOrigin({ 
-      top: btnRect.top - cardRect.top + 6, 
-      right: cardRect.right - btnRect.right + 6 
-    });
-  }
+    // 1. Calculate animation origin
+    if (cardRef.current && autoCorrectBtnRef.current) {
+      const cardRect = cardRef.current.getBoundingClientRect();
+      const btnRect = autoCorrectBtnRef.current.getBoundingClientRect();
+      setSparkleOrigin({
+        top: btnRect.top - cardRect.top + 6,
+        right: cardRect.right - btnRect.right + 6,
+      });
+    }
 
-  try {
-    // 2. Start Animation
-    setIsAutoCorrecting(true);
-    setIsReturning(false);
+    try {
+      // 2. Start Animation
+      setIsAutoCorrecting(true);
+      setIsReturning(false);
 
-    // 3. Tiny yield to let the browser paint the "start" of the animation
-    await new Promise((resolve) => setTimeout(resolve, 50));
+      // 3. Tiny yield to let the browser paint the "start" of the animation
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // 4. Capture Image using html-to-image (Faster & Lighter)
-    let imageBlob: Blob | undefined;
-    if (cardRef.current) {
-      try {
-        // html-to-image is much faster because it uses SVG foreignObject
-        imageBlob = await toBlob(cardRef.current, {
-          cacheBust: true,
-          skipAutoScale: true,
-          backgroundColor: '#ffffff', // Ensure white bg if transparent
-          filter: (node) => {
-             // Exclude elements with the ignore class
-             return !node.hasAttribute?.('data-html2canvas-ignore'); 
-          }
-        }) ?? undefined; // Handle potential null return
-      } catch (error) {
-        console.warn("Failed to capture screenshot:", error);
+      // 4. Capture Image using html-to-image (Faster & Lighter)
+      let imageBlob: Blob | undefined;
+      if (cardRef.current) {
+        try {
+          // html-to-image is much faster because it uses SVG foreignObject
+          imageBlob =
+            (await toBlob(cardRef.current, {
+              cacheBust: true,
+              skipAutoScale: true,
+              backgroundColor: "#ffffff", // Ensure white bg if transparent
+              filter: (node) => {
+                // Exclude elements with the ignore class
+                return !node.hasAttribute?.("data-html2canvas-ignore");
+              },
+            })) ?? undefined; // Handle potential null return
+        } catch (error) {
+          console.warn("Failed to capture screenshot:", error);
+        }
       }
+
+      // 5. API Call
+      if (onAutoCorrect) {
+        await onAutoCorrect(question.id);
+      } else {
+        await fastApiService.autoCorrectQuestion(question.id, imageBlob);
+      }
+
+      // 6. Finish Animation
+      setIsReturning(true);
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    } catch (error) {
+      console.error("Failed to auto-correct question", error);
+      alert("Failed to auto-correct question");
+    } finally {
+      setIsAutoCorrecting(false);
+      setIsReturning(false);
     }
-
-    // 5. API Call
-    if (onAutoCorrect) {
-      await onAutoCorrect(question.id);
-    } else {
-      await fastApiService.autoCorrectQuestion(question.id, imageBlob);
-    }
-
-    // 6. Finish Animation
-    setIsReturning(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-  } catch (error) {
-    console.error("Failed to auto-correct question", error);
-    alert("Failed to auto-correct question");
-  } finally {
-    setIsAutoCorrecting(false);
-    setIsReturning(false);
-  }
-};
+  };
 
   const handleDirectRegenerate = async () => {
     // Calculate the position of the button relative to the card before starting animation
@@ -390,6 +401,13 @@ export function GeneratedQuestionCard({
     // Wait for animation to complete
     await new Promise((resolve) => setTimeout(resolve, 400));
     onMoveToDraft(question.id);
+
+    // Show success toast
+    toast({
+      title: "Moved to Draft",
+      description: "1 question moved to draft successfully.",
+      className: "bg-green-500 text-white border-green-600",
+    });
     // Don't reset slideDirection - let the component stay hidden until parent removes it
   };
 

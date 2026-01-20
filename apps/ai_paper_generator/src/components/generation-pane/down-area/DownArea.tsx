@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  useToast,
 } from "@skolist/ui";
 import { Filter } from "lucide-react";
 import { useQuestionsContext } from "../../../context/QuestionsContext";
@@ -101,6 +102,8 @@ export function DownArea({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkMoving, setIsBulkMoving] = useState(false);
+  const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   const handleToggleSelect = (id: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -130,10 +133,29 @@ export function DownArea({
     try {
       setIsBulkMoving(true);
       const idsToMove = Array.from(selectedIds);
+      const count = idsToMove.length;
+
+      // Mark all questions as animating
+      setAnimatingIds(new Set(idsToMove));
+
+      // Wait for animation to complete
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      // Move questions to draft
       await moveQuestionsToDraft(idsToMove);
+
+      // Show success toast
+      toast({
+        title: "Moved to Draft",
+        description: `${count} question${count > 1 ? "s" : ""} moved to draft successfully.`,
+        className: "bg-green-500 text-white border-green-600",
+      });
+
       setSelectedIds(new Set());
+      setAnimatingIds(new Set());
     } catch (error) {
       console.error("Failed to bulk move questions:", error);
+      setAnimatingIds(new Set());
     } finally {
       setIsBulkMoving(false);
     }
@@ -289,6 +311,7 @@ export function DownArea({
               }}
               isSelected={selectedIds.has(question.id)}
               onSelect={(selected) => handleToggleSelect(question.id, selected)}
+              isAnimating={animatingIds.has(question.id)}
             />
           ))}
 
@@ -317,6 +340,7 @@ export function DownArea({
               }}
               isSelected={selectedIds.has(question.id)}
               onSelect={(selected) => handleToggleSelect(question.id, selected)}
+              isAnimating={animatingIds.has(question.id)}
             />
           ))}
         </div>
