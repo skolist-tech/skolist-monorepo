@@ -12,11 +12,7 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center">
-            <img
-              src="/logo_with_name.png"
-              alt="Skolist Logo"
-              className="h-10"
-            />
+            <img src="/logo.png" alt="Skolist Logo" className="h-10" />
           </Link>
         </div>
 
