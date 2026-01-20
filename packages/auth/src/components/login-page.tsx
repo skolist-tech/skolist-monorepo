@@ -96,9 +96,19 @@ export function LoginPage({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Check valid env var (support VITE_ prefix or standard if configured)
+  const envVite = import.meta.env.VITE_PHONE_SMS_AVAILABLE;
+
+  const isPhoneAvailable =
+    (envVite || "false").toLowerCase() !== "false";
+
   // Auth state management
   const [isSignUp, setIsSignUp] = useState(true);
-  const [authMethod, setAuthMethod] = useState<"phone" | "email">("phone");
+  const [authMethod, setAuthMethod] = useState<"phone" | "email">(() => {
+    return isPhoneAvailable ? "phone" : "email";
+  });
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
   // Phone/OTP State
   const [otpSent, setOtpSent] = useState(false);
@@ -189,7 +199,12 @@ export function LoginPage({
     if (result.error) {
       setError(result.error.message);
     } else {
-      onSuccess?.();
+      if (isSignUp) {
+        setSubmittedEmail(data.email);
+        setShowEmailConfirmation(true);
+      } else {
+        onSuccess?.();
+      }
     }
   };
 
@@ -263,83 +278,222 @@ export function LoginPage({
               </div>
             )}
 
-            {authMethod === "phone" ? (
-              /* Phone Flow */
-              !otpSent ? (
-                <form onSubmit={phoneForm.handleSubmit(handlePhoneSubmit)}>
-                  {isSignUp && (
+            {/* Email Confirmation View */}
+            {authMethod === "email" && showEmailConfirmation ? (
+              <div className="animate-enter flex flex-col items-center justify-center space-y-4 py-4 text-center">
+                <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-teal-50">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--login-teal)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                </div>
+
+                <h3 className="font-serif text-xl font-medium text-[var(--login-teal)]">
+                  Check your inbox
+                </h3>
+
+                <div className="space-y-2">
+                  <p className="font-sans text-sm text-gray-600">
+                    Confirmation link has been sent on your email, kindly check
+                    it
+                  </p>
+                  <p className="font-sans text-lg font-medium text-gray-900">
+                    {submittedEmail}
+                  </p>
+                </div>
+
+                <div className="w-full pt-4">
+                  <p className="mb-2 text-xs text-gray-500">
+                    If you have entered wrong email mistakenly
+                  </p>
+                  <button
+                    onClick={() => setShowEmailConfirmation(false)}
+                    className="login-form__submit border border-gray-300 bg-gray-100 text-gray-700 shadow-none hover:bg-gray-200"
+                  >
+                    Re-enter correct email address
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Normal Form Content */
+              <>
+                {authMethod === "phone" ? (
+                  /* Phone Flow */
+                  !otpSent ? (
+                    <form onSubmit={phoneForm.handleSubmit(handlePhoneSubmit)}>
+                      {isSignUp && (
+                        <div className="login-form__group">
+                          <label className="login-form__label">Name</label>
+                          <input
+                            className="login-form__input"
+                            placeholder="Enter your Name"
+                            {...phoneForm.register("name")}
+                          />
+                          {phoneForm.formState.errors.name && (
+                            <span className="mt-1 block text-xs text-red-500">
+                              {phoneForm.formState.errors.name.message}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="login-form__group">
+                        <label className="login-form__label">
+                          Phone Number
+                        </label>
+                        <div className="login-form__phone-group">
+                          <select
+                            className="login-form__country-code"
+                            value={countryCode}
+                            onChange={(e) => setCountryCode(e.target.value)}
+                          >
+                            <option value="+91">(91+)</option>
+                            <option value="+1">(1+)</option>
+                          </select>
+                          <input
+                            className="login-form__input login-form__phone-input"
+                            placeholder="Enter your number"
+                            type="tel"
+                            {...phoneForm.register("phone")}
+                          />
+                        </div>
+                        {phoneForm.formState.errors.phone && (
+                          <span className="mt-1 block text-xs text-red-500">
+                            {phoneForm.formState.errors.phone.message}
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="login-form__submit"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <Spinner size="sm" className="text-white" />
+                        ) : (
+                          "Send OTP"
+                        )}
+                      </button>
+                    </form>
+                  ) : (
+                    <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)}>
+                      <div className="login-form__group">
+                        <p className="login-form__otp-info">
+                          Enter the code sent to {phoneNumber}
+                        </p>
+                        <input
+                          className="login-form__input login-form__otp-input"
+                          placeholder="000000"
+                          maxLength={6}
+                          {...otpForm.register("otp")}
+                        />
+                        {otpForm.formState.errors.otp && (
+                          <span className="mt-1 block text-center text-xs text-red-500">
+                            {otpForm.formState.errors.otp.message}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <button
+                          type="submit"
+                          className="login-form__submit"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <Spinner size="sm" className="text-white" />
+                          ) : (
+                            "Verify & Continue"
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          className="login-form__back-btn"
+                          onClick={() => setOtpSent(false)}
+                        >
+                          Change phone number
+                        </button>
+                      </div>
+                    </form>
+                  )
+                ) : (
+                  /* Email Flow */
+                  <form onSubmit={emailForm.handleSubmit(handleEmailSubmit)}>
+                    {isSignUp && (
+                      <div className="login-form__group">
+                        <label className="login-form__label">Name</label>
+                        <input
+                          className="login-form__input"
+                          placeholder="Enter your Name"
+                          {...emailForm.register("name")}
+                        />
+                        {emailForm.formState.errors.name && (
+                          <span className="mt-1 block text-xs text-red-500">
+                            {emailForm.formState.errors.name.message}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     <div className="login-form__group">
-                      <label className="login-form__label">Name</label>
+                      <label className="login-form__label">Email Address</label>
                       <input
                         className="login-form__input"
-                        placeholder="Enter your Name"
-                        {...phoneForm.register("name")}
+                        placeholder="name@example.com"
+                        type="email"
+                        {...emailForm.register("email")}
                       />
-                      {phoneForm.formState.errors.name && (
+                      {emailForm.formState.errors.email && (
                         <span className="mt-1 block text-xs text-red-500">
-                          {phoneForm.formState.errors.name.message}
+                          {emailForm.formState.errors.email.message}
                         </span>
                       )}
                     </div>
-                  )}
 
-                  <div className="login-form__group">
-                    <label className="login-form__label">Phone Number</label>
-                    <div className="login-form__phone-group">
-                      <select
-                        className="login-form__country-code"
-                        value={countryCode}
-                        onChange={(e) => setCountryCode(e.target.value)}
-                      >
-                        <option value="+91">(91+)</option>
-                        <option value="+1">(1+)</option>
-                      </select>
+                    <div className="login-form__group">
+                      <label className="login-form__label">Password</label>
                       <input
-                        className="login-form__input login-form__phone-input"
-                        placeholder="Enter your number"
-                        type="tel"
-                        {...phoneForm.register("phone")}
+                        className="login-form__input"
+                        placeholder="Enter password"
+                        type="password"
+                        {...emailForm.register("password")}
                       />
+                      {emailForm.formState.errors.password && (
+                        <span className="mt-1 block text-xs text-red-500">
+                          {emailForm.formState.errors.password.message}
+                        </span>
+                      )}
                     </div>
-                    {phoneForm.formState.errors.phone && (
-                      <span className="mt-1 block text-xs text-red-500">
-                        {phoneForm.formState.errors.phone.message}
-                      </span>
-                    )}
-                  </div>
 
-                  <button
-                    type="submit"
-                    className="login-form__submit"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <Spinner size="sm" className="text-white" />
-                    ) : (
-                      "Send OTP"
+                    {isSignUp && (
+                      <div className="login-form__group">
+                        <label className="login-form__label">
+                          Confirm Password
+                        </label>
+                        <input
+                          className="login-form__input"
+                          placeholder="Confirm password"
+                          type="password"
+                          {...emailForm.register("confirmPassword")}
+                        />
+                        {emailForm.formState.errors.confirmPassword && (
+                          <span className="mt-1 block text-xs text-red-500">
+                            {emailForm.formState.errors.confirmPassword.message}
+                          </span>
+                        )}
+                      </div>
                     )}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)}>
-                  <div className="login-form__group">
-                    <p className="login-form__otp-info">
-                      Enter the code sent to {phoneNumber}
-                    </p>
-                    <input
-                      className="login-form__input login-form__otp-input"
-                      placeholder="000000"
-                      maxLength={6}
-                      {...otpForm.register("otp")}
-                    />
-                    {otpForm.formState.errors.otp && (
-                      <span className="mt-1 block text-center text-xs text-red-500">
-                        {otpForm.formState.errors.otp.message}
-                      </span>
-                    )}
-                  </div>
 
-                  <div className="space-y-2">
                     <button
                       type="submit"
                       className="login-form__submit"
@@ -347,142 +501,57 @@ export function LoginPage({
                     >
                       {isLoading ? (
                         <Spinner size="sm" className="text-white" />
+                      ) : isSignUp ? (
+                        "Create Account"
                       ) : (
-                        "Verify & Continue"
+                        "Sign In"
                       )}
                     </button>
+                  </form>
+                )}
+
+                {/* Toggle Auth Method (Only if not in OTP mode AND Phone is available) */}
+                {!otpSent && isPhoneAvailable && (
+                  <div className="text-center">
                     <button
                       type="button"
-                      className="login-form__back-btn"
-                      onClick={() => setOtpSent(false)}
+                      className="login-form__toggle-method-btn"
+                      onClick={() => {
+                        setAuthMethod(
+                          authMethod === "phone" ? "email" : "phone"
+                        );
+                        setError(null);
+                      }}
                     >
-                      Change phone number
+                      {authMethod === "phone"
+                        ? "Use Email Address"
+                        : "Use Phone Number"}
                     </button>
                   </div>
-                </form>
-              )
-            ) : (
-              /* Email Flow */
-              <form onSubmit={emailForm.handleSubmit(handleEmailSubmit)}>
-                {isSignUp && (
-                  <div className="login-form__group">
-                    <label className="login-form__label">Name</label>
-                    <input
-                      className="login-form__input"
-                      placeholder="Enter your Name"
-                      {...emailForm.register("name")}
-                    />
-                    {emailForm.formState.errors.name && (
-                      <span className="mt-1 block text-xs text-red-500">
-                        {emailForm.formState.errors.name.message}
-                      </span>
-                    )}
-                  </div>
                 )}
 
-                <div className="login-form__group">
-                  <label className="login-form__label">Email Address</label>
-                  <input
-                    className="login-form__input"
-                    placeholder="name@example.com"
-                    type="email"
-                    {...emailForm.register("email")}
-                  />
-                  {emailForm.formState.errors.email && (
-                    <span className="mt-1 block text-xs text-red-500">
-                      {emailForm.formState.errors.email.message}
-                    </span>
-                  )}
-                </div>
+                {/* Social Divider */}
+                {!otpSent && (
+                  <>
+                    <div className="login-right-panel__divider">Or</div>
 
-                <div className="login-form__group">
-                  <label className="login-form__label">Password</label>
-                  <input
-                    className="login-form__input"
-                    placeholder="Enter password"
-                    type="password"
-                    {...emailForm.register("password")}
-                  />
-                  {emailForm.formState.errors.password && (
-                    <span className="mt-1 block text-xs text-red-500">
-                      {emailForm.formState.errors.password.message}
-                    </span>
-                  )}
-                </div>
-
-                {isSignUp && (
-                  <div className="login-form__group">
-                    <label className="login-form__label">
-                      Confirm Password
-                    </label>
-                    <input
-                      className="login-form__input"
-                      placeholder="Confirm password"
-                      type="password"
-                      {...emailForm.register("confirmPassword")}
-                    />
-                    {emailForm.formState.errors.confirmPassword && (
-                      <span className="mt-1 block text-xs text-red-500">
-                        {emailForm.formState.errors.confirmPassword.message}
-                      </span>
+                    {showGoogle && (
+                      <button
+                        className="login-google-btn"
+                        onClick={handleGoogleSignIn}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <Spinner size="sm" />
+                        ) : (
+                          <>
+                            <GoogleIcon className="mr-2 h-4 w-4" />
+                            Continue with Google
+                          </>
+                        )}
+                      </button>
                     )}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="login-form__submit"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Spinner size="sm" className="text-white" />
-                  ) : isSignUp ? (
-                    "Create Account"
-                  ) : (
-                    "Sign In"
-                  )}
-                </button>
-              </form>
-            )}
-
-            {/* Toggle Auth Method (Only if not in OTP mode) */}
-            {!otpSent && (
-              <div className="text-center">
-                <button
-                  type="button"
-                  className="login-form__toggle-method-btn"
-                  onClick={() => {
-                    setAuthMethod(authMethod === "phone" ? "email" : "phone");
-                    setError(null);
-                  }}
-                >
-                  {authMethod === "phone"
-                    ? "Use Email Address"
-                    : "Use Phone Number"}
-                </button>
-              </div>
-            )}
-
-            {/* Social Divider */}
-            {!otpSent && (
-              <>
-                <div className="login-right-panel__divider">Or</div>
-
-                {showGoogle && (
-                  <button
-                    className="login-google-btn"
-                    onClick={handleGoogleSignIn}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <Spinner size="sm" />
-                    ) : (
-                      <>
-                        <GoogleIcon className="mr-2 h-4 w-4" />
-                        Continue with Google
-                      </>
-                    )}
-                  </button>
+                  </>
                 )}
               </>
             )}
