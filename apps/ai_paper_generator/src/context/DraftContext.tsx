@@ -30,7 +30,8 @@ import {
 } from "../services/draftService";
 import {
   updateQuestion,
-  upsertQuestions,
+  // upsertQuestions,
+  updateQuestionPosition,
   type GeneratedQuestionWithConcepts,
 } from "../services/questionService";
 import type {
@@ -38,7 +39,9 @@ import type {
   UpdateQgenDraft,
   QgenDraftSection,
   UpdateQgenDraftSection,
+  // UpdateGeneratedQuestion,
 } from "@skolist/db";
+
 
 interface DraftContextValue {
   draft: QgenDraft | null;
@@ -225,12 +228,13 @@ export function DraftProvider({ children }: { children: ReactNode }) {
 
           sectionQuestions.forEach((q) => {
             if (q.position_in_draft !== globalCounter) {
-              // Prepare update payload (remove relations)
-              const { ...rest } = q;
-              questionUpdates.push({
-                ...rest,
+              // Prepare update payload - exclude joined fields and local UI state
+              const updatePayload = {
+                id: q.id,
                 position_in_draft: globalCounter,
-              });
+              };
+
+              questionUpdates.push(updatePayload);
 
               // Optimistic local update
               updateQuestionLocal({ ...q, position_in_draft: globalCounter });
@@ -242,7 +246,11 @@ export function DraftProvider({ children }: { children: ReactNode }) {
         // Batch update questions if needed
         if (questionUpdates.length > 0) {
           try {
-            await upsertQuestions(questionUpdates);
+            await Promise.all(
+              questionUpdates.map(async (q) => {
+                await updateQuestionPosition(q.id, q.position_in_draft);
+              })
+            );
           } catch (e) {
             console.error("Failed to re-index questions:", e);
           }

@@ -192,6 +192,27 @@ export async function updateQuestion(
   return data;
 }
 
+export async function updateQuestionPosition(
+  questionId: string,
+  position_in_draft: number
+): Promise<GeneratedQuestion> {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from("gen_questions")
+    .update({ position_in_draft })
+    .eq("id", questionId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Failed to update question position:", error);
+    throw error;
+  }
+
+  return data;
+}
+
 /**
  * Bulk update multiple questions with the same updates (single query)
  */
