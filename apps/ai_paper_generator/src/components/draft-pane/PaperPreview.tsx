@@ -17,6 +17,7 @@ import {
   CheckSquare,
   FileDown,
   ChevronDown,
+  Download,
 } from "lucide-react";
 import {
   Button,
@@ -773,8 +774,8 @@ export function PaperPreview() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm" className="gap-1 px-2 md:gap-2 md:px-3">
-              <Printer className="h-4 w-4" />
-              <span className="hidden sm:inline">Print / Download</span>
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Download</span>
               <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
             </Button>
           </DropdownMenuTrigger>
