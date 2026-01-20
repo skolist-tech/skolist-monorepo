@@ -1,7 +1,7 @@
 import { Logo } from "./Logo";
 import { PaneNavigationButtons } from "./PaneNavigationButtons";
 import { UserProfile } from "./UserProfile";
-import { ModeToggle } from "./ModeToggle";
+// import { ModeToggle } from "./ModeToggle";
 import {
   Button,
   DropdownMenu,
