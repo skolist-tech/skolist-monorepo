@@ -5,8 +5,8 @@ import { AuthProvider } from "../context";
 /**
  * LoginPage Component
  *
- * Full-featured authentication page with email, Google OAuth, and phone OTP.
- * Used across all Skolist apps for unified authentication experience.
+ * Full-featured authentication page with split-screen layout capability.
+ * Supports Phone OTP (primary) and Google OAuth.
  */
 const meta: Meta<typeof LoginPage> = {
   title: "Auth/LoginPage",
@@ -23,17 +23,13 @@ const meta: Meta<typeof LoginPage> = {
     layout: "fullscreen",
   },
   argTypes: {
-    title: {
-      control: "text",
-      description: "Page title displayed on the card",
+    showLeftPanel: {
+      control: "boolean",
+      description: "Toggle split-screen layout",
     },
-    description: {
+    productName: {
       control: "text",
-      description: "Description text below the title",
-    },
-    enabledMethods: {
-      control: "object",
-      description: "Array of enabled auth methods",
+      description: "Product name displayed in marketing panel",
     },
   },
 };
@@ -42,62 +38,43 @@ export default meta;
 type Story = StoryObj<typeof LoginPage>;
 
 /**
- * Default login page with all auth methods enabled
+ * The standard QGEN login page with split-screen marketing panel.
  */
-export const Default: Story = {
-  args: {},
-};
-
-/**
- * Custom branding for a specific app
- */
-export const CustomBranding: Story = {
+export const QGENDefault: Story = {
   args: {
-    title: "Welcome to AI Tutor",
-    description: "Sign in to continue your learning journey",
+    productName: "QGEN",
+    showLeftPanel: true,
   },
 };
 
 /**
- * Email-only authentication
+ * Custom branding with split-screen enabled.
  */
-export const EmailOnly: Story = {
+export const SplitScreenCustom: Story = {
   args: {
-    title: "Email Sign In",
-    description: "Use your email and password",
-    enabledMethods: ["email"],
+    productName: "AI TUTOR",
+    productTagline: "Learn smarter, not harder",
+    showLeftPanel: true,
   },
 };
 
 /**
- * Google-only authentication
+ * Centered card layout (similar to legacy behavior) without the left panel.
+ */
+export const CenteredMinimal: Story = {
+  args: {
+    showLeftPanel: false,
+    title: "Welcome Back",
+    description: "Please sign in to continue",
+  },
+};
+
+/**
+ * Demonstrating different enabled auth methods (e.g. Google only).
  */
 export const GoogleOnly: Story = {
   args: {
-    title: "Continue with Google",
-    description: "Quick sign in with your Google account",
+    showLeftPanel: false,
     enabledMethods: ["google"],
-  },
-};
-
-/**
- * Phone-only authentication
- */
-export const PhoneOnly: Story = {
-  args: {
-    title: "Phone Sign In",
-    description: "Sign in with SMS verification",
-    enabledMethods: ["phone"],
-  },
-};
-
-/**
- * Email and Google (no phone)
- */
-export const NoPhone: Story = {
-  args: {
-    title: "Sign In",
-    description: "Choose your preferred method",
-    enabledMethods: ["email", "google"],
   },
 };

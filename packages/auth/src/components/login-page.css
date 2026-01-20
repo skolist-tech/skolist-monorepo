@@ -1,0 +1,694 @@
+/* =================================================================
+   Login Page Styles - QGEN High Fidelity v3 (Responsive Upgrade)
+   ================================================================= */
+
+/* ─────────────────────────────────────────────────────────────────
+   CSS Variables
+   ───────────────────────────────────────────────────────────────── */
+:root {
+  --login-red: #fa4d4d;
+  --login-red-dark: #d43f3f;
+  --login-blue: #0f5e9c;
+  --login-teal: #185e71;
+  --login-teal-dark: #124654;
+  --login-teal-border: #4a8b9e;
+  --login-text-dark: #1a1a1a;
+  --login-text-grey: #4a4a4a;
+  --login-bg-light: #ffffff;
+
+  /* Fonts */
+  --login-font-serif: "Times New Roman", Times, serif;
+  --login-font-sans:
+    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+
+  /* Animation Timing */
+  --anim-delay-base: 100ms;
+}
+
+/* Force full viewport height with no outer scroll */
+.login-page-container {
+  display: flex;
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  width: 100%;
+  font-family: var(--login-font-sans);
+  background-color: #fff;
+  overflow: hidden; /* Prevent body scroll */
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Animations
+   ───────────────────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes floatBook {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-enter {
+  opacity: 0;
+  animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.delay-1 {
+  animation-delay: 100ms;
+}
+.delay-2 {
+  animation-delay: 200ms;
+}
+.delay-3 {
+  animation-delay: 300ms;
+}
+.delay-4 {
+  animation-delay: 400ms;
+}
+.delay-5 {
+  animation-delay: 500ms;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Left Panel - Marketing Section
+   ───────────────────────────────────────────────────────────────── */
+.login-left-panel {
+  width: 55%;
+  height: 100%;
+  background-color: #fff;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.login-left-panel__logo {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.login-left-panel__logo:hover {
+  transform: scale(1.05);
+}
+
+.login-left-panel__logo img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Main Headline */
+.login-left-panel__headline {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-family: var(--login-font-sans);
+  font-size: clamp(1.1rem, 2vh, 1.8rem); /* Responsive to HEIGHT too */
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  max-width: 90%;
+}
+
+.login-left-panel__headline-red {
+  color: var(--login-red);
+}
+.login-left-panel__headline-dark {
+  color: var(--login-text-dark);
+}
+.login-left-panel__headline-blue {
+  color: var(--login-blue);
+}
+
+/* Branding QGEN */
+.login-left-panel__branding {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.login-left-panel__branding-icon {
+  font-size: clamp(2rem, 4vh, 2.5rem);
+  margin-bottom: 0.25rem;
+  display: block;
+  text-align: center;
+  animation: floatBook 3s ease-in-out infinite;
+}
+
+.login-left-panel__branding-name {
+  font-size: clamp(3rem, 8vh, 5.5rem); /* Scales with HEIGHT too */
+  font-weight: 900;
+  color: #000;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  margin: 0;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.05);
+}
+
+.login-left-panel__branding-subtitle {
+  font-size: clamp(0.9rem, 1.5vh, 1.1rem);
+  font-weight: 700;
+  color: var(--login-text-dark);
+  margin-top: 0.5rem;
+}
+
+/* Feature Pills */
+.login-left-panel__features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  max-width: 80%;
+}
+
+.login-left-panel__feature-pill {
+  padding: 0.75rem 1.75rem;
+  border: 2.5px solid #000;
+  border-radius: 9999px;
+  font-size: clamp(0.75rem, 1.2vw, 0.95rem);
+  font-weight: 700;
+  color: #000;
+  background: white;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: default;
+}
+
+.login-left-panel__feature-pill:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: #fafafa;
+}
+
+/* CTA */
+.login-left-panel__cta {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  line-height: 1.5;
+}
+
+.login-left-panel__cta-main {
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  font-weight: 700;
+  color: var(--login-text-dark);
+  margin-bottom: 0.25rem;
+}
+
+.login-left-panel__cta-main span {
+  color: var(--login-red);
+}
+
+.login-left-panel__cta-sub {
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  font-weight: 600;
+  color: var(--login-text-dark);
+}
+
+/* Black Banner */
+.login-left-panel__banner {
+  background-color: #1a1a1a;
+  color: #fff;
+  padding: 1rem 3rem;
+  border-radius: 9999px;
+  text-align: center;
+  font-weight: 800;
+  font-size: clamp(0.9rem, 1.5vw, 1.25rem);
+  letter-spacing: 0.02em;
+  margin-bottom: 3rem;
+  text-transform: uppercase;
+  width: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.login-left-panel__banner:hover {
+  transform: scale(1.02);
+}
+
+/* Contact */
+.login-left-panel__contact {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #000;
+  opacity: 0.9;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Right Panel - Auth
+   ───────────────────────────────────────────────────────────────── */
+.login-right-panel {
+  flex: 1;
+  height: 100%;
+  background-color: #fff;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.login-right-panel__content {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: auto 0;
+}
+
+/* Headings */
+.login-right-panel__header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-right-panel__title {
+  font-family: var(--login-font-serif);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  color: var(--login-teal);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.login-right-panel__subtitle {
+  font-family: var(--login-font-serif);
+  font-size: 1.1rem;
+  color: var(--login-teal);
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+
+.login-right-panel__toggle {
+  font-family: var(--login-font-serif);
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.login-right-panel__toggle-link {
+  color: var(--login-teal-border);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.login-right-panel__toggle-link:hover {
+  color: var(--login-teal);
+}
+
+/* Card Styling */
+.login-right-panel__form-card {
+  width: 100%;
+  background: white;
+  border: 4px solid var(--login-teal-border);
+  border-radius: 0.75rem;
+  padding: 2.5rem 2rem;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.5s ease-out 0.3s backwards;
+}
+
+/* Inputs */
+.login-form__group {
+  margin-bottom: 1.5rem;
+}
+
+.login-form__label {
+  display: block;
+  font-family: var(--login-font-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 0.5rem;
+}
+
+.login-form__input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #999;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  color: #000;
+  transition: border-color 0.2s;
+}
+
+.login-form__input:focus {
+  outline: none;
+  border-color: var(--login-teal);
+  box-shadow: 0 0 0 1px var(--login-teal);
+}
+
+.login-form__phone-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.login-form__country-code {
+  width: 90px;
+  padding: 0.5rem 0.5rem;
+  border: 1px solid #757575;
+  border-radius: 0.375rem;
+  background: white;
+  font-size: 1rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.login-form__input.login-form__phone-input {
+  border: 1px solid #757575;
+}
+
+/* Buttons */
+.login-form__submit {
+  width: 100%;
+  background-color: var(--login-teal);
+  color: white;
+  font-weight: 700;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 1.05rem;
+  margin-top: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-form__submit:hover {
+  background-color: var(--login-teal-dark);
+  transform: translateY(-1px);
+}
+
+.login-right-panel__divider {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #666;
+  font-family: var(--login-font-serif);
+  font-size: 1.1rem;
+}
+
+.login-form__toggle-method-btn {
+  background: none;
+  border: none;
+  color: var(--login-teal);
+  font-family: var(--login-font-serif);
+  font-size: 0.95rem;
+  text-decoration: underline;
+  cursor: pointer;
+  /* margin-top: 0.5rem; */
+  padding: 0.5rem;
+  transition: color 0.2s;
+  width: 100%;
+  text-align: center;
+}
+
+.login-form__toggle-method-btn:hover {
+  color: var(--login-teal-dark);
+}
+
+.login-google-btn {
+  width: 100%;
+  background: white;
+  border: 1px solid #757575;
+  color: #333;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: var(--login-font-serif);
+  transition: background-color 0.2s;
+}
+
+.login-google-btn:hover {
+  background-color: #f9fafb;
+}
+
+/* Trust Badges - Entrance */
+.login-right-panel__badges {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+  animation: fadeInUp 0.5s ease-out 0.5s backwards;
+}
+
+.login-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.login-badge__text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #000;
+}
+
+.login-badge__text span {
+  color: var(--login-red);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Media Queries for Vertical & Horizontal Responsiveness
+   ───────────────────────────────────────────────────────────────── */
+
+/* 1. SHORT SCREENS (e.g. Laptops < 900px height) */
+@media (max-height: 900px) {
+  .login-left-panel {
+    padding: 1.5rem;
+  }
+  .login-left-panel__headline {
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+  }
+  .login-left-panel__branding {
+    margin-bottom: 1.5rem;
+  }
+  .login-left-panel__branding-name {
+    font-size: 4rem;
+  }
+  .login-left-panel__branding-icon {
+    font-size: 2rem;
+  }
+  .login-left-panel__features {
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  .login-left-panel__feature-pill {
+    padding: 0.5rem 1rem;
+  }
+  .login-left-panel__banner {
+    padding: 0.75rem 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .login-right-panel {
+    padding: 1.5rem;
+  }
+  .login-right-panel__header {
+    margin-bottom: 1.5rem;
+  }
+  .login-right-panel__title {
+    font-size: 2.25rem;
+  }
+  .login-right-panel__form-card {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .login-form__group {
+    margin-bottom: 1rem;
+  }
+}
+
+/* 2. VERY SHORT SCREENS (e.g. 1366x768 Laptops) */
+@media (max-height: 1008px) {
+  .login-left-panel__branding-name {
+    font-size: 3rem;
+  }
+  .login-left-panel__headline {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .login-left-panel__cta {
+    margin-bottom: 1rem;
+  }
+  .login-left-panel__banner {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+  }
+  .login-left-panel__contact {
+    font-size: 0.8rem;
+  }
+
+  /* Right Panel Compact Adjustments */
+  .login-right-panel {
+    padding: 1rem;
+  }
+  .login-right-panel__title {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+  }
+  .login-right-panel__subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+  .login-right-panel__form-card {
+    padding: 1rem 1.25rem; /* Tighter padding */
+    margin-bottom: 0.75rem;
+    border-width: 2px;
+  }
+  .login-right-panel__header {
+    margin-bottom: 0.75rem;
+  }
+
+  /* Compact Form Groups */
+  .login-form__group {
+    margin-bottom: 0.5rem;
+  }
+  .login-form__label {
+    font-size: 0.95rem; /* Smaller label */
+    margin-bottom: 0.25rem;
+  }
+  .login-form__input {
+    padding: 0.4rem 0.5rem; /* Smaller input height */
+    font-size: 0.95rem;
+  }
+
+  /* Compact Buttons */
+  .login-form__submit {
+    padding: 0.5rem;
+    margin-top: 0.25rem;
+    font-size: 0.95rem;
+  }
+  .login-google-btn {
+    padding: 0.4rem;
+    font-size: 0.9rem;
+  }
+  .login-form__toggle-method-btn {
+    padding: 0.25rem;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+  }
+  .login-right-panel__divider {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+  }
+
+  /* Badges - Scale down */
+  .login-right-panel__badges {
+    gap: 0.5rem;
+  }
+  .login-badge {
+    gap: 0.5rem;
+  }
+  .login-badge__icon svg {
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+  .login-badge__text {
+    font-size: 0.8rem;
+  }
+}
+
+/* 3. EXTREMELY SHORT SCREENS (e.g. < 650px height) */
+@media (max-height: 650px) {
+  .login-right-panel__title {
+    display: none; /* Hide title if strictly necessary, or conserve more space */
+  }
+  .login-left-panel {
+    padding: 1rem;
+  }
+  .login-page-container {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto; /* Allow full page scroll if it really can't fit */
+  }
+  .login-right-panel {
+    height: auto;
+    overflow: visible;
+  }
+}
+
+/* 4. TABLET LANDSCAPE / SMALL DESKTOPS (Width constraint) */
+@media (min-width: 1024px) and (max-width: 1280px) {
+  .login-left-panel {
+    padding: 1.5rem;
+  }
+  .login-left-panel__headline {
+    font-size: 1.2rem;
+  }
+  .login-left-panel__branding-name {
+    font-size: 3.5rem;
+  }
+  .login-left-panel__branding-subtitle {
+    font-size: 0.9rem;
+  }
+  .login-left-panel__feature-pill {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* 5. TABLET PORTRAIT & MOBILE (Stack Layout) */
+@media (max-width: 1024px) {
+  .login-left-panel {
+    display: none;
+  }
+  .login-right-panel {
+    width: 100%;
+    padding: 1.5rem;
+  }
+  .login-right-panel__content {
+    max-width: 100%;
+  }
+}
+
+/* 6. MOBILE PHONES (Narrow Width) */
+@media (max-width: 640px) {
+  .login-right-panel {
+    justify-content: flex-start;
+    padding-top: 2rem;
+  }
+  .login-right-panel__title {
+    font-size: 2rem;
+  }
+  .login-right-panel__form-card {
+    padding: 1.5rem;
+    border-width: 3px;
+  }
+  .login-badge {
+    gap: 0.75rem;
+  }
+  .login-badge__text {
+    font-size: 0.85rem;
+  }
+}
