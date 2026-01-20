@@ -66,7 +66,7 @@ interface ConceptContextValue {
   getSelectedLeafConceptIds: () => string[];
 }
 
-const ConceptContext = createContext<ConceptContextValue | undefined>(
+export const ConceptContext = createContext<ConceptContextValue | undefined>(
   undefined
 );
 
@@ -112,7 +112,7 @@ function buildTreeNodes(
         value: `chapter:${chapter.id}`,
         label: chapter.name,
         icon: (
-          <span className="font-semibold pr-6 text-green-600">
+          <span className="pr-6 font-semibold text-green-600">
             {chapter.position}.
           </span>
         ),

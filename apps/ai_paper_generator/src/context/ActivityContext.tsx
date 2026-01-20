@@ -32,7 +32,7 @@ interface ActivityContextValue {
   refreshActivities: () => Promise<void>;
 }
 
-const ActivityContext = createContext<ActivityContextValue | undefined>(
+export const ActivityContext = createContext<ActivityContextValue | undefined>(
   undefined
 );
 

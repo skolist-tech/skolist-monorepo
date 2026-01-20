@@ -6,6 +6,7 @@ import { PromptBox } from "./AutoDecideQuestion/PromptBox";
 import { TotalInputs } from "./AutoDecideQuestion/TotalInputs";
 import type { QuestionType, HardnessLevel } from "@skolist/db";
 import { difficultySplitInt } from "../../../../utils/difficultySplit";
+import { useToast } from "@skolist/ui";
 // import { Separator } from "@skolist/ui";
 
 interface UpRightAreaProps {
@@ -44,6 +45,33 @@ export function UpRightArea({
   customPrompt,
   onCustomPromptChange,
 }: UpRightAreaProps) {
+  const { toast } = useToast();
+
+  const handleQuestionCountChange = (type: QuestionType, count: number) => {
+    // Calculate new total
+    // We can't rely just on totalQuestions prop because it might be out of sync or calculated differently
+    // So we calculate from the counts prop which is the source of truth for the selector
+    const currentTotal = Object.values(questionCounts).reduce(
+      (a, b) => a + b,
+      0
+    );
+    const currentTypeCount = questionCounts[type] || 0;
+    // Calculate the difference this change makes
+    const diff = count - currentTypeCount;
+    const newTotal = currentTotal + diff;
+
+    if (newTotal > 50) {
+      toast({
+        title: "Total questions limit reached",
+        description: "Total questions can't be more than 50",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    onQuestionCountChange(type, count);
+  };
+
   const handleAutoDecide = () => {
     const split = difficultySplitInt(totalQuestions, totalMarks, totalTime);
 
@@ -64,6 +92,12 @@ export function UpRightArea({
 
   return (
     <div className="h-full w-full max-w-5xl space-y-4 overflow-y-auto p-1 md:space-y-6">
+      {/* 7] Question Types Selector */}
+      <QuestionTypeSelector
+        questionCounts={questionCounts}
+        onCountChange={handleQuestionCountChange}
+      />
+
       {/* 1] Top three selectors, arranged horizontally */}
       <TotalInputs
         totalQuestions={totalQuestions}
@@ -99,13 +133,6 @@ export function UpRightArea({
       </div>
 
       {/* <Separator /> */}
-      <div className="pt-3">
-        {/* 7] Question Types Selector */}
-        <QuestionTypeSelector
-          questionCounts={questionCounts}
-          onCountChange={onQuestionCountChange}
-        />
-      </div>
 
       {/* <Separator /> */}
 

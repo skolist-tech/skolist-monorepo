@@ -45,9 +45,9 @@ interface QuestionsContextValue {
   markAllQuestionsOld: () => void;
 }
 
-const QuestionsContext = createContext<QuestionsContextValue | undefined>(
-  undefined
-);
+export const QuestionsContext = createContext<
+  QuestionsContextValue | undefined
+>(undefined);
 
 export function QuestionsProvider({ children }: { children: ReactNode }) {
   const { currentActivity } = useActivityContext();
