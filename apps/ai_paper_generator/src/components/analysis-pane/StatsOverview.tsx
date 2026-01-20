@@ -62,19 +62,25 @@ export function StatsOverview({ questions }: StatsOverviewProps) {
   // TODO: Replace with actual percentile calculation or API call
   const qualityPercentile = 1;
 
+  // Check if draft is empty (no questions in draft)
+  const draftQuestionsCount = questions.filter((q) => q.is_in_draft).length;
+  const isLocked = draftQuestionsCount === 0;
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       <DifficultyCard
         easyMarks={easyMarks}
         mediumMarks={mediumMarks}
         hardMarks={hardMarks}
+        isLocked={isLocked}
       />
       <SyllabusCard
         draftConceptCount={uniqueDraftConcepts.size}
         totalActivityConcepts={totalActivityConcepts}
+        isLocked={isLocked}
       />
-      <QualityCard percentile={qualityPercentile} />
-      <AccuracyCard accuracy={accuracy} />
+      <QualityCard percentile={qualityPercentile} isLocked={isLocked} />
+      <AccuracyCard accuracy={accuracy} isLocked={isLocked} />
     </div>
   );
 }

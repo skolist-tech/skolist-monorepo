@@ -1,15 +1,18 @@
 import { Card } from "@skolist/ui";
+import { Lock } from "lucide-react";
 
 interface DifficultyCardProps {
   easyMarks: number;
   mediumMarks: number;
   hardMarks: number;
+  isLocked?: boolean;
 }
 
 export function DifficultyCard({
   easyMarks,
   mediumMarks,
   hardMarks,
+  isLocked = false,
 }: DifficultyCardProps) {
   const getOverallDifficulty = () => {
     if (easyMarks >= mediumMarks && easyMarks >= hardMarks) {
@@ -44,21 +47,38 @@ export function DifficultyCard({
 
   return (
     <Card
-      className={`flex h-full flex-col border p-3 shadow-sm ${backgroundColor} ${borderColor}`}
+      className={`relative flex h-full flex-col border p-3 shadow-sm ${backgroundColor} ${borderColor}`}
     >
       <h3 className="text-sm font-medium">Overall Difficulty</h3>
 
-      <div className={`mt-2 text-2xl font-bold ${textColor}`}>{label}</div>
+      {isLocked ? (
+        <>
+          {/* Blur overlay */}
+          <div className="absolute inset-0 z-10 rounded-lg backdrop-blur-[2px]" />
 
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          {/* Lock icon and message */}
+          <div className="relative z-20 mt-4 flex flex-1 flex-col items-center justify-center gap-3">
+            <Lock className="h-8 w-8 text-gray-600" strokeWidth={2} />
+            <p className="px-2 text-center text-sm font-medium text-gray-700">
+              Overall difficulty level will be shown once draft is created
+            </p>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={`mt-2 text-2xl font-bold ${textColor}`}>{label}</div>
 
-      <div className="flex-1" />
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
 
-      <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
-        <span className="text-green-600 text-sm">👍</span>
+          <div className="flex-1" />
 
-        <span className="font-medium">Looks Good</span>
-      </div>
+          <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
+            <span className="text-sm text-green-600">👍</span>
+
+            <span className="font-medium">Looks Good</span>
+          </div>
+        </>
+      )}
     </Card>
   );
 }

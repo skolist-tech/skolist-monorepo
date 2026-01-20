@@ -94,9 +94,9 @@ export function Header({ onMenuClick }: HeaderProps) {
             </div>
           )}
           {/* Desktop only: Mode toggle */}
-          <div className="hidden md:block">
+          {/* <div className="hidden md:block">
             <ModeToggle />
-          </div>
+          </div> */}
           {/* Mobile: theme toggle is in UserProfile menu */}
           <div className="md:hidden">
             <UserProfile
