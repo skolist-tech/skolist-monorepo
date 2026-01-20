@@ -219,6 +219,9 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
             );
           } else if (payload.eventType === "DELETE") {
             const deletedImage = payload.old as GeneratedImage;
+            // NOTE: Supabase DELETE events only include primary key by default,
+            // not foreign keys like gen_question_id. This subscription won't catch deletions.
+            // Context updates happen via onUpdate callback instead.
             if (!deletedImage.gen_question_id) return;
 
             setQuestions((prev) =>
@@ -380,8 +383,9 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           updated_at: _updated_at,
           concepts: _concepts,
           images: _images,
+          is_old_local: _is_old_local, // Exclude local UI state
           ...updates
-        } = question; // Exclude system fields and join fields from update payload.
+        } = question as any; // Exclude system fields, join fields, and local UI state from update payload.
         // But `updates` in updateQuestion takes TablesUpdate<"gen_questions">.
         await updateQuestion(question.id, updates);
 

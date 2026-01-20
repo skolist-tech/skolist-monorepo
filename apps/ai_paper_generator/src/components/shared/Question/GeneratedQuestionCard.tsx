@@ -104,6 +104,15 @@ export function GeneratedQuestionCard({
   const [isEditing, setIsEditing] = useState(false);
   const [editedQuestion, setEditedQuestion] =
     useState<GeneratedQuestionWithConcepts>(question);
+
+  // Sync images from question prop when they change (via realtime subscription)
+  // This keeps uploaded/deleted images in sync without overwriting other local edits
+  useEffect(() => {
+    setEditedQuestion((prev) => ({
+      ...prev,
+      images: question.images,
+    }));
+  }, [question.images]);
   // Replaced modal state with popover state (controlled if needed, or just for inputs)
   const [prompt, setPrompt] = useState("");
   const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
@@ -116,6 +125,8 @@ export function GeneratedQuestionCard({
   const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleteImageModalOpen, setIsDeleteImageModalOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [isAutoCorrecting, setIsAutoCorrecting] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
   // State to store the calculated origin point for the sparkle
@@ -266,31 +277,15 @@ export function GeneratedQuestionCard({
 
     try {
       setIsUploading(true);
-      const { imgUrl } = await uploadQuestionImage(file, question.id);
+      await uploadQuestionImage(file, question.id);
 
-      // Construct a new image object (optimistic or from result)
-      // Since the API doesn't return the full DB object, we mock strictly what's needed for display
-      const newImage = {
-        id: crypto.randomUUID(), // Temporary ID for React key
-        gen_question_id: question.id,
-        img_url: imgUrl,
-        position: (question.images?.length || 0) + 1,
-        created_at: new Date().toISOString(),
-        svg_string: null,
-      } as any;
+      // Don't create optimistic update with temporary UUID
+      // Realtime subscription INSERT event will add the image with real database UUID
+      // This ensures deletions work correctly (no temp UUIDs sent to API)
 
-      const updatedQuestion = {
-        ...question,
-        images: [...(question.images || []), newImage],
-      };
-
-      // update local state
-      setEditedQuestion(updatedQuestion);
-
-      // notify parent
-      if (onUpdate) {
-        onUpdate(updatedQuestion);
-      }
+      // Keep isUploading true briefly so user sees the loading state
+      // The image will appear once the realtime subscription fires
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
       console.error("Upload failed", error);
       alert("Failed to upload image");
@@ -420,29 +415,44 @@ export function GeneratedQuestionCard({
     // Don't reset slideDirection - let the component stay hidden until parent removes it
   };
 
-  const handleDeleteImage = async (imageId: string) => {
+  const handleDeleteImage = (imageId: string) => {
+    setImageToDelete(imageId);
+    setIsDeleteImageModalOpen(true);
+  };
+
+  const confirmDeleteImage = async () => {
+    if (!imageToDelete) return;
+
     try {
-      if (!window.confirm("Are you sure you want to delete this image?")) {
-        return;
-      }
-
-      await deleteQuestionImage(imageId);
-
+      // Optimistically remove from local state for immediate UI feedback
       const updatedQuestion = {
-        ...question,
-        images: (question.images || []).filter((img) => img.id !== imageId),
+        ...editedQuestion,
+        images: (editedQuestion.images || []).filter(
+          (img) => img.id !== imageToDelete
+        ),
       };
-
-      // update local state
       setEditedQuestion(updatedQuestion);
 
-      // notify parent
+      // Delete from database
+      await deleteQuestionImage(imageToDelete);
+
+      // IMPORTANT: Manually update context because Supabase DELETE events
+      // don't include gen_question_id in payload.old, so realtime subscription cannot update
       if (onUpdate) {
         onUpdate(updatedQuestion);
       }
     } catch (error) {
-      console.error("Failed to delete image", error);
-      alert("Failed to delete image");
+      console.error("[DELETE IMAGE] Failed to delete image:", error);
+      // Revert optimistic update on error
+      setEditedQuestion(question);
+      toast({
+        title: "Error",
+        description: "Failed to delete image",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteImageModalOpen(false);
+      setImageToDelete(null);
     }
   };
 
@@ -592,8 +602,8 @@ export function GeneratedQuestionCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    size="icon"
-                    className="h-9 gap-2 px-3"
+                    size="sm"
+                    className="gap-2"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
                   >
@@ -1587,6 +1597,16 @@ export function GeneratedQuestionCard({
         confirmLabel="Delete"
       />
 
+      <ConfirmDialog
+        open={isDeleteImageModalOpen}
+        onOpenChange={setIsDeleteImageModalOpen}
+        title="Delete Image"
+        description="Are you sure you want to delete this image? This action cannot be undone."
+        onConfirm={confirmDeleteImage}
+        variant="destructive"
+        confirmLabel="Delete"
+      />
+
       {/* Regenerate with Prompt Popover - rendered outside ActionButton to prevent re-mount issues */}
       <Popover open={isRegenerateOpen} onOpenChange={setIsRegenerateOpen}>
         <PopoverTrigger asChild>
@@ -1732,9 +1752,9 @@ export function GeneratedQuestionCard({
         </div>
 
         {/* Question Images */}
-        {question.images && question.images.length > 0 && (
+        {editedQuestion.images && editedQuestion.images.length > 0 && (
           <QuestionImages
-            images={question.images}
+            images={editedQuestion.images}
             className="my-3"
             onDelete={handleDeleteImage}
           />
