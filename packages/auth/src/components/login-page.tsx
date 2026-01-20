@@ -11,7 +11,7 @@ import {
   emailSignupSchema,
   type PhoneLoginFormData,
   type OtpVerificationFormData,
-  type EmailLoginFormData,
+  // type EmailLoginFormData,
   type EmailSignupFormData,
 } from "../schemas";
 import { LeftPanel } from "./left-panel";
