@@ -170,7 +170,7 @@ export function DownArea({
   }
 
   return (
-    <div className="sticky top-0 z-10 flex h-[calc(100vh-4rem)] flex-col p-4 md:p-6">
+    <div className="sticky top-0 z-10 flex h-[98%] flex-col p-4 md:p-6">
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
         {/* Header */}
         <div

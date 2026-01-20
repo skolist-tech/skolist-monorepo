@@ -1,6 +1,6 @@
 import { useState, useLayoutEffect } from "react";
 
-export function useLayoutScale(targetWidth = 1760, breakpoint = 1024) {
+export function useLayoutScale(targetWidth = 1908, breakpoint = 1024) {
   // Indicates whether layout should behave as desktop
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > breakpoint);
 

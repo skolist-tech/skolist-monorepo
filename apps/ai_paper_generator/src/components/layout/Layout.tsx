@@ -8,7 +8,7 @@ export const Layout: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
-  const { isDesktop } = useLayoutScale(1760, 1024);
+  const { isDesktop } = useLayoutScale(1908, 1024);
 
 
   const containerStyle: React.CSSProperties = useMemo(() => ({
@@ -22,7 +22,7 @@ export const Layout: React.FC = () => {
   }), [isDesktop]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-background">
+    <div className="fixed inset-0 overflow bg-background">
       <div style={containerStyle} className="flex flex-col bg-background">
         <Header onMenuClick={() => setIsMobileOpen(true)} />
         
