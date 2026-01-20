@@ -69,6 +69,12 @@ export function DownArea({
     return typeMatch && diffMatch;
   });
 
+  // Split questions based on is_old_local attribute
+  // New questions (is_old_local: false) appear above loading card
+  // Old questions (is_old_local: true/undefined) appear below loading card
+  const newQuestions = visibleQuestions.filter((q) => q.is_old_local === false);
+  const oldQuestions = visibleQuestions.filter((q) => q.is_old_local !== false);
+
   const toggleFilterType = (type: string) => {
     setFilterTypes((prev) => {
       const next = new Set(prev);
@@ -261,10 +267,36 @@ export function DownArea({
 
         {/* Scrollable Content */}
         <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
-          {/* Loading Card */}
+          {/* New questions (received during current generation) */}
+          {newQuestions.map((question) => (
+            <GeneratedQuestionCard
+              key={question.id}
+              question={question}
+              onMoveToDraft={moveQuestionToDraft}
+              onUpdate={(updated) => saveQuestion(updated)}
+              onDelete={deleteQuestion}
+              onRegenerate={async (prompt, files) => {
+                try {
+                  await fastApiService.regenerateQuestionWithPrompt(
+                    question.id,
+                    prompt,
+                    files
+                  );
+                  await refetchQuestions();
+                } catch (error) {
+                  console.error("Failed to regenerate question:", error);
+                }
+              }}
+              isSelected={selectedIds.has(question.id)}
+              onSelect={(selected) => handleToggleSelect(question.id, selected)}
+            />
+          ))}
+
+          {/* Loading Card - between new and old questions */}
           {isGenerating && <LoadingQuestionCard />}
 
-          {visibleQuestions.map((question) => (
+          {/* Old questions (existed before generation started) */}
+          {oldQuestions.map((question) => (
             <GeneratedQuestionCard
               key={question.id}
               question={question}

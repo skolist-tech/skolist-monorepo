@@ -68,8 +68,10 @@ export const fastApiService = {
   /**
    * info: Calls the FastAPI backend to auto correct the question
    * endpoint: POST /api/v1/qgen/auto_correct_question
+   * @param gen_question_id - UUID of the question to correct
+   * @param image - Optional image blob to attach for context (screenshot of the question card)
    */
-  async autoCorrectQuestion(gen_question_id: string) {
+  async autoCorrectQuestion(gen_question_id: string, image?: Blob) {
     try {
       const {
         data: { session },
@@ -80,14 +82,21 @@ export const fastApiService = {
         throw new Error("User not authenticated");
       }
 
+      const formData = new FormData();
+      formData.append("gen_question_id", gen_question_id);
+      if (image) {
+        formData.append("image", image, "question-card.png");
+      }
+
       const response = await fetch(
-        `${API_URL}/api/v1/qgen/auto_correct_question?gen_question_id=${gen_question_id}`,
+        `${API_URL}/api/v1/qgen/auto_correct_question`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            // Don't set Content-Type - let browser set it with boundary for FormData
             Authorization: `Bearer ${token}`,
           },
+          body: formData,
         }
       );
 

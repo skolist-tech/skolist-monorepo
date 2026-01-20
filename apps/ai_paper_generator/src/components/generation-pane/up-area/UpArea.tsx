@@ -10,6 +10,7 @@ import type { QuestionType, HardnessLevel } from "@skolist/db";
 import type { AutoDecideParams } from "./up-right/AutoDecideQuestion/AutoDecideQuestion";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { useConceptContext } from "../../../context/ConceptContext";
+import { useQuestionsContext } from "../../../context/QuestionsContext";
 import { fastApiService } from "../../../services/fastApiService";
 import { upsertActivityConcepts } from "../../../services/activityService";
 import {
@@ -43,7 +44,6 @@ const DEFAULT_QUESTION_COUNTS: Record<QuestionType, number> = {
 interface UpAreaProps {
   hardnessLevels: Record<HardnessLevel, number>;
   onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
-  onGenerationComplete?: () => void;
   isGenerating?: boolean;
   onGenerateStart?: () => void;
   onGenerateEnd?: () => void;
@@ -52,7 +52,6 @@ interface UpAreaProps {
 export function UpArea({
   hardnessLevels,
   onHardnessLevelChange,
-  onGenerationComplete,
   isGenerating = false,
   onGenerateStart,
   onGenerateEnd,
@@ -67,6 +66,7 @@ export function UpArea({
     selectSubject,
     setSelectedConcepts,
   } = useConceptContext();
+  const { markAllQuestionsOld } = useQuestionsContext();
   const { toast } = useToast();
 
   const [questionCounts, setQuestionCounts] = useState<
@@ -466,8 +466,6 @@ export function UpArea({
         );
         // Don't block UI for this error
       }
-
-      onGenerationComplete?.();
     } catch (error) {
       console.error("Failed to generate questions:", error);
       toast({
@@ -479,6 +477,9 @@ export function UpArea({
         variant: "destructive",
       });
     } finally {
+      // Mark all questions as old when generation ends
+      markAllQuestionsOld();
+
       if (onGenerateEnd) {
         onGenerateEnd();
       } else {
