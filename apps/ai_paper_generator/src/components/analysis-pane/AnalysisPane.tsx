@@ -22,10 +22,10 @@ export function AnalysisPane() {
 
         {/* Bottom Section - Feedback & Missing */}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-          <div className="min-h-[200px] md:h-[250px]">
+          <div className="min-h-[300px] md:h-[400px]">
             <FeedbackSection />
           </div>
-          <div className="min-h-[200px] md:h-[250px]">
+          <div className="min-h-[300px] md:h-[400px]">
             <MissingTopicsSection />
           </div>
         </section>

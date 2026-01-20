@@ -59,12 +59,18 @@ export function StatsOverview({ questions }: StatsOverviewProps) {
   // 3. Summary Stats
   const accuracy = 100; // TODO: Replace with actual accuracy calculation
 
-  // TODO: Replace with actual percentile calculation or API call
-  const qualityPercentile = 1;
-
   // Check if draft is empty (no questions in draft)
   const draftQuestionsCount = questions.filter((q) => q.is_in_draft).length;
   const isLocked = draftQuestionsCount === 0;
+
+  // Calculate quality percentile based on draft question count
+  const qualityPercentile = (() => {
+    if (draftQuestionsCount >= 20) return 1;
+    if (draftQuestionsCount >= 10) return 3;
+    if (draftQuestionsCount >= 5) return 5;
+    if (draftQuestionsCount >= 1) return 10;
+    return 1; // Default for locked state (won't be shown anyway)
+  })();
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

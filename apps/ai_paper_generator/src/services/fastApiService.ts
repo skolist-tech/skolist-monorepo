@@ -37,14 +37,17 @@ export const fastApiService = {
         throw new Error("User not authenticated");
       }
 
-      const response = await fetch(`${API_URL}/api/v1/qgen/generate_questions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        `${API_URL}/api/v1/qgen/generate_questions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -185,11 +188,11 @@ export const fastApiService = {
       // Use FormData for multipart/form-data request (required for file uploads)
       const formData = new FormData();
       formData.append("gen_question_id", gen_question_id);
-      
+
       if (prompt) {
         formData.append("prompt", prompt);
       }
-      
+
       if (files && files.length > 0) {
         files.forEach((file) => {
           formData.append("files", file);
@@ -223,6 +226,43 @@ export const fastApiService = {
       return await response.json();
     } catch (error) {
       console.error("Error regenerating question with prompt:", error);
+      throw error;
+    }
+  },
+  /**
+   * info: Calls the FastAPI backend to get feedback on a draft
+   * endpoint: POST /api/v1/qgen/get_feedback
+   */
+  async getFeedback(draft_id: string) {
+    try {
+      const {
+        data: { session },
+      } = await getClient().auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetch(`${API_URL}/api/v1/qgen/get_feedback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ draft_id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `Failed to get feedback: ${response.statusText}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error getting feedback:", error);
       throw error;
     }
   },
