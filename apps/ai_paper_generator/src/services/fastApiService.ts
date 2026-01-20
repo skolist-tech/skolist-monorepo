@@ -50,6 +50,9 @@ export const fastApiService = {
       );
 
       if (!response.ok) {
+        if (response.status === 402) {
+          window.dispatchEvent(new Event("credits-exhausted"));
+        }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.detail ||
@@ -104,6 +107,9 @@ export const fastApiService = {
       );
 
       if (!response.ok) {
+        if (response.status === 402) {
+          window.dispatchEvent(new Event("credits-exhausted"));
+        }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.detail ||
@@ -149,6 +155,9 @@ export const fastApiService = {
       );
 
       if (!response.ok) {
+        if (response.status === 402) {
+          window.dispatchEvent(new Event("credits-exhausted"));
+        }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.detail ||
@@ -212,6 +221,9 @@ export const fastApiService = {
       );
 
       if (!response.ok) {
+        if (response.status === 402) {
+          window.dispatchEvent(new Event("credits-exhausted"));
+        }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.detail ||

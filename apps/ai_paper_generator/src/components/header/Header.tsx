@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Logo } from "./Logo";
 import { PaneNavigationButtons } from "./PaneNavigationButtons";
 import { UserProfile } from "./UserProfile";
@@ -8,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  useToast,
 } from "@skolist/ui";
 import { Menu, Sparkles, FileEdit, BarChart3, ChevronDown } from "lucide-react";
 import { usePaneContext } from "../../context/PaneContext";
@@ -39,6 +41,22 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { credits } = useUserCredits();
   const { activePane, setActivePane } = usePaneContext();
   const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const handleCreditsExhausted = () => {
+      toast({
+        title: "Credits Exhausted",
+        description: "You have 0 credits. Please recharge to continue.",
+        variant: "destructive",
+      });
+    };
+
+    window.addEventListener("credits-exhausted", handleCreditsExhausted);
+    return () => {
+      window.removeEventListener("credits-exhausted", handleCreditsExhausted);
+    };
+  }, [toast]);
 
   const currentPane = panes.find((p) => p.type === activePane) ?? panes[0]!;
 

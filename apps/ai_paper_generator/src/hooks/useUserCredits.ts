@@ -10,6 +10,8 @@ export function useUserCredits() {
       try {
         const userId = await getCurrentUserId();
         const client = getClient();
+
+        // Initial fetch
         const { data, error } = await client
           .from("users")
           .select("credits")
@@ -21,6 +23,39 @@ export function useUserCredits() {
         } else {
           setCredits(data?.credits ?? 0);
         }
+
+        // Realtime subscription
+        const channel = client
+          .channel(`user-credits-${userId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "users",
+              filter: `id=eq.${userId}`,
+            },
+            (payload) => {
+              console.log(
+                "[useUserCredits] Realtime payload received:",
+                payload
+              );
+              if (payload.new && typeof payload.new.credits === "number") {
+                console.log(
+                  "[useUserCredits] Updating credits to:",
+                  payload.new.credits
+                );
+                setCredits(payload.new.credits);
+              }
+            }
+          )
+          .subscribe((status) => {
+            console.log("[useUserCredits] Subscription status:", status);
+          });
+
+        return () => {
+          client.removeChannel(channel);
+        };
       } catch (err) {
         console.error("Error in fetchCredits:", err);
       } finally {
@@ -28,7 +63,11 @@ export function useUserCredits() {
       }
     }
 
-    fetchCredits();
+    const unsubscribePromise = fetchCredits();
+
+    return () => {
+      unsubscribePromise.then((unsubscribe) => unsubscribe && unsubscribe());
+    };
   }, []);
 
   return { credits, loading };
