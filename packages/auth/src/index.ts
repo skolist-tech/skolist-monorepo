@@ -4,7 +4,7 @@
  */
 
 // Client
-export { createClient, getSupabaseClient } from "./client";
+export { createClient, getSupabaseClient, getCurrentUserId, isAuthenticated } from "./client";
 
 // Context & Hooks
 export { AuthProvider, useAuth, type AuthContextValue } from "./context";

@@ -102,3 +102,25 @@ export function getSupabaseClient(): SupabaseClient {
   }
   return supabaseClient;
 }
+
+export async function isAuthenticated(): Promise<boolean> {
+  const client = getSupabaseClient();
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  return !!user;
+}
+
+export async function getCurrentUserId(): Promise<string> {
+  const client = getSupabaseClient();
+  const {
+    data: { user },
+    error,
+  } = await client.auth.getUser();
+
+  if (error || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  return user.id;
+}
