@@ -3,7 +3,7 @@
  * Handles Supabase operations for generated questions
  */
 
-import { getClient } from "./supabase";
+import { getSupabaseClient } from "@skolist/auth";
 import type {
   GeneratedQuestion,
   GeneratedImage,
@@ -14,7 +14,7 @@ import type {
 export async function createQuestion(
   question: InsertGeneratedQuestion
 ): Promise<GeneratedQuestion> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("gen_questions")
@@ -52,7 +52,7 @@ type QuestionWithConceptsResponse = GeneratedQuestion & {
 export async function fetchQuestions(
   activityId: string
 ): Promise<GeneratedQuestionWithConcepts[]> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   // We order by created_at for now, as requested to be sequential as fetched
   const { data, error } = await client
@@ -112,7 +112,7 @@ export async function fetchQuestions(
 export async function fetchQuestion(
   questionId: string
 ): Promise<GeneratedQuestionWithConcepts | null> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("gen_questions")
@@ -175,7 +175,7 @@ export async function updateQuestion(
   questionId: string,
   updates: UpdateGeneratedQuestion
 ): Promise<GeneratedQuestion> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("gen_questions")
@@ -196,7 +196,7 @@ export async function updateQuestionPosition(
   questionId: string,
   position_in_draft: number
 ): Promise<GeneratedQuestion> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("gen_questions")
@@ -220,7 +220,7 @@ export async function bulkUpdateQuestions(
   questionIds: string[],
   updates: UpdateGeneratedQuestion
 ): Promise<GeneratedQuestion[]> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("gen_questions")
@@ -240,7 +240,7 @@ export async function bulkUpdateQuestions(
  * Delete a question
  */
 export async function deleteQuestion(questionId: string): Promise<void> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { error } = await client
     .from("gen_questions")
@@ -259,7 +259,7 @@ export async function deleteQuestion(questionId: string): Promise<void> {
 export async function upsertQuestions(
   questions: InsertGeneratedQuestion[]
 ): Promise<void> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { error } = await client
     .from("gen_questions")
@@ -283,7 +283,7 @@ export async function uploadQuestionImage(
     throw new Error("Only image files are allowed");
   }
 
-  const client = getClient();
+  const client = getSupabaseClient();
   const ext = file.name.split(".").pop();
   const filePath = `${questionId}/${crypto.randomUUID()}.${ext}`;
 
@@ -328,7 +328,7 @@ export async function uploadQuestionImage(
  * Delete a question image
  */
 export async function deleteQuestionImage(imageId: string): Promise<void> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { error } = await client.from("gen_images").delete().eq("id", imageId);
 

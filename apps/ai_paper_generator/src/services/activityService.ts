@@ -3,7 +3,7 @@
  * Handles Supabase operations for activities with product_type='qgen'
  */
 
-import { getClient, getCurrentUserId } from "./supabase";
+import { getSupabaseClient, getCurrentUserId } from "@skolist/auth";
 import type {
   Activity,
   InsertActivity,
@@ -17,7 +17,7 @@ const PRODUCT_TYPE = "qgen" as const;
  * Fetch all activities for the current user filtered by product_type='qgen'
  */
 export async function fetchUserActivities(): Promise<Activity[]> {
-  const client = getClient();
+  const client = getSupabaseClient();
   const userId = await getCurrentUserId();
 
   const { data, error } = await client
@@ -39,7 +39,7 @@ export async function fetchUserActivities(): Promise<Activity[]> {
  * Create a new activity for the current user
  */
 export async function createActivity(name: string): Promise<Activity> {
-  const client = getClient();
+  const client = getSupabaseClient();
   const userId = await getCurrentUserId();
 
   const insertData: InsertActivity = {
@@ -66,7 +66,7 @@ export async function createActivity(name: string): Promise<Activity> {
  * Delete an activity by ID
  */
 export async function deleteActivity(activityId: string): Promise<void> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { error } = await client
     .from("activities")
@@ -86,7 +86,7 @@ export async function updateActivity(
   activityId: string,
   updates: UpdateActivity
 ): Promise<Activity> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("activities")
@@ -111,7 +111,7 @@ export async function upsertActivityConcepts(
   activityId: string,
   conceptIds: string[]
 ): Promise<void> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   if (conceptIds.length === 0) return;
 
@@ -139,7 +139,7 @@ export async function upsertActivityConcepts(
 export async function fetchActivityConcepts(
   activityId: string
 ): Promise<string[]> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("concepts_activities_maps")

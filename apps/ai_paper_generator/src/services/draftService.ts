@@ -3,7 +3,7 @@
  * Handles Supabase operations for draft management
  */
 
-import { getClient } from "./supabase";
+import { getSupabaseClient } from "@skolist/auth";
 import type {
   QgenDraftInstructionAndQgenDraft,
   QgenDraft,
@@ -22,7 +22,7 @@ export type QgenInstruction = QgenDraftInstructionAndQgenDraft;
 export async function fetchDraftInstructions(
   draftId: string
 ): Promise<QgenInstruction[]> {
-  const client = getClient();
+  const client = getSupabaseClient();
   const { data, error } = await client
     .from("qgen_draft_instructions_drafts_maps")
     .select("*")
@@ -43,7 +43,7 @@ export async function createDraftInstruction(
   draftId: string,
   text: string
 ): Promise<QgenInstruction> {
-  const client = getClient();
+  const client = getSupabaseClient();
   const { data, error } = await client
     .from("qgen_draft_instructions_drafts_maps")
     .insert({
@@ -67,7 +67,7 @@ export async function updateDraftInstruction(
   id: string,
   text: string
 ): Promise<QgenInstruction> {
-  const client = getClient();
+  const client = getSupabaseClient();
   const { data, error } = await client
     .from("qgen_draft_instructions_drafts_maps")
     .update({ instruction_text: text })
@@ -86,7 +86,7 @@ export async function updateDraftInstruction(
  * Delete an instruction
  */
 export async function deleteDraftInstruction(id: string): Promise<void> {
-  const client = getClient();
+  const client = getSupabaseClient();
   const { error } = await client
     .from("qgen_draft_instructions_drafts_maps")
     .delete()
@@ -105,7 +105,7 @@ export async function deleteDraftInstruction(id: string): Promise<void> {
 export async function fetchOrCreateDraft(
   activityId: string
 ): Promise<QgenDraft> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   // Try to find existing draft
   const { data: existingDraft, error: fetchError } = await client
@@ -148,7 +148,7 @@ export async function updateDraft(
   draftId: string,
   updates: UpdateQgenDraft
 ): Promise<QgenDraft> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("qgen_drafts")
@@ -171,7 +171,7 @@ export async function updateDraft(
 export async function fetchSections(
   draftId: string
 ): Promise<QgenDraftSection[]> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("qgen_draft_sections")
@@ -195,7 +195,7 @@ export async function createSection(
   position: number,
   name: string = "New Section"
 ): Promise<QgenDraftSection> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("qgen_draft_sections")
@@ -222,7 +222,7 @@ export async function updateSection(
   sectionId: string,
   updates: UpdateQgenDraftSection
 ): Promise<QgenDraftSection> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("qgen_draft_sections")
@@ -243,7 +243,7 @@ export async function updateSection(
  * Delete a section
  */
 export async function deleteSection(sectionId: string): Promise<void> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { error } = await client
     .from("qgen_draft_sections")
@@ -263,7 +263,7 @@ export async function uploadLogo(
   file: File,
   activityId: string
 ): Promise<{ status: string; path: string; message?: string }> {
-  const client = getClient();
+  const client = getSupabaseClient();
   const filePath = `${activityId}/logo.png`;
 
   // 1. Upload file (upsert: true to replace)
@@ -296,7 +296,7 @@ export async function uploadLogo(
  * Delete logo from storage
  */
 export async function deleteLogo(activityId: string): Promise<void> {
-  const client = getClient();
+  const client = getSupabaseClient();
   const filePath = `${activityId}/logo.png`;
 
   // 1. Remove from storage
@@ -328,7 +328,7 @@ export async function getSignedLogoUrl(
   path: string | null
 ): Promise<string | null> {
   if (!path) return null;
-  const client = getClient();
+  const client = getSupabaseClient();
   const { data, error } = await client.storage
     .from("draft_logo_bucket")
     .createSignedUrl(path, 3600); // 1 hour
@@ -344,7 +344,7 @@ export async function getSignedLogoUrl(
  * Check if logo exists in storage
  */
 export async function hasLogo(activityId: string): Promise<boolean> {
-  const client = getClient();
+  const client = getSupabaseClient();
   const filePath = "logo.png";
 
   // List files in the folder

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { type GeneratedQuestionWithConcepts } from "../../context/QuestionsContext";
 import { useActivityContext } from "../../context/ActivityContext";
-import { getClient } from "../../services/supabase";
+import { getSupabaseClient } from "@skolist/auth"
 import { DifficultyCard } from "./DifficultyCard";
 import { SyllabusCard } from "./SyllabusCard";
 import { QualityCard } from "./QualityCard";
@@ -34,7 +34,7 @@ export function StatsOverview({ questions }: StatsOverviewProps) {
     async function fetchTotalConcepts() {
       if (!currentActivity?.id) return;
 
-      const client = getClient();
+      const client = getSupabaseClient();
       const { count, error } = await client
         .from("concepts_activities_maps")
         .select("*", { count: "exact", head: true })

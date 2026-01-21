@@ -3,7 +3,7 @@
  * Handles Supabase operations for persisting generation pane status
  */
 
-import { getClient } from "./supabase";
+import { getSupabaseClient } from "@skolist/auth";
 import type {
   QgenGenerationPaneStatus,
   InsertQgenGenerationPaneStatus,
@@ -16,7 +16,7 @@ import type {
 export async function fetchGenerationPaneStatus(
   activityId: string
 ): Promise<QgenGenerationPaneStatus | null> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("qgen_generation_panes")
@@ -39,7 +39,7 @@ export async function fetchGenerationPaneStatus(
 export async function upsertGenerationPaneStatus(
   status: InsertQgenGenerationPaneStatus
 ): Promise<QgenGenerationPaneStatus> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("qgen_generation_panes")
@@ -63,7 +63,7 @@ export async function upsertGenerationPaneStatus(
 export async function fetchGenerationPaneConcepts(
   paneId: string
 ): Promise<string[]> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   const { data, error } = await client
     .from("generation_pane_concepts_maps")
@@ -86,7 +86,7 @@ export async function replaceGenerationPaneConcepts(
   paneId: string,
   conceptIds: string[]
 ): Promise<void> {
-  const client = getClient();
+  const client = getSupabaseClient();
 
   // 1. Delete existing mappings
   const { error: deleteError } = await client

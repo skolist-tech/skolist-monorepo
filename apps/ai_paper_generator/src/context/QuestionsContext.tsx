@@ -28,7 +28,7 @@ import {
   type GeneratedQuestionWithConcepts,
 } from "../services/questionService";
 export type { GeneratedQuestionWithConcepts };
-import { getClient } from "../services/supabase";
+import { getSupabaseClient } from "@skolist/auth";
 
 interface QuestionsContextValue {
   questions: (GeneratedQuestionWithConcepts & { is_old_local?: boolean })[];
@@ -85,7 +85,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!currentActivity?.id) return;
 
-    const client = getClient();
+    const client = getSupabaseClient();
     const channel = client
       .channel(`questions-${currentActivity.id}`)
       .on(

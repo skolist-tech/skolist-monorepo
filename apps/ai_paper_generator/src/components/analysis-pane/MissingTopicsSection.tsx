@@ -3,7 +3,7 @@ import { AlertTriangle, BookX, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useActivityContext } from "../../context/ActivityContext";
 import { useQuestionsContext } from "../../context/QuestionsContext";
-import { getClient } from "../../services/supabase";
+import { getSupabaseClient } from "@skolist/auth";
 
 interface Topic {
   id: string;
@@ -29,7 +29,7 @@ export function MissingTopicsSection() {
 
       try {
         setIsLoading(true);
-        const client = getClient();
+        const client = getSupabaseClient();
 
         // 1. Fetch all concepts for this activity from concepts_activities_maps
         const { data: conceptMaps, error: conceptMapsError } = await client
