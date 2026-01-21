@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { getClient, getCurrentUserId } from "../services/supabase";
+import { getCurrentUserId } from "../services/supabase";
+import { getSupabaseClient} from "@skolist/auth";
 
 export function useUserCredits() {
   const [credits, setCredits] = useState<number | null>(null);
@@ -9,7 +10,7 @@ export function useUserCredits() {
     async function fetchCredits() {
       try {
         const userId = await getCurrentUserId();
-        const client = getClient();
+        const client = getSupabaseClient();
 
         // Initial fetch
         const { data, error } = await client

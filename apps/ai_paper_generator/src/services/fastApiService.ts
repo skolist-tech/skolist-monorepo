@@ -1,4 +1,4 @@
-import { getClient } from "./supabase";
+import { getSupabaseClient} from "@skolist/auth";
 
 // Get API URL from environment variables, fallback to localhost for development
 const API_URL = import.meta.env.VITE_FASTAPI_URL;
@@ -30,7 +30,7 @@ export const fastApiService = {
     try {
       const {
         data: { session },
-      } = await getClient().auth.getSession();
+      } = await getSupabaseClient().auth.getSession();
       const token = session?.access_token;
 
       if (!token) {
@@ -81,7 +81,7 @@ export const fastApiService = {
     try {
       const {
         data: { session },
-      } = await getClient().auth.getSession();
+      } = await getSupabaseClient().auth.getSession();
       const token = session?.access_token;
 
       if (!token) {
@@ -136,7 +136,7 @@ export const fastApiService = {
     try {
       const {
         data: { session },
-      } = await getClient().auth.getSession();
+      } = await getSupabaseClient().auth.getSession();
       const token = session?.access_token;
 
       if (!token) {
@@ -187,7 +187,7 @@ export const fastApiService = {
     try {
       const {
         data: { session },
-      } = await getClient().auth.getSession();
+      } = await getSupabaseClient().auth.getSession();
       const token = session?.access_token;
 
       if (!token) {
@@ -249,7 +249,7 @@ export const fastApiService = {
     try {
       const {
         data: { session },
-      } = await getClient().auth.getSession();
+      } = await getSupabaseClient().auth.getSession();
       const token = session?.access_token;
 
       if (!token) {
