@@ -38,12 +38,12 @@ export function PromptBox({
           )}
         />
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-center md:justify-end">
         <Button
-          size="sm"
+          size="default"
           onClick={onGenerate}
           disabled={disabled || isGenerating}
-          className="h-9 gap-2 px-4"
+          className="h-10 gap-2 px-8 text-base md:h-9 md:px-4 md:text-sm"
         >
           {isGenerating ? (
             <>
