@@ -841,25 +841,31 @@ export function PaperStructure() {
         className="flex-1 overflow-auto bg-muted/10 px-4"
         onScroll={handleAutoClose}
       >
-        <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex flex-wrap items-center justify-between gap-2 border-b bg-white px-3 py-2 shadow-sm md:mb-6 md:px-4">
-          <span className="text-sm font-semibold">Sections</span>
-          <div className="hidden sm:block">
-            <DraftProgress />
+        <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex flex-col bg-white shadow-sm md:mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 md:px-4">
+            <span className="text-sm font-semibold">Sections</span>
+            <div className="hidden sm:block">
+              <DraftProgress />
+            </div>
+            <div className="flex items-center gap-1 md:gap-2">
+              <AddCustomQuestionGlobal sections={sections} />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => addSection()}
+                className="h-7 px-2 text-xs md:px-3"
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                <span className="sm:inline">Add Section</span>
+                {/* below is commented out for the mobile view workaround */}
+                {/* <span className="hidden sm:inline">Add Section</span> */}
+                {/* <span className="sm:hidden">Add</span> */}
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-1 md:gap-2">
-            <AddCustomQuestionGlobal sections={sections} />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => addSection()}
-              className="h-7 px-2 text-xs md:px-3"
-            >
-              <Plus className="mr-1 h-3 w-3" />
-              <span className="sm:inline">Add Section</span>
-              {/* below is commented out for the mobile view workaround */}
-              {/* <span className="hidden sm:inline">Add Section</span> */}
-              {/* <span className="sm:hidden">Add</span> */}
-            </Button>
+          {/* Mobile Draft Progress */}
+          <div className="flex justify-center border-b px-4 py-2 sm:hidden">
+            <DraftProgress />
           </div>
         </div>
 
