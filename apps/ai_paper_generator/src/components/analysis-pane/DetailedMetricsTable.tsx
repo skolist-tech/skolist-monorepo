@@ -207,7 +207,7 @@ export function DetailedMetricsTable({ questions }: DetailedMetricsTableProps) {
             <table className="w-full table-fixed text-left text-sm">
               <thead className="sticky top-0 bg-gray-50 text-muted-foreground">
                 <tr className="border-b border-gray-400">
-                  <th className="h-10 w-[40%] px-4 font-medium">
+                  <th className="h-10 w-[35%] px-4 font-medium">
                     {TAB_LABELS[activeTab]}
                   </th>
                   <th className="h-10 w-[15%] px-4 text-center font-medium">
@@ -219,7 +219,7 @@ export function DetailedMetricsTable({ questions }: DetailedMetricsTableProps) {
                   <th className="h-10 w-[15%] px-4 text-center font-medium">
                     Hard
                   </th>
-                  <th className="h-10 w-[15%] px-4 text-center font-medium">
+                  <th className="h-10 w-[20%] px-4 text-center font-medium">
                     Total
                   </th>
                 </tr>
