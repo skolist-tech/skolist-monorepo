@@ -855,8 +855,10 @@ export function PaperStructure() {
               className="h-7 px-2 text-xs md:px-3"
             >
               <Plus className="mr-1 h-3 w-3" />
-              <span className="hidden sm:inline">Add Section</span>
-              <span className="sm:hidden">Add</span>
+              <span className="sm:inline">Add Section</span>
+              {/* below is commented out for the mobile view workaround */}
+              {/* <span className="hidden sm:inline">Add Section</span> */}
+              {/* <span className="sm:hidden">Add</span> */}
             </Button>
           </div>
         </div>
