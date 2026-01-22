@@ -69,7 +69,7 @@ export const CARD_ACTIONS_CONFIG: ActionConfig[] = [
   {
     id: "move",
     label: "Move", // Label changes dynamically based on state (Move to Draft / Remove from Draft)
-    mobile: { location: "menu", order: 80, visible: true },
+    mobile: { location: "card", order: 80, visible: true },
     desktop: { order: 80, visible: true },
   },
   {
