@@ -33,21 +33,21 @@ export function PaneNavigationButtons({
   ];
 
   return (
-    <div className="flex items-center gap-6">
-      <div className="flex flex-wrap items-center gap-2">
-        {panes.map((pane) => (
-          <Button
-            key={pane.type}
-            variant={activePane === pane.type ? "default" : "ghost"}
-            size="sm"
-            onClick={() => handlePaneClick(pane.type)}
-            className={cn("gap-2", activePane === pane.type && "shadow-sm")}
-          >
-            {pane.icon}
-            {pane.label}
-          </Button>
-        ))}
-      </div>
+    <div className="flex w-full items-center gap-2 rounded-lg bg-muted/20 p-1 md:w-auto md:rounded-none md:bg-transparent md:p-0">
+      {panes.map((pane) => (
+        <Button
+          key={pane.type}
+          variant={activePane === pane.type ? "default" : "ghost"}
+          onClick={() => handlePaneClick(pane.type)}
+          className={cn(
+            "h-10 flex-1 gap-2 text-xl font-medium transition-all md:h-9 md:flex-none md:text-base",
+            activePane === pane.type && "shadow-sm"
+          )}
+        >
+          {pane.icon}
+          {pane.label}
+        </Button>
+      ))}
     </div>
   );
 }

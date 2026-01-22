@@ -3,18 +3,9 @@ import { Logo } from "./Logo";
 import { PaneNavigationButtons } from "./PaneNavigationButtons";
 import { UserProfile } from "./UserProfile";
 // import { ModeToggle } from "./ModeToggle";
-import {
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  useToast,
-} from "@skolist/ui";
-import { Menu, Sparkles, FileEdit, BarChart3, ChevronDown } from "lucide-react";
-import { usePaneContext } from "../../context/PaneContext";
+import { Button, useToast } from "@skolist/ui";
+import { Menu } from "lucide-react";
 import { useTheme } from "../theme-provider";
-import type { PaneType } from "../../types/pane";
 
 import { useUserCredits } from "../../hooks/useUserCredits";
 
@@ -22,24 +13,8 @@ interface HeaderProps {
   onMenuClick?: () => void;
 }
 
-// Pane config for dropdown
-const panes: { type: PaneType; label: string; icon: React.ReactNode }[] = [
-  {
-    type: "generation",
-    label: "Generate",
-    icon: <Sparkles className="h-4 w-4" />,
-  },
-  { type: "draft", label: "Draft", icon: <FileEdit className="h-4 w-4" /> },
-  {
-    type: "analysis",
-    label: "Analysis",
-    icon: <BarChart3 className="h-4 w-4" />,
-  },
-];
-
 export function Header({ onMenuClick }: HeaderProps) {
   const { credits } = useUserCredits();
-  const { activePane, setActivePane } = usePaneContext();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
@@ -58,8 +33,6 @@ export function Header({ onMenuClick }: HeaderProps) {
     };
   }, [toast]);
 
-  const currentPane = panes.find((p) => p.type === activePane) ?? panes[0]!;
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center px-4 md:h-16 md:px-6">
@@ -76,28 +49,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Logo />
         </div>
 
-        {/* Mobile pane dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2 md:hidden">
-              {currentPane.icon}
-              <span>{currentPane.label}</span>
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="center">
-            {panes.map((pane) => (
-              <DropdownMenuItem
-                key={pane.type}
-                onClick={() => setActivePane(pane.type)}
-                className={activePane === pane.type ? "bg-accent" : ""}
-              >
-                {pane.icon}
-                <span className="ml-2">{pane.label}</span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Mobile pane dropdown - REMOVED */}
 
         {/* Desktop pane navigation */}
         <div className="hidden md:block">
