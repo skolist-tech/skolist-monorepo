@@ -73,7 +73,9 @@ export function StatsOverview({ questions }: StatsOverviewProps) {
   })();
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    // class are changed via commenting out old for mobile view workaround
+    // <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
       <DifficultyCard
         easyMarks={easyMarks}
         mediumMarks={mediumMarks}
