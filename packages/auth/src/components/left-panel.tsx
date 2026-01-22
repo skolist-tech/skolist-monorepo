@@ -2,7 +2,7 @@ import React from "react";
 import "./login-page.css";
 
 // Default feature pills from the reference design
-const DEFAULT_FEATURES = [
+export const DEFAULT_FEATURES = [
   "Concept level generator",
   "100% board aligned",
   "Instant formatting",
@@ -10,6 +10,106 @@ const DEFAULT_FEATURES = [
   "Accurate & Reliable",
   "Detailed Analysis",
 ];
+
+export function LeftPanelHeadline({
+  headline,
+}: {
+  headline?: React.ReactNode;
+}) {
+  return (
+    <h2 className="login-left-panel__headline animate-enter delay-1">
+      {headline || (
+        <>
+          <span className="login-left-panel__headline-red">
+            INSTANTLY CHOOSE FROM
+          </span>
+          <br />
+          <span className="login-left-panel__headline-dark">
+            MILLIONS OF QUESTIONS
+          </span>{" "}
+          <span className="login-left-panel__headline-red">WITH</span>
+          <br />
+          <span className="login-left-panel__headline-blue">
+            AUTO-FORMATTING
+          </span>
+        </>
+      )}
+    </h2>
+  );
+}
+
+export function LeftPanelBranding({
+  productName = "QGEN",
+}: {
+  productName?: string;
+}) {
+  return (
+    <div className="login-left-panel__branding animate-enter delay-2">
+      <div className="login-left-panel__branding-icon">📚</div>
+      <h1 className="login-left-panel__branding-name">{productName}</h1>
+      <p className="login-left-panel__branding-subtitle">Built by Skolist</p>
+    </div>
+  );
+}
+
+export function LeftPanelFeatures({
+  features = DEFAULT_FEATURES,
+}: {
+  features?: string[];
+}) {
+  return (
+    <div className="login-left-panel__features animate-enter delay-3">
+      {features.map((feature, index) => (
+        <div
+          key={index}
+          className="login-left-panel__feature-pill"
+          style={{ animationDelay: `${300 + index * 50}ms` }}
+        >
+          {feature}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function LeftPanelCTA({
+  productName = "QGEN",
+}: {
+  productName?: string;
+}) {
+  return (
+    <div className="login-left-panel__cta animate-enter delay-4">
+      <p className="login-left-panel__cta-main">
+        Use the next-generation tool <span>{productName} for free</span>
+      </p>
+      <p className="login-left-panel__cta-sub">
+        A product made with teachers, not just for them
+      </p>
+    </div>
+  );
+}
+
+export function LeftPanelBanner() {
+  return (
+    <div className="login-left-panel__banner animate-enter delay-5">
+      QUESTION PAPER GENERATION IS
+      <br />
+      NOW EASIER
+    </div>
+  );
+}
+
+export function LeftPanelContact({
+  contactInfo,
+}: {
+  contactInfo: { email: string; phone: string };
+}) {
+  return (
+    <div className="login-left-panel__contact animate-enter delay-5">
+      Any Queries : {contactInfo.email} / {contactInfo.phone}
+    </div>
+  );
+}
 
 interface LeftPanelProps {
   headline?: React.ReactNode;
@@ -42,66 +142,22 @@ export function LeftPanel({
       )}
 
       {/* Main Headline */}
-      <h2 className="login-left-panel__headline animate-enter delay-1">
-        {headline || (
-          <>
-            <span className="login-left-panel__headline-red">
-              INSTANTLY CHOOSE FROM
-            </span>
-            <br />
-            <span className="login-left-panel__headline-dark">
-              MILLIONS OF QUESTIONS
-            </span>{" "}
-            <span className="login-left-panel__headline-red">WITH</span>
-            <br />
-            <span className="login-left-panel__headline-blue">
-              AUTO-FORMATTING
-            </span>
-          </>
-        )}
-      </h2>
+      <LeftPanelHeadline headline={headline} />
 
       {/* Product Branding */}
-      <div className="login-left-panel__branding animate-enter delay-2">
-        <div className="login-left-panel__branding-icon">📚</div>
-        <h1 className="login-left-panel__branding-name">{productName}</h1>
-        <p className="login-left-panel__branding-subtitle">Built by Skolist</p>
-      </div>
+      <LeftPanelBranding productName={productName} />
 
       {/* Feature Pills */}
-      <div className="login-left-panel__features animate-enter delay-3">
-        {features.map((feature, index) => (
-          <div
-            key={index}
-            className="login-left-panel__feature-pill"
-            style={{ animationDelay: `${300 + index * 50}ms` }} // Staggered pill entrance
-          >
-            {feature}
-          </div>
-        ))}
-      </div>
+      <LeftPanelFeatures features={features} />
 
       {/* Call to Action Text */}
-      <div className="login-left-panel__cta animate-enter delay-4">
-        <p className="login-left-panel__cta-main">
-          Use the next-generation tool <span>{productName} for free</span>
-        </p>
-        <p className="login-left-panel__cta-sub">
-          A product made with teachers, not just for them
-        </p>
-      </div>
+      <LeftPanelCTA productName={productName} />
 
       {/* Bottom Banner */}
-      <div className="login-left-panel__banner animate-enter delay-5">
-        QUESTION PAPER GENERATION IS
-        <br />
-        NOW EASIER
-      </div>
+      <LeftPanelBanner />
 
       {/* Contact Info */}
-      <div className="login-left-panel__contact animate-enter delay-5">
-        Any Queries : {contactInfo.email} / {contactInfo.phone}
-      </div>
+      <LeftPanelContact contactInfo={contactInfo} />
     </div>
   );
 }

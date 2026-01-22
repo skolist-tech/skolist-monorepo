@@ -252,6 +252,11 @@
   opacity: 0.9;
 }
 
+.login-mobile-marketing,
+.login-mobile-footer {
+  display: none;
+}
+
 /* ─────────────────────────────────────────────────────────────────
    Right Panel - Auth
    ───────────────────────────────────────────────────────────────── */
@@ -670,6 +675,50 @@
   .login-right-panel__content {
     max-width: 100%;
   }
+
+  .login-mobile-marketing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .login-mobile-marketing .login-left-panel__headline {
+    font-size: 1.5rem;
+    max-width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  .login-mobile-marketing .login-left-panel__branding {
+    margin-bottom: 0;
+  }
+
+  .login-mobile-marketing .login-left-panel__branding-name {
+    font-size: 3rem;
+  }
+
+  .login-mobile-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .login-mobile-footer .login-left-panel__features {
+    max-width: 100%;
+    margin-bottom: 2rem;
+  }
+
+  .login-mobile-footer .login-left-panel__cta {
+    margin-bottom: 1.5rem;
+  }
+
+  .login-mobile-footer .login-left-panel__banner {
+    margin-bottom: 2rem;
+  }
 }
 
 /* 6. MOBILE PHONES (Narrow Width) */
@@ -685,10 +734,20 @@
     padding: 1.5rem;
     border-width: 3px;
   }
-  .login-badge {
-    gap: 0.75rem;
-  }
   .login-badge__text {
     font-size: 0.85rem;
+  }
+
+  .login-mobile-marketing .login-left-panel__headline {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .login-mobile-marketing .login-left-panel__branding-name {
+    font-size: 2.25rem;
+  }
+
+  .login-mobile-marketing {
+    margin-bottom: 0.5 rem;
   }
 }

@@ -14,7 +14,15 @@ import {
   // type EmailLoginFormData,
   type EmailSignupFormData,
 } from "../schemas";
-import { LeftPanel } from "./left-panel";
+import {
+  LeftPanel,
+  LeftPanelHeadline,
+  LeftPanelBranding,
+  LeftPanelFeatures,
+  LeftPanelCTA,
+  LeftPanelBanner,
+  LeftPanelContact,
+} from "./left-panel";
 import "./login-page.css";
 
 // Icons (keeping existing icons...)
@@ -99,8 +107,7 @@ export function LoginPage({
   // Check valid env var (support VITE_ prefix or standard if configured)
   const envVite = import.meta.env.VITE_PHONE_SMS_AVAILABLE;
 
-  const isPhoneAvailable =
-    (envVite || "false").toLowerCase() !== "false";
+  const isPhoneAvailable = (envVite || "false").toLowerCase() !== "false";
 
   // Auth state management
   const [isSignUp, setIsSignUp] = useState(true);
@@ -234,6 +241,12 @@ export function LoginPage({
 
       <div className="login-right-panel">
         <div className="login-right-panel__content">
+          {/* Mobile Marketing Header */}
+          <div className="login-mobile-marketing">
+            <LeftPanelHeadline />
+            <LeftPanelBranding productName={productName} />
+          </div>
+
           {/* Header */}
           <div className="login-right-panel__header">
             <h2 className="login-right-panel__title">
@@ -575,6 +588,19 @@ export function LoginPage({
                 Trusted by 1,000+ teacher/schools
               </div>
             </div>
+          </div>
+
+          {/* Mobile Footer Marketing */}
+          <div className="login-mobile-footer">
+            <LeftPanelFeatures />
+            <LeftPanelCTA productName={productName} />
+            <LeftPanelBanner />
+            <LeftPanelContact
+              contactInfo={{
+                email: "info@skolist.com",
+                phone: "+91 7667366098",
+              }}
+            />
           </div>
         </div>
       </div>
