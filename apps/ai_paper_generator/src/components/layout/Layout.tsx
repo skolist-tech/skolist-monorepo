@@ -7,25 +7,27 @@ import { useLayoutScale } from "./useLayoutScale";
 export const Layout: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  
-  const { isDesktop } = useLayoutScale(1908, 1024);
 
+  const { isDesktop } = useLayoutScale(1908, 600, 1024);
 
-  const containerStyle: React.CSSProperties = useMemo(() => ({
-    width: "var(--app-width, 100%)",
-    height: "var(--app-height, 100vh)",
-    transform: isDesktop ? "scale(var(--app-scale, 1))" : "none",
-    transformOrigin: "top left",
-    willChange: isDesktop ? "transform" : "auto",
-    backfaceVisibility: "hidden", 
-    WebkitFontSmoothing: "antialiased", 
-  }), [isDesktop]);
+  const containerStyle: React.CSSProperties = useMemo(
+    () => ({
+      width: "var(--app-width, 100%)",
+      height: "var(--app-height, 100vh)",
+      transform: "scale(var(--app-scale, 1))",
+      transformOrigin: "top left",
+      willChange: "transform",
+      backfaceVisibility: "hidden",
+      WebkitFontSmoothing: "antialiased",
+    }),
+    [isDesktop]
+  );
 
   return (
-    <div className="fixed inset-0 overflow bg-background">
+    <div className="overflow fixed inset-0 bg-background">
       <div style={containerStyle} className="flex flex-col bg-background">
         <Header onMenuClick={() => setIsMobileOpen(true)} />
-        
+
         <div className="flex flex-1 overflow-hidden">
           <ActivitySidebar
             isCollapsed={isCollapsed}
@@ -39,9 +41,3 @@ export const Layout: React.FC = () => {
     </div>
   );
 };
-
-
-
-
-
-
