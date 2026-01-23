@@ -1,4 +1,4 @@
-import { getSupabaseClient} from "@skolist/auth";
+import { getSupabaseClient } from "@skolist/auth";
 
 // Get API URL from environment variables, fallback to localhost for development
 const API_URL = import.meta.env.VITE_FASTAPI_URL;
@@ -275,6 +275,43 @@ export const fastApiService = {
       return await response.json();
     } catch (error) {
       console.error("Error getting feedback:", error);
+      throw error;
+    }
+  },
+  /**
+   * info: Calls the FastAPI backend to download PDF
+   * endpoint: POST /api/v1/qgen/download_pdf
+   */
+  async downloadPdf(draft_id: string, mode: string) {
+    try {
+      const {
+        data: { session },
+      } = await getSupabaseClient().auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetch(`${API_URL}/api/v1/qgen/download_pdf`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ draft_id, mode }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `Failed to download PDF: ${response.statusText}`
+        );
+      }
+
+      return await response.blob();
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
       throw error;
     }
   },

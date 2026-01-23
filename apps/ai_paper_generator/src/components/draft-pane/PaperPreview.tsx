@@ -18,6 +18,7 @@ import {
   FileDown,
   ChevronDown,
   Download,
+  Loader2,
 } from "lucide-react";
 import {
   Button,
@@ -35,6 +36,7 @@ import type { GeneratedQuestionWithConcepts } from "../../services/questionServi
 import type { QgenDraft, QgenDraftSection } from "@skolist/db";
 import type { QgenInstruction } from "../../services/draftService";
 import { LatexHtmlRenderer, LatexRenderer } from "../shared/LatexRenderer";
+import { fastApiService } from "../../services/fastApiService";
 
 // -- Constants --
 const A4_WIDTH_MM = 210;
@@ -247,8 +249,8 @@ const QuestionItem = ({
 }) => {
   // Filter and sort images by position
   const validImages = (question.images || [])
-    .filter((img) => img.svg_string || img.img_url)
-    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+    .filter((img: any) => img.svg_string || img.img_url)
+    .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
 
   return (
     <div className="mb-4 break-inside-avoid">
@@ -558,16 +560,23 @@ export function PaperPreview() {
 
     // Sections and Questions
     let globalQIndex = 0;
-    sections.forEach((section) => {
+    sections.forEach((section: QgenDraftSection) => {
       // Questions in Section
       const sectionQuestions = questions
-        .filter((q) => q.is_in_draft && q.qgen_draft_section_id === section.id)
+        .filter(
+          (q: GeneratedQuestionWithConcepts) =>
+            q.is_in_draft && q.qgen_draft_section_id === section.id
+        )
         .sort(
-          (a, b) => (a.position_in_draft || 0) - (b.position_in_draft || 0)
+          (
+            a: GeneratedQuestionWithConcepts,
+            b: GeneratedQuestionWithConcepts
+          ) => (a.position_in_draft || 0) - (b.position_in_draft || 0)
         );
 
       const totalMarks = sectionQuestions.reduce(
-        (sum, q) => sum + Number(q.marks || 0),
+        (sum: number, q: GeneratedQuestionWithConcepts) =>
+          sum + Number(q.marks || 0),
         0
       );
 
@@ -696,6 +705,37 @@ export function PaperPreview() {
     onBeforePrint: () => new Promise((resolve) => setTimeout(resolve, 500)),
   });
 
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (!draft) return;
+    try {
+      setIsDownloadingPdf(true);
+      const blob = await fastApiService.downloadPdf(draft.id, previewMode);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${draft.paper_title || "Paper"}_${previewMode}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Download Started",
+        description: "Your PDF is being downloaded.",
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to generate PDF. Please try again or use Print.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   if (!draft) return null;
 
   return (
@@ -770,36 +810,57 @@ export function PaperPreview() {
           </div>
         </div>
 
-        {/* Print Button */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" className="gap-1 px-2 md:gap-2 md:px-3">
+        {/* Download Button Group */}
+        <div className="flex items-center">
+          <Button
+            size="sm"
+            className="gap-2 rounded-r-none border-r border-white/20 px-3 md:px-4"
+            onClick={handleDownloadPdf}
+            disabled={isDownloadingPdf}
+          >
+            {isDownloadingPdf ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
               <Download className="h-4 w-4" />
-              <span className="sm:inline">Download</span>
-              {/* below is commented out for the mobile view workaround */}
-              {/* <span className="hidden sm:inline">Download</span> */}
-              <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                toast({
-                  title: "Feature Coming Soon",
-                  description: "Download as Word file will be available soon!",
-                });
-              }}
-              className="gap-2"
-            >
-              <FileDown className="h-4 w-4" />
-              Download Word File
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handlePrint()} className="gap-2">
-              <Printer className="h-4 w-4" />
-              Print PDF
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            )}
+            <span className="hidden sm:inline">
+              {/* Download {previewMode === "paper" ? "Paper" : "Answers"} PDF */}
+              Download
+            </span>
+            <span className="sm:hidden">PDF</span>
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                className="rounded-l-none border-l-0 px-1 shadow-none md:px-2"
+                disabled={isDownloadingPdf}
+              >
+                <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  toast({
+                    title: "Feature Coming Soon",
+                    description:
+                      "Download as Word file will be available soon!",
+                  });
+                }}
+                className="gap-2"
+              >
+                <FileDown className="h-4 w-4" />
+                Download Word File
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePrint()} className="gap-2">
+                <Printer className="h-4 w-4" />
+                Print PDF (Browser)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Preview Area */}
