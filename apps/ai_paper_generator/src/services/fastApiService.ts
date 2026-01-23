@@ -77,7 +77,7 @@ export const fastApiService = {
    * @param gen_question_id - UUID of the question to correct
    * @param image - Optional image blob to attach for context (screenshot of the question card)
    */
-  async autoCorrectQuestion(gen_question_id: string, image?: Blob) {
+  async autoCorrectQuestion(gen_question_id: string) {
     try {
       const {
         data: { session },
@@ -90,9 +90,6 @@ export const fastApiService = {
 
       const formData = new FormData();
       formData.append("gen_question_id", gen_question_id);
-      if (image) {
-        formData.append("image", image, "question-card.png");
-      }
 
       const response = await fetch(
         `${API_URL}/api/v1/qgen/auto_correct_question`,

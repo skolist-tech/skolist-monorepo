@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { toBlob } from "html-to-image";
 import { formatQuestionType } from "../../../utils/formatters";
 import {
   Button,
@@ -121,31 +120,11 @@ export function GeneratedQuestionCard({
       // 3. Tiny yield to let the browser paint the "start" of the animation
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // 4. Capture Image using html-to-image (Faster & Lighter)
-      let imageBlob: Blob | undefined;
-      if (cardRef.current) {
-        try {
-          // html-to-image is much faster because it uses SVG foreignObject
-          imageBlob =
-            (await toBlob(cardRef.current, {
-              cacheBust: true,
-              skipAutoScale: true,
-              backgroundColor: "#ffffff", // Ensure white bg if transparent
-              filter: (node) => {
-                // Exclude elements with the ignore class
-                return !node.hasAttribute?.("data-html2canvas-ignore");
-              },
-            })) ?? undefined; // Handle potential null return
-        } catch (error) {
-          console.warn("Failed to capture screenshot:", error);
-        }
-      }
-
-      // 5. API Call
+      // 4. API Call
       if (onAutoCorrect) {
         await onAutoCorrect(question.id);
       } else {
-        await fastApiService.autoCorrectQuestion(question.id, imageBlob);
+        await fastApiService.autoCorrectQuestion(question.id);
       }
 
       // 6. Finish Animation
