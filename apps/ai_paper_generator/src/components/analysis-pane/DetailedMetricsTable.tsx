@@ -77,6 +77,8 @@ export function DetailedMetricsTable({ questions }: DetailedMetricsTableProps) {
     const metricsMap = new Map<string, MetricRow>();
 
     questions.forEach((q) => {
+      if (!q.is_in_draft) return;
+
       const concepts =
         q.concepts && q.concepts.length > 0
           ? q.concepts
@@ -231,7 +233,8 @@ export function DetailedMetricsTable({ questions }: DetailedMetricsTableProps) {
                       colSpan={5}
                       className="h-24 p-4 text-center text-muted-foreground"
                     >
-                      No data available. Generate questions to see metrics.
+                      No questions in draft. Add questions to draft to see
+                      metrics.
                     </td>
                   </tr>
                 ) : (
