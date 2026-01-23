@@ -315,4 +315,41 @@ export const fastApiService = {
       throw error;
     }
   },
+  /**
+   * info: Calls the FastAPI backend to download DOCX
+   * endpoint: POST /api/v1/qgen/download_docx
+   */
+  async downloadDocx(draft_id: string, mode: string) {
+    try {
+      const {
+        data: { session },
+      } = await getSupabaseClient().auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetch(`${API_URL}/api/v1/qgen/download_docx`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ draft_id, mode }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `Failed to download DOCX: ${response.statusText}`
+        );
+      }
+
+      return await response.blob();
+    } catch (error) {
+      console.error("Error downloading DOCX:", error);
+      throw error;
+    }
+  },
 };

@@ -706,11 +706,16 @@ export function PaperPreview() {
   });
 
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
 
   const handleDownloadPdf = async () => {
     if (!draft) return;
     try {
       setIsDownloadingPdf(true);
+      toast({
+        title: "Download Started",
+        description: "Your PDF is being downloaded.",
+      });
       const blob = await fastApiService.downloadPdf(draft.id, previewMode);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -720,10 +725,6 @@ export function PaperPreview() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast({
-        title: "Download Started",
-        description: "Your PDF is being downloaded.",
-      });
     } catch (error) {
       console.error(error);
       toast({
@@ -733,6 +734,35 @@ export function PaperPreview() {
       });
     } finally {
       setIsDownloadingPdf(false);
+    }
+  };
+
+  const handleDownloadDocx = async () => {
+    if (!draft) return;
+    try {
+      setIsDownloadingDocx(true);
+      toast({
+        title: "Download Started",
+        description: "Your Word file is being downloaded.",
+      });
+      const blob = await fastApiService.downloadDocx(draft.id, previewMode);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${draft.paper_title || "Paper"}_${previewMode}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to generate Word file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloadingDocx(false);
     }
   };
 
@@ -816,17 +846,14 @@ export function PaperPreview() {
             size="sm"
             className="gap-2 rounded-r-none border-r border-white/20 px-3 md:px-4"
             onClick={handleDownloadPdf}
-            disabled={isDownloadingPdf}
+            disabled={isDownloadingPdf || isDownloadingDocx}
           >
             {isDownloadingPdf ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Download className="h-4 w-4" />
             )}
-            <span className="hidden sm:inline">
-              {/* Download {previewMode === "paper" ? "Paper" : "Answers"} PDF */}
-              Download
-            </span>
+            <span className="hidden sm:inline">Download</span>
             <span className="sm:hidden">PDF</span>
           </Button>
 
@@ -835,23 +862,22 @@ export function PaperPreview() {
               <Button
                 size="sm"
                 className="rounded-l-none border-l-0 px-1 shadow-none md:px-2"
-                disabled={isDownloadingPdf}
+                disabled={isDownloadingPdf || isDownloadingDocx}
               >
                 <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onClick={() => {
-                  toast({
-                    title: "Feature Coming Soon",
-                    description:
-                      "Download as Word file will be available soon!",
-                  });
-                }}
+                onClick={handleDownloadDocx}
                 className="gap-2"
+                disabled={isDownloadingDocx}
               >
-                <FileDown className="h-4 w-4" />
+                {isDownloadingDocx ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
                 Download Word File
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handlePrint()} className="gap-2">
