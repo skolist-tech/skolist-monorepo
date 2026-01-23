@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Input,
+  useToast,
 } from "@skolist/ui";
 import {
   Plus,
@@ -52,6 +53,8 @@ import {
 import { ArrowLeft } from "lucide-react";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
 import { usePrevious } from "../../hooks/usePrevious";
+import { calculateDragUpdates } from "../../utils/questionDragLogic";
+import { moveQuestionsToDraftBatch } from "../../services/questionService";
 
 function AddCustomQuestionGlobal({
   sections,
@@ -160,6 +163,113 @@ function AddCustomQuestionGlobal({
 
 // -- Sub-components for Sortable Items --
 
+function SortableQuestion({
+  question,
+  onMoveUp,
+  onMoveDown,
+}: {
+  question: GeneratedQuestionWithConcepts;
+  index: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: question.id,
+    data: { type: "question", question },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
+  };
+
+  const {
+    moveQuestionToGeneration,
+    saveQuestion,
+    deleteQuestion,
+    refetchQuestions,
+  } = useQuestionsContext();
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group relative mb-4 ${isDragging ? "z-50" : ""}`}
+      id={`question-node-${question.id}`}
+    >
+      <div className="w-[105%] origin-top-left scale-[0.95]">
+        <GeneratedQuestionCard
+          question={question}
+          onMoveToDraft={() => {}} // Already in draft
+          onRemoveFromDraft={() => moveQuestionToGeneration(question.id)}
+          onUpdate={saveQuestion}
+          onDelete={deleteQuestion}
+          onRegenerate={async (prompt, files) => {
+            try {
+              await fastApiService.regenerateQuestionWithPrompt(
+                question.id,
+                prompt,
+                files
+              );
+              await refetchQuestions();
+            } catch (error) {
+              console.error("Failed to regenerate question:", error);
+            }
+          }}
+          showReorder={true}
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
+          dragHandleProps={{ ...attributes, ...listeners }}
+        />
+      </div>
+
+      {/* Page Break Toggle */}
+      <div
+        className="group/pb -mt-2 mb-2 flex cursor-pointer flex-col items-center py-1"
+        onClick={() =>
+          saveQuestion({
+            ...question,
+            is_page_break_below: !question.is_page_break_below,
+          })
+        }
+        title={
+          question.is_page_break_below
+            ? "Remove Page Break"
+            : "Insert Page Break Here"
+        }
+      >
+        {/* Visual Line */}
+        <div
+          className={`h-0.5 w-full transition-all duration-200 ${
+            question.is_page_break_below
+              ? "bg-black opacity-100"
+              : "bg-primary/20 opacity-0 group-hover/pb:opacity-100"
+          }`}
+        />
+
+        {/* Visual Badge/Label */}
+        <div
+          className={`mt-1 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
+            question.is_page_break_below
+              ? "bg-black text-white opacity-100"
+              : "bg-primary/10 text-primary opacity-0 group-hover/pb:opacity-100"
+          }`}
+        >
+          {question.is_page_break_below ? "Page Break" : "Insert Break"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SortableSection({
   section,
   sections,
@@ -220,14 +330,7 @@ function SortableSection({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const {
-    questions,
-    moveQuestionToGeneration,
-    addCustomQuestion,
-    saveQuestion,
-    deleteQuestion,
-    refetchQuestions,
-  } = useQuestionsContext();
+  const { questions, addCustomQuestion, saveQuestion } = useQuestionsContext();
 
   // Filter questions belonging to this section
   const sectionQuestions = questions
@@ -582,78 +685,20 @@ function SortableSection({
                 No questions in this section
               </div>
             ) : (
-              sectionQuestions.map((q, idx) => (
-                <div
-                  key={q.id}
-                  className="group relative"
-                  id={`question-node-${q.id}`}
-                >
-                  {/* Re-using prepared card */}
-                  <div className="w-[105%] origin-top-left scale-[0.95]">
-                    <GeneratedQuestionCard
-                      question={q}
-                      onMoveToDraft={() => {}} // Already in draft
-                      onRemoveFromDraft={() => moveQuestionToGeneration(q.id)}
-                      onUpdate={saveQuestion}
-                      onDelete={deleteQuestion}
-                      onRegenerate={async (prompt, files) => {
-                        try {
-                          await fastApiService.regenerateQuestionWithPrompt(
-                            q.id,
-                            prompt,
-                            files
-                          );
-                          await refetchQuestions();
-                        } catch (error) {
-                          console.error(
-                            "Failed to regenerate question:",
-                            error
-                          );
-                        }
-                      }}
-                      showReorder={true}
-                      onMoveUp={() => moveQuestion(idx, "up")}
-                      onMoveDown={() => moveQuestion(idx, "down")}
-                    />
-                  </div>
-
-                  {/* Page Break Toggle */}
-                  <div
-                    className="group/pb -mt-2 mb-2 flex cursor-pointer flex-col items-center py-1"
-                    onClick={() =>
-                      saveQuestion({
-                        ...q,
-                        is_page_break_below: !q.is_page_break_below,
-                      })
-                    }
-                    title={
-                      q.is_page_break_below
-                        ? "Remove Page Break"
-                        : "Insert Page Break Here"
-                    }
-                  >
-                    {/* Visual Line */}
-                    <div
-                      className={`h-0.5 w-full transition-all duration-200 ${
-                        q.is_page_break_below
-                          ? "bg-black opacity-100"
-                          : "bg-primary/20 opacity-0 group-hover/pb:opacity-100"
-                      }`}
-                    />
-
-                    {/* Visual Badge/Label */}
-                    <div
-                      className={`mt-1 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
-                        q.is_page_break_below
-                          ? "bg-black text-white opacity-100"
-                          : "bg-primary/10 text-primary opacity-0 group-hover/pb:opacity-100"
-                      }`}
-                    >
-                      {q.is_page_break_below ? "Page Break" : "Insert Break"}
-                    </div>
-                  </div>
-                </div>
-              ))
+              <SortableContext
+                items={sectionQuestions.map((q) => q.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {sectionQuestions.map((q, idx) => (
+                  <SortableQuestion
+                    key={q.id}
+                    question={q}
+                    index={idx}
+                    onMoveUp={() => moveQuestion(idx, "up")}
+                    onMoveDown={() => moveQuestion(idx, "down")}
+                  />
+                ))}
+              </SortableContext>
             )}
           </div>
           <div className="border-t p-3">
@@ -699,6 +744,7 @@ function SortableSection({
 }
 
 export function PaperStructure() {
+  const { toast } = useToast();
   const {
     draft,
     sections,
@@ -755,17 +801,142 @@ export function PaperStructure() {
     return <div className="p-4 text-center">Loading draft structure...</div>;
   }
 
+  /* -- Drag Handlers -- */
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+  const { questions, updateQuestionLocal } = useQuestionsContext();
 
-    if (over && active.id !== over.id) {
-      moveSection(active.id as string, over.id as string);
+  const handleDragOver = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    // Check if we are dragging a question
+    if (active.data.current?.type === "question") {
+      const activeQuestionId = active.id as string;
+      const overId = over.id as string;
+
+      // Identify active question
+      const activeQuestion = questions.find((q) => q.id === activeQuestionId);
+      if (!activeQuestion) return;
+
+      // Find over section
+      let overSectionId: string | undefined;
+
+      // Case A: Over is a Section
+      if (over.data.current?.type === "section") {
+        overSectionId = overId;
+      }
+      // Case B: Over is another Question
+      else if (over.data.current?.type === "question") {
+        const overQuestion = questions.find((q) => q.id === overId);
+        if (overQuestion) {
+          overSectionId = overQuestion.qgen_draft_section_id || undefined;
+        }
+      }
+
+      // If we found a target section and it's different from current, update it
+      if (
+        overSectionId &&
+        overSectionId !== activeQuestion.qgen_draft_section_id
+      ) {
+        // Optimistically update the section ID so it "moves" to the new list
+        updateQuestionLocal({
+          ...activeQuestion,
+          qgen_draft_section_id: overSectionId,
+        });
+      }
     }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
     setActiveId(null);
+
+    if (!over) return;
+
+    // 1. Handle Section Reordering
+    if (
+      active.data.current?.type === "section" &&
+      over.data.current?.type === "section"
+    ) {
+      if (active.id !== over.id) {
+        moveSection(active.id as string, over.id as string);
+      }
+      return;
+    }
+
+    // 2. Handle Question Reordering
+    if (active.data.current?.type === "question") {
+      const activeQId = active.id as string;
+      const overId = over.id as string;
+
+      const activeQuestion = questions.find((q) => q.id === activeQId);
+      if (!activeQuestion) return;
+
+      const activeSectionId = activeQuestion.qgen_draft_section_id;
+      if (!activeSectionId) return;
+
+      let overSectionId = activeSectionId; // Default to same section
+
+      // Determine target section
+      if (over.data.current?.type === "section") {
+        overSectionId = overId;
+      } else if (over.data.current?.type === "question") {
+        const overQuestion = questions.find((q) => q.id === overId);
+        if (overQuestion && overQuestion.qgen_draft_section_id) {
+          overSectionId = overQuestion.qgen_draft_section_id;
+        }
+      }
+
+      // Calculate updates
+      const updates = calculateDragUpdates(
+        activeQId,
+        overId,
+        activeSectionId,
+        overSectionId,
+        questions,
+        sections
+      );
+
+      if (updates.length > 0) {
+        // Snapshot current state for rollback
+        const previousStates = updates
+          .map((u) => questions.find((q) => q.id === u.id))
+          .filter(Boolean) as GeneratedQuestionWithConcepts[];
+
+        // Optimistic UI Update
+        updates.forEach((u) => {
+          const q = questions.find((q) => q.id === u.id);
+          if (q) {
+            updateQuestionLocal({
+              ...q,
+              position_in_draft: u.position_in_draft,
+              qgen_draft_section_id: u.qgen_draft_section_id,
+            });
+          }
+        });
+
+        // Backend Update
+        try {
+          await moveQuestionsToDraftBatch(updates);
+        } catch (error) {
+          console.error("Failed to update drag positions:", error);
+
+          // Rollback changes
+          previousStates.forEach((q) => updateQuestionLocal(q));
+
+          toast({
+            title: "Move Failed",
+            description:
+              "Failed to save the new question order. Changes have been reverted.",
+            variant: "destructive",
+          });
+        }
+      }
+    }
   };
 
   const moveSectionByIndex = (
@@ -873,6 +1044,7 @@ export function PaperStructure() {
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <SortableContext

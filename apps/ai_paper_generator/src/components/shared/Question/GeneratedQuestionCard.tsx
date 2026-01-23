@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
   useToast,
 } from "@skolist/ui";
-import { ChevronUp, ChevronDown, Info } from "lucide-react";
+import { ChevronUp, ChevronDown, Info, GripVertical } from "lucide-react";
 import type { GeneratedQuestionWithConcepts } from "../../../services/questionService";
 import { fastApiService } from "../../../services/fastApiService";
 import { QuestionMarks } from "./QuestionMarks";
@@ -60,6 +60,7 @@ interface GeneratedQuestionCardProps {
     prompt: string,
     files: File[]
   ) => Promise<void>; // Optional override for regenerate with prompt (useful for Storybook)
+  dragHandleProps?: Record<string, any>;
 }
 
 export function GeneratedQuestionCard({
@@ -78,6 +79,7 @@ export function GeneratedQuestionCard({
   isAnimating = false,
   onAutoCorrect,
   onRegenerateWithPrompt,
+  dragHandleProps,
 }: GeneratedQuestionCardProps) {
   const { toast } = useToast();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -516,7 +518,26 @@ export function GeneratedQuestionCard({
         )}
       </div>
 
-      <div className="absolute bottom-2 right-2">
+      <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+        {dragHandleProps && (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9 cursor-grab touch-none text-muted-foreground hover:text-primary active:cursor-grabbing"
+                  {...dragHandleProps}
+                >
+                  <GripVertical className="!h-6 !w-6" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Drag to Reorder</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         <Popover>
           <PopoverTrigger asChild>
             <div>
