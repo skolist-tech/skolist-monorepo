@@ -42,14 +42,13 @@ import type {
   // UpdateGeneratedQuestion,
 } from "@skolist/db";
 
-
 interface DraftContextValue {
   draft: QgenDraft | null;
   sections: QgenDraftSection[];
   instructions: QgenInstruction[];
   isLoading: boolean;
   updateDraftSettings: (updates: UpdateQgenDraft) => Promise<void>;
-  addSection: (name?: string) => Promise<void>;
+  addSection: (name?: string) => Promise<QgenDraftSection | undefined>;
   editSection: (id: string, updates: UpdateQgenDraftSection) => Promise<void>;
   removeSection: (id: string) => Promise<void>;
   moveSection: (activeId: string, overId: string) => Promise<void>;
@@ -148,8 +147,10 @@ export function DraftProvider({ children }: { children: ReactNode }) {
         const newSection = await createSection(draft.id, position, name);
         console.log("Section created:", newSection);
         setSections((prev) => [...prev, newSection]);
+        return newSection;
       } catch (err) {
         console.error("Failed to add section:", err);
+        return undefined;
       }
     },
     [draft, sections.length]

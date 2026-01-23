@@ -11,6 +11,12 @@ import type {
   UpdateGeneratedQuestion,
 } from "@skolist/db";
 
+export interface QuestionDraftRpcUpdate {
+  id: string;
+  position_in_draft: number;
+  qgen_draft_section_id: string;
+}
+
 export async function createQuestion(
   question: InsertGeneratedQuestion
 ): Promise<GeneratedQuestion> {
@@ -334,6 +340,24 @@ export async function deleteQuestionImage(imageId: string): Promise<void> {
 
   if (error) {
     console.error("Failed to delete question image:", error);
+    throw error;
+  }
+}
+
+/**
+ * Batch update questions for draft move
+ */
+export async function moveQuestionsToDraftBatch(
+  updates: QuestionDraftRpcUpdate[]
+): Promise<void> {
+  const client = getSupabaseClient();
+
+  const { error } = await client.rpc("update_question_position_and_section_ids", {
+    updates: updates, // Supabase RPC matches keys to arguments "updates"
+  });
+
+  if (error) {
+    console.error("Failed to batch move questions to draft:", error);
     throw error;
   }
 }

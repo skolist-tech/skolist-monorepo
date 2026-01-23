@@ -24,6 +24,7 @@ import type { HardnessLevel } from "@skolist/db";
 import { GenerateMoreButton } from "./GenerateMoreButton";
 import { DraftProgress } from "../../shared/DraftProgress";
 import { formatQuestionType } from "../../../utils/formatters";
+import { useSmartDraftActions } from "../../../hooks/useSmartDraftActions";
 
 interface DownAreaProps {
   hardnessLevels: Record<HardnessLevel, number>;
@@ -37,12 +38,12 @@ export function DownArea({
   const {
     questions,
     isLoading,
-    moveQuestionToDraft,
-    moveQuestionsToDraft,
     saveQuestion,
     deleteQuestion,
     refetchQuestions,
   } = useQuestionsContext();
+
+  const { handleSmartMoveToDraft } = useSmartDraftActions();
 
   // Filter questions not in draft
   const [filterTypes, setFilterTypes] = useState<Set<string>>(new Set());
@@ -142,7 +143,7 @@ export function DownArea({
       await new Promise((resolve) => setTimeout(resolve, 400));
 
       // Move questions to draft
-      await moveQuestionsToDraft(idsToMove);
+      await handleSmartMoveToDraft(idsToMove);
 
       // Show success toast
       toast({
@@ -294,7 +295,7 @@ export function DownArea({
             <GeneratedQuestionCard
               key={question.id}
               question={question}
-              onMoveToDraft={moveQuestionToDraft}
+              onMoveToDraft={() => handleSmartMoveToDraft([question.id])}
               onUpdate={(updated) => saveQuestion(updated)}
               onDelete={deleteQuestion}
               onRegenerate={async (prompt, files) => {
@@ -323,7 +324,7 @@ export function DownArea({
             <GeneratedQuestionCard
               key={question.id}
               question={question}
-              onMoveToDraft={moveQuestionToDraft}
+              onMoveToDraft={() => handleSmartMoveToDraft([question.id])}
               onUpdate={(updated) => saveQuestion(updated)}
               onDelete={deleteQuestion}
               onRegenerate={async (prompt, files) => {
