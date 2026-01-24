@@ -321,7 +321,7 @@ const EcosystemSvg = () => {
 
 export function EcosystemSection() {
   return (
-    <section className="bg-white py-16 md:py-24">
+    <section className="bg-gray-50 py-16 md:py-24">
       <div className="container mx-auto px-4">
         <div className="mb-10 text-center md:mb-16">
           <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">

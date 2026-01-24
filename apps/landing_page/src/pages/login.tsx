@@ -18,6 +18,7 @@ export function LoginPage() {
       title="Welcome to Skolist"
       description="Sign in to access AI Paper Generator and AI Tutor"
       onSuccess={() => navigate("/")}
+      logoUrl=""
     />
   );
 }

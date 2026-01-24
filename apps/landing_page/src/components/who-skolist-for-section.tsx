@@ -62,9 +62,9 @@ export function WhoSkolistForSection() {
     <section className="bg-white py-20 pb-0">
       <div className="container mx-auto px-4">
         <h2 className="mb-4 text-center text-4xl font-bold text-gray-900">
-          Who Skolist Is For
+          What You Get
         </h2>
-        <p className="mx-auto mb-20 max-w-2xl text-center text-xs font-medium text-gray-500">
+        <p className="mx-auto mb-20 max-w-2xl text-center text-base font-medium text-gray-500 md:text-lg">
           For students seeking clarity, teachers enabling personalization,
           parents demanding transparency, and schools building trust through
           measurable learning outcomes.

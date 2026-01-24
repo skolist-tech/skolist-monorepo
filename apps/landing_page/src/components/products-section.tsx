@@ -22,7 +22,7 @@ const products = [
   {
     name: "Strategy",
     icon: GitBranch,
-    description: "Learning Path Optimizer",
+    description: "Personalized Learning Path Optimizer",
     color: "bg-violet-500",
     lightColor: "bg-violet-50",
     borderColor: "border-l-violet-500",
@@ -50,7 +50,7 @@ const products = [
 
 export function ProductsSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-500 py-24">
+    <section className="relative overflow-hidden bg-gradient-to-br from-sky-500 via-sky-400 to-sky-600 py-24">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="mb-16 text-center">
