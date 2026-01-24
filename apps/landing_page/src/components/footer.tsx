@@ -1,75 +1,59 @@
 import { Link } from "react-router-dom";
-import { LINKS } from "../constants/links";
 
 export function Footer() {
   return (
-    <footer className="border-t bg-gray-50 py-12">
-      <div className="container">
-        <div className="mb-8 grid gap-8 md:grid-cols-3">
-          {/* Skolist Section */}
-          <div>
-            <h3 className="mb-4 text-xl font-bold">Skolist</h3>
-            <p className="text-sm text-gray-600">
+    <footer className="bg-[#0A325F] pb-6 pt-14 text-white md:pb-12 md:pt-36">
+      <div className="container mx-auto px-4">
+        <div className="mb-8 grid grid-cols-1 gap-6 text-center md:mb-16 md:grid-cols-3 md:gap-12 md:text-left">
+          {/* Logo & About */}
+          <div className="flex flex-col items-center md:items-start">
+            <h3 className="mb-2 text-lg font-bold md:mb-4 md:text-xl">
+              Skolist
+            </h3>
+            <p className="max-w-xs text-xs leading-relaxed text-blue-200">
               Empowering Schools to Provide Personalized Strategy-Based Learning
               for Every Child&apos;s Better Future
             </p>
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h3 className="mb-4 text-xl font-bold">Quick Links</h3>
-            <nav className="flex flex-col gap-3">
-              <Link
-                to="/"
-                className="text-sm text-gray-600 transition-colors hover:text-gray-900"
-              >
+          <div className="flex flex-col items-center">
+            <h3 className="mb-3 text-lg font-bold md:mb-6 md:text-xl">
+              Quick Links
+            </h3>
+            <div className="flex gap-8 text-sm font-medium text-blue-100">
+              <Link to="/" className="transition-colors hover:text-white">
                 Home
               </Link>
-              <Link
-                to="/vision"
-                className="text-sm text-gray-600 transition-colors hover:text-gray-900"
-              >
+              <Link to="/vision" className="transition-colors hover:text-white">
                 Vision
               </Link>
               <Link
                 to="/contact"
-                className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+                className="transition-colors hover:text-white"
               >
                 Contact
               </Link>
-            </nav>
+            </div>
           </div>
 
-          {/* Get in Touch */}
-          <div>
-            <h3 className="mb-4 text-xl font-bold">Get in Touch</h3>
-            <p className="mb-3 text-sm text-gray-600">
-              Ready to transform learning in your school?
-            </p>
+          {/* Contact */}
+          <div className="flex flex-col items-center md:items-end">
+            <h3 className="mb-2 text-lg font-bold md:mb-4 md:text-xl">
+              Contact Us
+            </h3>
             <a
-              href={LINKS.WHATSAPP_GROUP}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mb-3 inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
+              href="mailto:info@skolist.com"
+              className="text-xs text-blue-100 transition-colors hover:text-white"
             >
-              Join WhatsApp Group 💬 →
+              info@skolist.com
             </a>
-            <p className="text-sm text-gray-600">
-              Email:{" "}
-              <a
-                href="mailto:info@skolist.com"
-                className="text-blue-600 hover:text-blue-700"
-              >
-                info@skolist.com
-              </a>
-            </p>
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="border-t pt-8 text-center">
-          <p className="text-sm text-gray-600">
-            © 2025 Skolist. Built by IIT Founders.
+        <div className="border-t border-blue-900/50 md:pt-8 text-center">
+          <p className="text-[10px] font-medium text-blue-300">
+            2025 Skolist. Built by IIT Founders.
           </p>
         </div>
       </div>

@@ -9,8 +9,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="container flex h-16 items-center">
+        <div className="flex flex-1 items-center">
           <Link to="/" className="flex items-center">
             <img src="/logo.png" alt="Skolist Logo" className="h-10" />
           </Link>
@@ -20,28 +20,31 @@ export function Header() {
         <nav className="hidden items-center gap-8 md:flex">
           <Link
             to="/"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-medium transition-colors hover:text-foreground"
           >
             Home
           </Link>
           <Link
             to="/vision"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-medium transition-colors hover:text-foreground"
           >
             Vision
           </Link>
           <Link
             to="/product"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-medium transition-colors hover:text-foreground"
           >
             Product
           </Link>
           <Link
             to="/contact"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-medium transition-colors hover:text-foreground"
           >
             Contact
           </Link>
+        </nav>
+
+        <div className="hidden flex-1 items-center justify-end md:flex">
           {isAuthenticated ? (
             <UserMenu />
           ) : (
@@ -49,10 +52,10 @@ export function Header() {
               <Link to="/login">Sign Up</Link>
             </Button>
           )}
-        </nav>
+        </div>
 
-        {/* Mobile Sign Up/Profile and Menu Button */}
-        <div className="flex items-center gap-4 md:hidden">
+        {/* Mobile Actions and Menu Button */}
+        <div className="flex flex-1 items-center justify-end gap-4 md:hidden">
           {isAuthenticated ? (
             <UserMenu />
           ) : (
