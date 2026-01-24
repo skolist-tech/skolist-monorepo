@@ -70,50 +70,66 @@ export function WhoSkolistForSection() {
           measurable learning outcomes.
         </p>
 
-        <div className="grid h-full grid-cols-1 items-center gap-12 pb-20 sm:gap-16 md:grid-cols-2 lg:grid-cols-4">
-          {targetAudiences.map((audience, idx) => (
-            <div
-              key={audience.title}
-              className={`group relative ${idx % 2 !== 0 ? "lg:translate-y-12" : ""}`}
-            >
-              {/* Stacked Background Card */}
+        {/* Mobile: Flex layout with zigzag overlap | Desktop: Grid layout */}
+        <div className="flex flex-col pb-20 md:grid md:grid-cols-2 md:gap-12 lg:grid-cols-4">
+          {targetAudiences.map((audience, idx) => {
+            // On mobile: even cards (0,2) align left, odd cards (1,3) align right with negative margin
+            const isEven = idx % 2 === 0;
+
+            return (
               <div
-                className="absolute inset-0 translate-x-3 translate-y-3 rounded-[32px] opacity-100 transition-transform group-hover:translate-x-4 group-hover:translate-y-4"
-                style={{ backgroundColor: audience.accentColor }}
-              />
+                key={audience.title}
+                className={`group relative w-[72%] md:w-full ${
+                  // Mobile alignment: even=left, odd=right
+                  isEven ? "self-start" : "self-end"
+                } ${
+                  // Mobile: odd cards get negative margin to overlap
+                  !isEven ? "-mt-12 md:mt-0" : idx > 0 ? "mt-6 md:mt-0" : ""
+                } ${
+                  // Desktop: stagger effect
+                  !isEven ? "lg:translate-y-12" : ""
+                }`}
+                style={{ zIndex: targetAudiences.length - idx }}
+              >
+                {/* Stacked Background Card */}
+                <div
+                  className="absolute inset-0 translate-x-2 translate-y-2 rounded-[24px] opacity-100 transition-transform group-hover:translate-x-3 group-hover:translate-y-3 md:translate-x-3 md:translate-y-3 md:rounded-[32px] md:group-hover:translate-x-4 md:group-hover:translate-y-4"
+                  style={{ backgroundColor: audience.accentColor }}
+                />
 
-              {/* Main Foreground Card */}
-              <div className="relative flex h-full flex-col items-center rounded-[32px] border border-gray-100 bg-white p-8 text-center shadow-sm">
-                <div className="mb-6 flex items-center justify-center">
-                  <audience.icon
-                    className="h-10 w-10 text-gray-800"
-                    strokeWidth={1.5}
-                  />
+                {/* Main Foreground Card */}
+                <div className="relative flex h-full flex-col items-center rounded-[24px] border border-gray-100 bg-white p-5 text-center shadow-md md:rounded-[32px] md:p-8">
+                  <div className="mb-4 flex items-center justify-center md:mb-6">
+                    <audience.icon
+                      className="h-8 w-8 text-gray-800 md:h-10 md:w-10"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+
+                  <div className="mb-5 md:mb-8">
+                    <span className="rounded-full border border-blue-100 bg-[#EBF5FF] px-4 py-1 text-[10px] font-bold italic text-gray-900 md:px-5 md:py-1.5 md:text-xs">
+                      {audience.title}
+                    </span>
+                  </div>
+
+                  <ul className="w-full space-y-2.5 text-left md:space-y-4">
+                    {audience.features.map((feature) => (
+                      <li
+                        key={feature}
+                        className="flex items-start gap-2 text-[10px] font-semibold leading-tight text-gray-700 md:gap-3 md:text-[11px]"
+                      >
+                        <Check
+                          className="mt-[-2px] h-3.5 w-3.5 flex-shrink-0 text-gray-900 md:h-4 md:w-4"
+                          strokeWidth={3}
+                        />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-
-                <div className="mb-8">
-                  <span className="rounded-full border border-blue-100 bg-[#EBF5FF] px-5 py-1.5 text-xs font-bold italic text-gray-900">
-                    {audience.title}
-                  </span>
-                </div>
-
-                <ul className="w-full space-y-4 text-left">
-                  {audience.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-start gap-3 text-[11px] font-semibold leading-tight text-gray-700"
-                    >
-                      <Check
-                        className="mt-[-2px] h-4 w-4 flex-shrink-0 text-gray-900"
-                        strokeWidth={3}
-                      />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
