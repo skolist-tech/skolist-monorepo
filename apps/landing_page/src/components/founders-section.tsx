@@ -27,14 +27,6 @@ const founders: Founder[] = [
     image: "/purushottam.jpeg",
     linkedin: "https://www.linkedin.com/in/purushottam-dafure",
   },
-  {
-    id: 3,
-    name: "Sparsh Vyas",
-    role: "Co-Founder",
-    institute: "IIT Delhi",
-    image: "/sparsh.jpeg",
-    linkedin: "https://www.linkedin.com/in/sparsh-vyas",
-  },
 ];
 
 export function FoundersSection() {
@@ -77,11 +69,11 @@ export function FoundersSection() {
                   className="flex-[0_0_100%] px-3 md:flex-[0_0_50%]"
                 >
                   <div className="h-full overflow-hidden rounded-lg border bg-white shadow-md transition hover:shadow-xl">
-                    <div className="h-96 w-full overflow-hidden bg-gray-100">
+                    <div className="h-80 w-full overflow-hidden bg-gray-50">
                       <img
                         src={founder.image}
                         alt={founder.name}
-                        className="h-full w-full object-contain"
+                        className="h-full w-full object-cover object-center"
                       />
                     </div>
                     <div className="p-6 text-center">

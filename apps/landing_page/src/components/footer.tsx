@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
-    <footer className="bg-[#0A325F] pb-6 pt-14 text-white md:pb-12 md:pt-36">
+    <footer className="bg-[#0A325F] pb-6 pt-12 text-white md:pb-8 md:pt-24">
       <div className="container mx-auto px-4">
         <div className="mb-8 grid grid-cols-1 gap-6 text-center md:mb-16 md:grid-cols-3 md:gap-12 md:text-left">
           {/* Logo & About */}
@@ -11,8 +11,9 @@ export function Footer() {
               Skolist
             </h3>
             <p className="max-w-xs text-xs leading-relaxed text-blue-200">
-              Empowering Schools to Provide Personalized Strategy-Based Learning
-              for Every Child&apos;s Better Future
+              Empowering School with
+Personalized
+Student Strategies
             </p>
           </div>
 

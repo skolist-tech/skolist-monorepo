@@ -2,9 +2,9 @@ import { FoundersSection } from "../components/founders-section";
 
 export function VisionPage() {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-blue-100/50">
       {/* Why We Built Skolist */}
-      <section className="container max-w-4xl py-16">
+      <section className="container max-w-4xl py-16 bg">
         <h1 className="mb-8 text-4xl font-bold md:text-5xl">
           Why We Built Skolist
         </h1>
@@ -128,7 +128,7 @@ export function VisionPage() {
           visible, measurable, and addressable at scale.
         </p>
 
-        <div className="mb-12 border-l-4 border-blue-900 bg-gray-100 p-8">
+        <div className="mb-12 border-l-4 border-blue-900 bg-blue-100 p-8">
           <p className="mb-2 text-lg text-gray-800">
             &quot;We&apos;re not building another content platform or gamified
             app. We&apos;re building intelligence for schools, intelligence that

@@ -1,15 +1,15 @@
 import {
   Building2,
-  Users,
-  GraduationCap,
-  UserCircle,
   Check,
 } from "lucide-react";
+import { GiTeacher } from "react-icons/gi";
+import { PiStudentFill } from "react-icons/pi";
+import { RiParentLine, RiSchoolLine } from "react-icons/ri";
 
 const targetAudiences = [
   {
     title: "For Schools",
-    icon: Building2,
+    icon: RiSchoolLine,
     color: "blue",
     accentColor: "#A5CCFF",
     features: [
@@ -21,7 +21,7 @@ const targetAudiences = [
   },
   {
     title: "For Teachers",
-    icon: Users,
+    icon: GiTeacher,
     color: "orange",
     accentColor: "#FFE4A5",
     features: [
@@ -33,7 +33,7 @@ const targetAudiences = [
   },
   {
     title: "For Students",
-    icon: GraduationCap,
+    icon: PiStudentFill,
     color: "blue-light",
     accentColor: "#A5CCFF",
     features: [
@@ -45,13 +45,13 @@ const targetAudiences = [
   },
   {
     title: "For Parents",
-    icon: UserCircle,
+    icon: RiParentLine,
     color: "green",
-    accentColor: "#C1E4BA",
+    accentColor: "#FFE4A5",
     features: [
       "See exactly where their child needs help",
       "Track real progress, not just grades",
-      "Get early indications when their child is falling behind",
+      "Early signals when a child falls behind",
       "Trust the school's personalized approach",
     ],
   },
@@ -59,16 +59,11 @@ const targetAudiences = [
 
 export function WhoSkolistForSection() {
   return (
-    <section className="bg-white py-20 pb-0">
+    <section className="bg-white py-24 pb-0">
       <div className="container mx-auto px-4">
-        <h2 className="mb-4 text-center text-4xl font-bold text-gray-900">
+        <h2 className="mb-12 text-left text-4xl font-bold text-gray-900 md:text-5xl">
           What You Get
         </h2>
-        <p className="mx-auto mb-20 max-w-2xl text-center text-base font-medium text-gray-500 md:text-lg">
-          For students seeking clarity, teachers enabling personalization,
-          parents demanding transparency, and schools building trust through
-          measurable learning outcomes.
-        </p>
 
         {/* Mobile: Flex layout with zigzag overlap | Desktop: Grid layout */}
         <div className="flex flex-col pb-20 md:grid md:grid-cols-2 md:gap-12 lg:grid-cols-4">
@@ -98,7 +93,7 @@ export function WhoSkolistForSection() {
                 />
 
                 {/* Main Foreground Card */}
-                <div className="relative flex h-full flex-col items-center rounded-[24px] border border-gray-100 bg-white p-5 text-center shadow-md md:rounded-[32px] md:p-8">
+                <div className="relative flex h-full flex-col items-center rounded-[24px] border border-gray-200 bg-white p-5 text-center shadow-md md:rounded-[32px] md:p-8">
                   <div className="mb-4 flex items-center justify-center md:mb-6">
                     <audience.icon
                       className="h-8 w-8 text-gray-800 md:h-10 md:w-10"
@@ -107,7 +102,7 @@ export function WhoSkolistForSection() {
                   </div>
 
                   <div className="mb-5 md:mb-8">
-                    <span className="rounded-full border border-blue-100 bg-[#EBF5FF] px-4 py-1 text-[10px] font-bold italic text-gray-900 md:px-5 md:py-1.5 md:text-xs">
+                    <span className="rounded-full border border-blue-100 bg-[#EBF5FF] px-4 py-1 text-[12px] font-bold text-gray-900 md:px-5 md:py-1.5 md:text-sm">
                       {audience.title}
                     </span>
                   </div>
@@ -116,7 +111,7 @@ export function WhoSkolistForSection() {
                     {audience.features.map((feature) => (
                       <li
                         key={feature}
-                        className="flex items-start gap-2 text-[10px] font-semibold leading-tight text-gray-700 md:gap-3 md:text-[11px]"
+                        className="flex items-start gap-2 text-[12px] font-semibold leading-tight text-gray-700 md:gap-3 md:text-[11px]"
                       >
                         <Check
                           className="mt-[-2px] h-3.5 w-3.5 flex-shrink-0 text-gray-900 md:h-4 md:w-4"

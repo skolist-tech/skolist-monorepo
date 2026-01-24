@@ -50,14 +50,15 @@ const products = [
 
 export function ProductsSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-sky-500 via-sky-400 to-sky-600 py-24">
+    // <section className="relative overflow-hidden bg-gradient-to-br from-gray-200 via-gray-200 to-gray-200 py-24">
+    <section className="relative overflow-hidden bg-blue-100/50 py-16">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="mb-16 text-center">
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-5xl">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-black md:text-5xl">
             Our Products
           </h2>
-          <p className="mx-auto max-w-2xl text-lg font-medium text-white/95">
+          <p className="mx-auto max-w-2xl text-lg font-medium text-black/95">
             A comprehensive suite of technologically empowered tools designed to
             transform education
           </p>
@@ -105,7 +106,7 @@ export function ProductsSection() {
 
         {/* Bottom CTA */}
         <div className="mt-16 text-center">
-          <p className="mb-6 font-medium text-white/90">
+          <p className="mb-6 font-medium text-black/90">
             All tools work seamlessly together for maximum impact
           </p>
           <a
@@ -117,7 +118,7 @@ export function ProductsSection() {
             <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500" />
             QGen is Live — Try it now!
           </a>
-          <p className="mt-4 text-xs font-bold uppercase tracking-wider text-white/80">
+          <p className="mt-4 text-xs font-bold uppercase tracking-wider text-black/80">
             Instantly choose from millions of questions with auto-formatting
           </p>
         </div>

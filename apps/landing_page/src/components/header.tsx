@@ -1,11 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@skolist/ui";
 import { useAuth, UserMenu } from "@skolist/auth";
 
 export function Header() {
   const { isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const navLinkClass = (path: string) =>
+    `text-sm font-medium transition-colors hover:text-foreground ${
+      isActive(path) ? "text-foreground font-semibold" : "text-muted-foreground"
+    }`;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -18,37 +26,26 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-8 md:flex">
-          <Link
-            to="/"
-            className="text-sm font-medium transition-colors hover:text-foreground"
-          >
+          <Link to="/" className={navLinkClass("/")}>
             Home
           </Link>
-          <Link
-            to="/vision"
-            className="text-sm font-medium transition-colors hover:text-foreground"
-          >
+          <Link to="/vision" className={navLinkClass("/vision")}>
             Vision
           </Link>
-          <Link
-            to="/product"
-            className="text-sm font-medium transition-colors hover:text-foreground"
-          >
+          {/* <Link to="/product" className={navLinkClass("/product")}>
             Product
-          </Link>
-          <Link
-            to="/contact"
-            className="text-sm font-medium transition-colors hover:text-foreground"
-          >
+          </Link> */}
+          <Link to="/contact" className={navLinkClass("/contact")}>
             Contact
           </Link>
         </nav>
 
-        <div className="hidden flex-1 items-center justify-end md:flex">
+        <div className="hidden flex-1 items-center justify-end md:flex ">
           {isAuthenticated ? (
             <UserMenu />
           ) : (
-            <Button asChild>
+            
+            <Button asChild className="bg-blue-900" >
               <Link to="/login">Sign Up</Link>
             </Button>
           )}
@@ -59,7 +56,7 @@ export function Header() {
           {isAuthenticated ? (
             <UserMenu />
           ) : (
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="bg-blue-900">
               <Link to="/login">Sign Up</Link>
             </Button>
           )}
@@ -108,28 +105,28 @@ export function Header() {
           <nav className="container flex flex-col gap-4 py-4">
             <Link
               to="/"
-              className="py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className={`py-2 ${navLinkClass("/")}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Home
             </Link>
             <Link
               to="/vision"
-              className="py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className={`py-2 ${navLinkClass("/vision")}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Vision
             </Link>
             <Link
               to="/product"
-              className="py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className={`py-2 ${navLinkClass("/product")}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Product
             </Link>
             <Link
               to="/contact"
-              className="py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className={`py-2 ${navLinkClass("/contact")}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Contact

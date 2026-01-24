@@ -96,7 +96,7 @@ const DemoForm = () => {
   };
 
   return (
-    <div className="rounded-lg bg-white p-8 shadow-md">
+    <div className="rounded-lg bg-blue-100 p-8 shadow-md">
       <h3 className="mb-6 text-2xl font-bold text-gray-900">Book a Demo</h3>
 
       {success && (
