@@ -5,21 +5,33 @@ import { useCallback, useEffect, useState } from "react";
 const testimonials = [
   {
     quote:
-      "Even at an early stage, Skolist is helping teachers identify specific areas where students struggle. The pilot feedback has been encouraging, and we're interested in how it evolves",
+      "Even at an early stage, Skolist is helping teachers identify specific areas where students struggle. The pilot feedback has been encouraging, and we're interested in how it evolves.",
     author: "Manoj Gandhi",
     role: "Head of Academics",
   },
   {
     quote:
-      "During the pilot, Skolist has helped us better visualize student progress beyond test scores. We see potential in using these insights to guide more focused classroom interventions",
+      "During the pilot, Skolist has helped us better visualize student progress beyond test scores. We see potential in using these insights to guide more focused classroom interventions.",
     author: "Rajesh Kumar",
     role: "Academic Director",
   },
   {
     quote:
-      "After discussing the concept with the founders, we found the idea compelling and well-thought-out. We're keen to pilot this and see how it works in a real classroom setting",
+      "After discussing the concept with the founders, we found the idea compelling and well-thought-out. We're keen to pilot this and see how it works in a real classroom setting.",
     author: "Dr. Jaya Agarwal",
     role: "Principal",
+  },
+  {
+    quote:
+      "The AI doubt solver has been a game-changer for our students. It provides immediate, personalized support that allows our teachers to focus on higher-level conceptual guidance.",
+    author: "Sanjay Mehta",
+    role: "Senior Coordinator",
+  },
+  {
+    quote:
+      "Skolist's ability to pinpoint the exact root cause of a student's learning gap—rather than just giving a percentage score—is exactly what modern personalized education needs.",
+    author: "Anita Sharma",
+    role: "Lead Educator",
   },
 ];
 
@@ -33,32 +45,14 @@ export function TestimonialsSection() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [tweenValues, setTweenValues] = useState<number[]>([]);
 
-  const scrollPrev = useCallback(() => {
-    if (emblaApi) emblaApi.scrollPrev();
-  }, [emblaApi]);
-
-  const scrollNext = useCallback(() => {
-    if (emblaApi) emblaApi.scrollNext();
-  }, [emblaApi]);
-
-  const scrollTo = useCallback(
-    (index: number) => {
-      if (emblaApi) emblaApi.scrollTo(index);
-    },
-    [emblaApi]
-  );
-
   const onScroll = useCallback(() => {
     if (!emblaApi) return;
-
-    const engine = emblaApi.internalEngine();
     const scrollProgress = emblaApi.scrollProgress();
 
     const styles = emblaApi.scrollSnapList().map((scrollSnap, index) => {
       let diffToTarget = scrollSnap - scrollProgress;
-
-      if (engine.options.loop) {
-        engine.slideLooper.loopPoints.forEach((loopItem) => {
+      if (emblaApi.internalEngine().options.loop) {
+        emblaApi.internalEngine().slideLooper.loopPoints.forEach((loopItem) => {
           const target = loopItem.target();
           if (index === loopItem.index && target !== 0) {
             const sign = Math.sign(target);
@@ -67,100 +61,93 @@ export function TestimonialsSection() {
           }
         });
       }
-
-      // Clamp the value between -1 and 1 for consistent animation
-      return Math.max(-1, Math.min(1, diffToTarget * 2.5));
+      // Increased multiplier for more dramatic scaling/overlap
+      return Math.max(-1, Math.min(1, diffToTarget * 3));
     });
-
     setTweenValues(styles);
   }, [emblaApi]);
 
   useEffect(() => {
     if (!emblaApi) return;
-
-    const onSelect = () => {
-      setSelectedIndex(emblaApi.selectedScrollSnap());
-    };
-
-    emblaApi.on("select", onSelect);
-    emblaApi.on("scroll", onScroll);
-    emblaApi.on("reInit", onScroll);
-
+    const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
+    emblaApi
+      .on("select", onSelect)
+      .on("scroll", onScroll)
+      .on("reInit", onScroll);
     onSelect();
     onScroll();
-
-    return () => {
-      emblaApi.off("select", onSelect);
-      emblaApi.off("scroll", onScroll);
-      emblaApi.off("reInit", onScroll);
-    };
   }, [emblaApi, onScroll]);
 
   return (
-    <section className="overflow-hidden bg-[#F8F9FA] py-24">
-      <div className="container mx-auto px-4 text-center">
-        <h2 className="mb-20 text-4xl font-bold text-gray-900">
+    <section className="overflow-hidden bg-white py-24">
+      <div className="container mx-auto px-4">
+        <h2 className="mb-20 text-center text-4xl font-bold tracking-tight text-[#1a2b3b]">
           Know What Other Schools Have To Say!
         </h2>
 
         <div className="relative mx-auto max-w-6xl">
           {/* Controls */}
           <button
-            onClick={scrollPrev}
-            className="absolute left-0 top-1/2 z-10 hidden -translate-x-4 -translate-y-1/2 rounded-xl border border-gray-200 bg-white p-3 shadow-lg transition-all hover:bg-gray-50 hover:shadow-xl md:block lg:-translate-x-8"
+            onClick={() => emblaApi?.scrollPrev()}
+            className="absolute -left-4 top-1/2 z-40 -translate-y-1/2 rounded-full border border-slate-100 bg-white p-3 shadow-xl transition-transform hover:scale-110"
           >
-            <ChevronLeft className="h-5 w-5 text-gray-500" />
+            <ChevronLeft className="h-6 w-6 text-slate-700" />
           </button>
           <button
-            onClick={scrollNext}
-            className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 translate-x-4 rounded-xl border border-gray-200 bg-white p-3 shadow-lg transition-all hover:bg-gray-50 hover:shadow-xl md:block lg:translate-x-8"
+            onClick={() => emblaApi?.scrollNext()}
+            className="absolute -right-4 top-1/2 z-40 -translate-y-1/2 rounded-full border border-slate-100 bg-white p-3 shadow-xl transition-transform hover:scale-110"
           >
-            <ChevronRight className="h-5 w-5 text-gray-500" />
+            <ChevronRight className="h-6 w-6 text-slate-700" />
           </button>
 
-          <div className="overflow-hidden py-8" ref={emblaRef}>
-            <div className="flex">
+          <div className="overflow-visible" ref={emblaRef}>
+            <div className="flex touch-pan-y">
               {testimonials.map((t, i) => {
                 const tweenValue = tweenValues[i] || 0;
-                const scale = 1 - Math.abs(tweenValue) * 0.15;
-                const opacity = 1 - Math.abs(tweenValue) * 0.4;
-                const zIndex = Math.abs(tweenValue) < 0.3 ? 20 : 10;
+                // isActive is true when the card is perfectly centered
+                const isActive = Math.abs(tweenValue) < 0.1;
+
+                // Scale logic: 1.15 for center, 0.85 for sides
+                const scale = 1.15 - Math.abs(tweenValue) * 0.3;
+                const opacity = 1 - Math.abs(tweenValue) * 0.6;
+                const zIndex = isActive ? 30 : 10;
 
                 return (
                   <div
                     key={i}
-                    className="flex min-w-0 flex-[0_0_85%] items-center justify-center px-3 md:flex-[0_0_40%] md:px-4"
+                    // flex-[0_0_33.33%] ensures exactly 3 cards fit the view width
+                    className="min-w-0 flex-[0_0_100%] px-2 py-10 md:flex-[0_0_33.33%]"
                     style={{
                       transform: `scale(${scale})`,
                       opacity: opacity,
                       zIndex: zIndex,
-                      transition:
-                        "transform 0.2s ease-out, opacity 0.2s ease-out",
+                      transition: "transform 0.4s ease, opacity 0.4s ease",
                     }}
                   >
                     <div
-                      className={`relative w-full rounded-3xl border bg-gradient-to-br from-[#E8F4FD] to-[#D6ECFB] px-8 py-12 shadow-xl transition-shadow md:px-10 md:py-14 ${
-                        Math.abs(tweenValue) < 0.3
-                          ? "border-blue-200 shadow-2xl"
-                          : "border-blue-100 shadow-lg"
+                      className={`relative h-full rounded-[2.5rem] p-8 text-center transition-colors duration-500 ${
+                        isActive
+                          ? "border border-blue-200 bg-[#e5f1ff] shadow-[0_20px_50px_rgba(0,102,255,0.15)]"
+                          : "border border-transparent bg-[#f1f8ff] shadow-md"
                       }`}
                     >
-                      {/* Quote Icon */}
-                      <div className="absolute left-6 top-6 md:left-8 md:top-8">
-                        <Quote className="h-10 w-10 fill-gray-800 text-gray-800 md:h-12 md:w-12" />
+                      <div className="mb-6 flex justify-center">
+                        <Quote
+                          className={`h-10 w-10 ${isActive ? "fill-slate-800 text-slate-800" : "fill-slate-400 text-slate-400 opacity-40"}`}
+                        />
                       </div>
 
-                      {/* Quote Text */}
-                      <p className="mb-8 mt-12 text-sm font-medium leading-relaxed text-gray-700 md:mb-10 md:mt-14 md:text-base">
-                        {t.quote}
+                      <p
+                        className={`mb-8 text-base font-medium italic leading-relaxed text-slate-600 ${isActive ? "opacity-100" : "opacity-80"}`}
+                      >
+                        "{t.quote}"
                       </p>
 
-                      {/* Author */}
-                      <div className="text-center">
-                        <h4 className="text-base font-bold text-gray-900 md:text-lg">
-                          –{t.author}
+                      <div className="mt-auto">
+                        <h4 className="text-lg font-extrabold text-[#1a2b3b]">
+                          -{t.author}
                         </h4>
-                        <p className="mt-1 text-xs text-gray-500 md:text-sm">
+                        <p className="text-xs font-semibold text-slate-500">
                           ({t.role})
                         </p>
                       </div>
@@ -171,18 +158,17 @@ export function TestimonialsSection() {
             </div>
           </div>
 
-          {/* Dot Navigation */}
-          <div className="mt-8 flex justify-center gap-3">
+          {/* Dots */}
+          <div className="mt-12 flex justify-center gap-2">
             {testimonials.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => scrollTo(idx)}
-                className={`h-3 w-3 rounded-full transition-all duration-300 ${
+                onClick={() => emblaApi?.scrollTo(idx)}
+                className={`h-2 rounded-full transition-all duration-300 ${
                   idx === selectedIndex
-                    ? "scale-110 bg-gray-700"
-                    : "bg-gray-300 hover:bg-gray-400"
+                    ? "w-10 bg-slate-800"
+                    : "w-2 bg-slate-300"
                 }`}
-                aria-label={`Go to slide ${idx + 1}`}
               />
             ))}
           </div>

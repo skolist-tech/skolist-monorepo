@@ -1,177 +1,80 @@
+import { Target, BarChart3, BrainCircuit, Zap, SearchCode } from 'lucide-react';
+
+const cards = [
+  {
+    title: "Strategic Improvement Focused on Root Causes",
+    description: "Students practice and improve weak areas through continuous, personalized diagnosis with our AI doubt solver.",
+    icon: <Target className="w-6 h-6 text-blue-600" />,
+    className: "lg:col-span-7 bg-blue-50/50",
+  },
+  {
+    title: "Actionable Insights",
+    description: "Clear reports on each student's progress for targeted interventions.",
+    icon: <BarChart3 className="w-6 h-6 text-indigo-600" />,
+    className: "lg:col-span-5 bg-slate-50",
+  },
+  {
+    title: "AI-Generated Strategy",
+    description: "Curriculum-based personalized plans for every student, customizable by teachers.",
+    icon: <BrainCircuit className="w-6 h-6 text-blue-600" />,
+    className: "lg:col-span-4 bg-slate-50",
+  },
+  {
+    title: "Hassle-Free Integration",
+    description: "Agentic AI models complete setup in clicks. No technical knowledge required.",
+    icon: <Zap className="w-6 h-6 text-amber-500" />,
+    className: "lg:col-span-4 bg-blue-50/50",
+  },
+  {
+    title: "Exact Weak Concepts",
+    description: "Pinpoint specific topics beyond just scores to reveal true root causes.",
+    icon: <SearchCode className="w-6 h-6 text-indigo-600" />,
+    className: "lg:col-span-4 bg-indigo-50/30",
+  },
+];
+
 export function HowSkolistHelpsSection() {
-  const cards = [
-    {
-      title: "Strategic Improvement Focused on Root Causes",
-      description:
-        "Students practice and improve their weak areas through continuous, personalized diagnosis with our real-time AI doubt solver",
-      span: "lg:col-span-5",
-    },
-    {
-      title: "Actionable Insights for Schools",
-      description:
-        "Schools get clear reports on each student's progress, enabling targeted classroom interventions",
-      span: "lg:col-span-3",
-    },
-    {
-      title: "Personalized AI-Generated Strategy",
-      description:
-        "Every teacher receives a school curriculum based personalized strategy for each student and can customize it based on the school needs to strengthen their weak areas",
-      span: "lg:col-span-3",
-    },
-    {
-      title: "Hassle-Free Integration",
-      description:
-        "We use agentic AI models to complete every step in just a few clicks! No technical knowledge required",
-      span: "lg:col-span-3",
-    },
-    {
-      title: "Identification of Exact Weak Concepts",
-      description:
-        "Skolist pinpoints specific topics where each student struggles, going beyond just scores to reveal root causes",
-      span: "lg:col-span-6",
-    },
-  ];
-
   return (
-    <section className="bg-white py-12 md:py-20">
-      <div className="container mx-auto px-4">
-        {/* Mobile: Header first, then zigzag cards | Desktop: Grid layout */}
-
-        {/* Mobile Header - shown only on mobile at top */}
-        <div className="mb-8 text-center lg:hidden">
-          <h2 className="mb-3 text-2xl font-bold leading-tight text-gray-900 md:text-4xl">
-            How Skolist Helps
+    <section className="bg-white py-24">
+      <div className="container mx-auto px-6">
+        
+        {/* Header Section */}
+        <div className="max-w-3xl mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 mb-6">
+            How Skolist <span className="text-blue-600">Helps</span>
           </h2>
-          <p className="text-sm text-gray-600 md:text-base">
+          <p className="text-lg text-slate-600 leading-relaxed">
             Skolist makes learning gaps visible and actionable through
-            personalized strategy and intelligent hassle-free integration
+            personalized strategy and intelligent hassle-free integration.
           </p>
         </div>
 
-        {/* Mobile: Zigzag overlapping cards */}
-        <div className="flex flex-col lg:hidden">
-          {cards.map((card, idx) => {
-            const isEven = idx % 2 === 0;
-            return (
-              <div
-                key={card.title}
-                className={`w-[65%] ${isEven ? "self-start" : "self-end"} ${
-                  idx > 0 ? "mt-3" : ""
-                }`}
-                style={{ zIndex: cards.length - idx }}
-              >
-                <FeatureCard
-                  title={card.title}
-                  description={card.description}
-                  isMobile
-                />
+        {/* Modern Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+          {cards.map((card, idx) => (
+            <div
+              key={card.title}
+              className={`group relative overflow-hidden rounded-[2rem] p-8 border border-slate-100 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 ${card.className}`}
+            >
+              {/* Subtle Background Pattern or Glow */}
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/50 rounded-full blur-2xl group-hover:bg-blue-200/50 transition-colors" />
+              
+              <div className="relative z-10">
+                <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 group-hover:scale-110 transition-transform">
+                  {card.icon}
+                </div>
+                
+                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">
+                  {card.title}
+                </h3>
+                <p className="text-slate-600 leading-relaxed font-medium text-[15px]">
+                  {card.description}
+                </p>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Desktop: Two-row layout with equal heights per row */}
-        <div className="hidden lg:flex lg:flex-col lg:gap-8">
-          {/* Row 1: Cards 1 & 2 + Header */}
-          <div className="grid grid-cols-12 items-stretch gap-8">
-            <div className="col-span-5">
-              <FeatureCard
-                title={cards[0]?.title}
-                description={cards[0]?.description}
-              />
             </div>
-            <div className="col-span-3">
-              <FeatureCard
-                title={cards[1]?.title}
-                description={cards[1]?.description}
-              />
-            </div>
-            <div className="col-span-4 flex flex-col justify-center pl-8">
-              <h2 className="mb-4 text-4xl font-bold leading-tight text-gray-900">
-                How Skolist Helps
-              </h2>
-              <p className="text-gray-600">
-                Skolist makes learning gaps visible and actionable through
-                personalized strategy and intelligent hassle-free integration
-              </p>
-            </div>
-          </div>
-
-          {/* Row 2: Cards 3, 4, 5 */}
-          <div className="grid grid-cols-12 items-stretch gap-8">
-            <div className="col-span-3">
-              <FeatureCard
-                title={cards[2]?.title}
-                description={cards[2]?.description}
-              />
-            </div>
-            <div className="col-span-3">
-              <FeatureCard
-                title={cards[3]?.title}
-                description={cards[3]?.description}
-              />
-            </div>
-            <div className="col-span-6">
-              <FeatureCard
-                title={cards[4]?.title}
-                description={cards[4]?.description}
-              />
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>
-  );
-}
-
-function FeatureCard({
-  title,
-  description,
-  isMobile = false,
-}: {
-  title?: string;
-  description?: string;
-  isMobile?: boolean;
-}) {
-  return (
-    <div className="relative h-full">
-      {/* Background shadow/border layer */}
-      <div
-        className={`absolute border-[3px] border-[#4A8FDA] ${
-          isMobile
-            ? "inset-x-0 bottom-0 top-2 rounded-[16px]"
-            : "inset-x-0 bottom-0 top-[10px] rounded-[21px]"
-        }`}
-        style={{ left: isMobile ? "-4px" : "-10px" }}
-      />
-      {/* Main card */}
-      <div
-        className={`relative h-full border-2 border-[#4A8FDA] bg-[#E4F1FF] ${
-          isMobile ? "rounded-[16px] px-4 py-4" : "rounded-[21px] px-6 py-5"
-        }`}
-        style={{
-          filter: "drop-shadow(0px 4px 8px #CCE5FF)",
-        }}
-      >
-        <h3
-          className={`font-semibold text-black ${
-            isMobile
-              ? "mb-2 text-right text-sm leading-tight"
-              : "mb-4 text-right text-xl leading-[24px]"
-          }`}
-        >
-          {title}
-        </h3>
-        <p
-          className={`font-light text-black ${
-            isMobile
-              ? "text-right text-[11px] leading-[14px]"
-              : "text-right text-base leading-[19px]"
-          }`}
-        >
-          {description}
-        </p>
-      </div>
-    </div>
   );
 }
