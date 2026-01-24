@@ -463,12 +463,13 @@ export function SortableSection({
               </SortableContext>
             )}
           </div>
-          <div className="border-t p-3">
+          <div className="border-t p-3 hidden md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   className="w-full gap-2 border-dashed text-muted-foreground hover:text-primary"
+                  onPointerDown={(e) => e.stopPropagation()}
                 >
                   <Plus className="h-4 w-4" />
                   Add custom question
