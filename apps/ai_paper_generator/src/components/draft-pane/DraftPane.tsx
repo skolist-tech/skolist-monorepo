@@ -13,11 +13,11 @@ export function DraftPane() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background md:flex-row">
       {/* Mobile Tab Buttons */}
-      <div className="flex border-b bg-muted/30 md:hidden">
+      <div className="sticky top-0 z-20 flex shrink-0 border-b bg-background md:hidden">
         <Button
           variant="ghost"
           className={cn(
-            "flex-1 rounded-none border-b-2 py-7 font-bold text-lg",
+            "flex-1 rounded-none border-b-2 py-7 text-lg font-bold",
             mobileTab === "structure"
               ? "border-primary bg-background text-primary"
               : "border-transparent text-muted-foreground"
@@ -30,7 +30,7 @@ export function DraftPane() {
         <Button
           variant="ghost"
           className={cn(
-            "flex-1 rounded-none border-b-2 py-7 font-bold text-lg",
+            "flex-1 rounded-none border-b-2 py-7 text-lg font-bold",
             mobileTab === "preview"
               ? "border-primary bg-background text-primary"
               : "border-transparent text-muted-foreground"
@@ -45,7 +45,7 @@ export function DraftPane() {
       {/* Left Pane - Structure (55% on desktop, full on mobile when active) */}
       <div
         className={cn(
-          "flex h-full flex-col border-r md:w-[55%] md:min-w-[320px] md:max-w-[900px]",
+          "flex min-h-0 flex-1 flex-col border-r md:w-[55%] md:min-w-[320px] md:max-w-[900px]",
           mobileTab === "structure" ? "flex" : "hidden md:flex"
         )}
       >
@@ -55,7 +55,7 @@ export function DraftPane() {
       {/* Right Pane - Preview (45% on desktop, full on mobile when active) */}
       <div
         className={cn(
-          "flex h-full min-w-0 flex-1 flex-col bg-muted/30",
+          "flex min-h-0 flex-1 flex-col bg-muted/30",
           mobileTab === "preview" ? "flex" : "hidden md:flex"
         )}
       >
