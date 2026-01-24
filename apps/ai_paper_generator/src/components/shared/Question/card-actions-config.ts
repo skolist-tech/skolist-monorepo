@@ -51,7 +51,7 @@ export const CARD_ACTIONS_CONFIG: ActionConfig[] = [
   {
     id: "regenerate",
     label: "Regenerate",
-    mobile: { location: "menu", order: 50, visible: true },
+    mobile: { location: "card", order: 50, visible: true },
     desktop: { order: 50, visible: true },
   },
   {

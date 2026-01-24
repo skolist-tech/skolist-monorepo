@@ -854,7 +854,7 @@ export function PaperPreview() {
               <Download className="h-4 w-4" />
             )}
             <span className="hidden sm:inline">Download</span>
-            <span className="sm:hidden">PDF</span>
+            <span className="sm:hidden">Download</span>
           </Button>
 
           <DropdownMenu>

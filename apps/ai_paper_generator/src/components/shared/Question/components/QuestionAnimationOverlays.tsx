@@ -128,7 +128,7 @@ export function AutoCorrectOverlay({
           }}
         >
           <span className="text-lg font-bold text-foreground">
-            We Are correcting
+            We are correcting
           </span>
           <span className="text-lg font-bold text-foreground after:inline-block after:min-w-[1.5em] after:animate-[dots_2s_infinite_steps(1)] after:text-left after:content-['']" />
         </div>
@@ -376,6 +376,16 @@ export function RegenerateOverlay({
           0% { backdrop-filter: blur(8px); background-color: rgba(255, 255, 255, 0.7); }
           100% { backdrop-filter: blur(0px); background-color: rgba(255, 255, 255, 0); }
         }
+        @keyframes delayedFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes dots {
+          0% { content: ''; }
+          25% { content: '.'; }
+          50% { content: '..'; }
+          75% { content: '...'; }
+        }
       `}</style>
     </div>
   );
@@ -442,6 +452,16 @@ export function ChatPromptOverlay() {
             transform: scale(1);
             opacity: 1;
           }
+        }
+        @keyframes delayedFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes dots {
+          0% { content: ''; }
+          25% { content: '.'; }
+          50% { content: '..'; }
+          75% { content: '...'; }
         }
       `}</style>
     </div>
