@@ -94,17 +94,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
 
       setInstructions(instructionsData);
 
-      // If no sections exist, create a default one
-      if (sectionsData.length === 0) {
-        const defaultSection = await createSection(
-          draftData.id,
-          1,
-          "Section A"
-        );
-        setSections([defaultSection]);
-      } else {
-        setSections(sectionsData);
-      }
+      setSections(sectionsData);
     } catch (err) {
       console.error("Failed to init draft:", err);
     } finally {

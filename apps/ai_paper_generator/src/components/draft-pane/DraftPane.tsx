@@ -17,7 +17,7 @@ export function DraftPane() {
         <Button
           variant="ghost"
           className={cn(
-            "flex-1 rounded-none border-b-2 py-3",
+            "flex-1 rounded-none border-b-2 py-7 font-bold text-lg",
             mobileTab === "structure"
               ? "border-primary bg-background text-primary"
               : "border-transparent text-muted-foreground"
@@ -30,7 +30,7 @@ export function DraftPane() {
         <Button
           variant="ghost"
           className={cn(
-            "flex-1 rounded-none border-b-2 py-3",
+            "flex-1 rounded-none border-b-2 py-7 font-bold text-lg",
             mobileTab === "preview"
               ? "border-primary bg-background text-primary"
               : "border-transparent text-muted-foreground"
