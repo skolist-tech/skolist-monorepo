@@ -439,7 +439,7 @@ export function QuestionCardActions({
             <PopoverContent
               className="w-56 bg-background p-2"
               align="end"
-              portal={false}
+              container={document.getElementById("layout-portal-root")}
             >
               <div className="flex flex-col gap-1">
                 {mobileMenuActions.map((action) => (

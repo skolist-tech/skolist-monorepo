@@ -37,6 +37,7 @@ export const Layout: React.FC = () => {
           />
           <MainArea />
         </div>
+        <div id="layout-portal-root" />
       </div>
     </div>
   );
