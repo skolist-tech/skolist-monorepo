@@ -16,15 +16,10 @@ const cleanupSubdomainAuth = () => {
     "sb-xgugcyguhzfevxvjdgbm-auth-token.1",
   ];
 
-  const subdomains = ["www.skolist.com", "qgen.skolist.com"];
-
-  subdomains.forEach((domain) => {
-    cookieNames.forEach((name) => {
-      // Force delete by setting expiry to 1970
-      document.cookie = `${name}=; Path=/; Domain=${domain}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-      // Also try with a leading dot just in case
-      document.cookie = `${name}=; Path=/; Domain=.${domain}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-    });
+  cookieNames.forEach((name) => {
+    // Force delete by setting expiry to 1970
+    document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    console.log(`${name}=; Path=/;  Expires=Thu, 01 Jan 1970 00:00:01 GMT;`);
   });
 };
 
