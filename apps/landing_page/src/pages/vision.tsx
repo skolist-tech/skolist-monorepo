@@ -147,7 +147,7 @@ export function VisionPage() {
         <div className="flex justify-center">
           <a
             href="/contact"
-            className="rounded-lg bg-blue-900 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-800"
+            className="rounded-lg bg-blue-900 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-800 text-center"
           >
             Click to Build a Free Personalized Pilot
           </a>

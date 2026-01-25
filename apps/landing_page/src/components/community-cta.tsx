@@ -3,13 +3,13 @@ import { LINKS } from "../constants/links";
 
 export function CommunityCTA() {
   return (
-    <section className="bg-white px-4 py-12">
+    <section className="bg-white px-4 pb-16 md:py-12">
       <div className="container mx-auto">
-        <div className="relative z-10 mx-auto max-w-4xl translate-y-24 transform rounded-[50px] bg-[#e8ee77] px-4 py-8 text-center shadow-lg md:py-8">
-          <h2 className="mb-6 text-2cxl lg:text-4xl font-bold text-gray-900">
+        <div className="relative z-10 mx-auto max-w-4xl translate-y-24 transform rounded-[50px] bg-[#e8ee77] px-4 py-6 text-center shadow-lg md:py-8">
+          <h2 className="mb-2 md:mb-6 text-2cxl lg:text-4xl font-bold text-gray-900">
             Let&apos;s Connect & Build Community
           </h2>
-          <p className="mx-auto mb-4 max-w-2xl text-sm font-medium text-gray-800 md:mb-10">
+          <p className="mx-auto mb-2 max-w-2xl text-sm font-medium text-gray-800 md:mb-10">
             Inviting teachers, school leaders, parents, and students to build
             the future of schooling with us
           </p>

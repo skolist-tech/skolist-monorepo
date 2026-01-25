@@ -1,7 +1,4 @@
-import {
-  Building2,
-  Check,
-} from "lucide-react";
+import { Check } from "lucide-react";
 import { GiTeacher } from "react-icons/gi";
 import { PiStudentFill } from "react-icons/pi";
 import { RiParentLine, RiSchoolLine } from "react-icons/ri";
@@ -93,8 +90,16 @@ export function WhoSkolistForSection() {
                 />
 
                 {/* Main Foreground Card */}
-                <div className="relative flex h-full flex-col items-center rounded-[24px] border border-gray-200 bg-white p-5 text-center shadow-md md:rounded-[32px] md:p-8">
-                  <div className="mb-4 flex items-center justify-center md:mb-6">
+                <div
+                  className={`relative flex h-full flex-col rounded-[24px] border border-gray-200 bg-white p-5 shadow-md md:items-center md:rounded-[32px] md:p-8 md:text-center ${
+                    !isEven ? "items-end text-right" : "items-start text-left"
+                  }`}
+                >
+                  <div
+                    className={`mb-4 flex items-center md:mb-6 md:justify-center ${
+                      !isEven ? "justify-end" : "justify-start"
+                    }`}
+                  >
                     <audience.icon
                       className="h-8 w-8 text-gray-800 md:h-10 md:w-10"
                       strokeWidth={1.5}

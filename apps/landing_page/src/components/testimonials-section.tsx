@@ -91,9 +91,9 @@ export function TestimonialsSection() {
   }, [emblaApi, onScroll]);
 
   return (
-    <section className="overflow-hidden bg-white py-24">
+    <section className="overflow-hidden bg-white py-8 md:py-24">
       <div className="container mx-auto px-4">
-        <h2 className="mb-20 text-center text-4xl font-bold tracking-tight text-[#1a2b3b]">
+        <h2 className="mb-8 md:mb-20 text-center text-4xl font-bold tracking-tight text-[#1a2b3b]">
           Know What Other Schools Have To Say!
         </h2>
 

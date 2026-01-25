@@ -41,7 +41,7 @@ export function BuiltWithRigorSection() {
             <span className="mb-3 block text-sm font-bold uppercase tracking-widest text-blue-600">
               Our Foundation
             </span>
-            <h2 className="mb-6 max-w-2xl text-4xl md:text-5xl font-semibold leading-[1.1] tracking-tight text-slate-800">
+            <h2 className="mb-6 max-w-2xl text-4xl font-semibold leading-[1.1] tracking-tight text-slate-800 md:text-5xl">
               Built with Rigor <br />
               <span className="text-black-600">and Empathy</span>
             </h2>
@@ -59,18 +59,26 @@ export function BuiltWithRigorSection() {
               {points.map((point, idx) => (
                 <div
                   key={point.title}
-                  className={`group relative rounded-[2.5rem] md:p-10 p-6 ${point.bgClass} border border-white/80 shadow-xl shadow-slate-200/50 transition-all duration-500 hover:-translate-y-2 ${idx % 2 !== 0 ? "md:translate-y-12 md:hover:translate-y-10" : ""}`}
+                  className={`group relative rounded-[2.5rem] p-6 md:p-10 ${point.bgClass} border border-white/80 shadow-xl shadow-slate-200/50 transition-all duration-500 hover:-translate-y-2 ${idx % 2 !== 0 ? "md:translate-y-12 md:hover:translate-y-10" : ""}`}
                 >
-                  <div className="md:mb-8 mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm transition-transform group-hover:rotate-6">
-                    {point.icon}
-                  </div>
+                  <div
+                    className={`relative z-10 ${
+                      idx % 2 !== 0
+                        ? "flex flex-col items-end text-right md:block md:text-left"
+                        : ""
+                    }`}
+                  >
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm transition-transform group-hover:rotate-6 md:mb-8">
+                      {point.icon}
+                    </div>
 
-                  <h3 className="md:mb-4 mb-2 text-xl font-bold text-slate-900">
-                    {point.title}
-                  </h3>
-                  <p className="md:text-[15px] text-[14px] font-medium leading-relaxed text-slate-600">
-                    {point.description}
-                  </p>
+                    <h3 className="mb-2 text-xl font-bold text-slate-900 md:mb-4">
+                      {point.title}
+                    </h3>
+                    <p className="text-[14px] font-medium leading-relaxed text-slate-600 md:text-[15px]">
+                      {point.description}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>

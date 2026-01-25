@@ -43,34 +43,43 @@ const cards = [
 
 export function HowSkolistHelpsSection() {
   return (
-    <section className="bg-white py-24">
+    <section className="bg-white py-4 md:py-24">
       <div className="container mx-auto px-6">
         {/* Header Section */}
-        <div className="mb-16 text-right">
-          <h2 className="mb-6 text-2xl font-bold tracking-tight text-slate-900 md:text-5xl">
+        <div className="mb-12 text-right md:mb-16">
+          <h2 className="mb-6 hidden text-4xl font-bold tracking-tight text-slate-900 md:block md:text-5xl">
             Easy to Adopt, Easy to Use.
+          </h2>
+          <h2 className="mb-6 block text-4xl font-bold tracking-tight text-slate-900 md:hidden md:text-5xl">
+            Easy to Adopt, <br /> Easy to Use.
           </h2>
         </div>
 
         {/* Modern Bento Grid */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-12">
-          {cards.map((card) => (
+          {cards.map((card, idx) => (
             <div
               key={card.title}
-              className={`group relative overflow-hidden rounded-[2rem] border border-slate-100 md:p-8 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/10 ${card.className}`}
+              className={`group relative overflow-hidden rounded-[2rem] border border-slate-100 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/10 md:p-8 ${card.className}`}
             >
               {/* Subtle Background Pattern or Glow */}
               <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/50 blur-2xl transition-colors group-hover:bg-blue-200/50" />
 
-              <div className="relative z-10">
-                <div className="md:mb-6 mb-2 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition-transform group-hover:scale-110">
+              <div
+                className={`relative z-10 ${
+                  idx % 2 === 0
+                    ? "flex flex-col items-end text-right md:block md:text-left"
+                    : ""
+                }`}
+              >
+                <div className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition-transform group-hover:scale-110 md:mb-6">
                   {card.icon}
                 </div>
 
-                <h3 className="mb-2 md:mb-3 md:text-xl text-lg font-bold tracking-tight text-slate-900">
+                <h3 className="mb-2 text-lg font-bold tracking-tight text-slate-900 md:mb-3 md:text-xl">
                   {card.title}
                 </h3>
-                <p className="md:text-[15px] text-[14px] font-medium leading-relaxed text-slate-600">
+                <p className="text-[14px] font-medium leading-relaxed text-slate-600 md:text-[15px]">
                   {card.description}
                 </p>
               </div>

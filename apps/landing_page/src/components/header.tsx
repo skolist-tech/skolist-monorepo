@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@skolist/ui";
 import { useAuth, UserMenu } from "@skolist/auth";
@@ -9,6 +9,16 @@ export function Header() {
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDarkMode(mediaQuery.matches);
+
+    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
 
   const navLinkClass = (path: string) =>
     `text-sm font-medium transition-colors hover:text-foreground ${
@@ -20,7 +30,11 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <div className="flex flex-1 items-center">
           <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="Skolist Logo" className="h-10" />
+            <img
+              src={isDarkMode ? "/logo.svg" : "/logo.svg"}
+              alt="Skolist Logo"
+              className="h-10"
+            />
           </Link>
         </div>
 
@@ -40,12 +54,11 @@ export function Header() {
           </Link>
         </nav>
 
-        <div className="hidden flex-1 items-center justify-end md:flex ">
+        <div className="hidden flex-1 items-center justify-end md:flex">
           {isAuthenticated ? (
             <UserMenu />
           ) : (
-            
-            <Button asChild className="bg-blue-900" >
+            <Button asChild className="bg-blue-900">
               <Link to="/login">Sign Up</Link>
             </Button>
           )}
@@ -117,13 +130,13 @@ export function Header() {
             >
               Vision
             </Link>
-            <Link
+            {/* <Link
               to="/product"
               className={`py-2 ${navLinkClass("/product")}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Product
-            </Link>
+            </Link> */}
             <Link
               to="/contact"
               className={`py-2 ${navLinkClass("/contact")}`}

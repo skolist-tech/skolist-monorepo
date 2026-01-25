@@ -132,7 +132,7 @@ const DemoForm = () => {
                 setFieldErrors({ ...fieldErrors, name: "" });
               }
             }}
-            className={`w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
+            className={`w-full rounded-lg border bg-white px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
               fieldErrors.name ? "border-red-500" : "border-gray-300"
             }`}
             disabled={loading}
@@ -159,7 +159,7 @@ const DemoForm = () => {
                 setFieldErrors({ ...fieldErrors, role: "" });
               }
             }}
-            className={`w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
+            className={`w-full rounded-lg border bg-white px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
               fieldErrors.role ? "border-red-500" : "border-gray-300"
             }`}
             disabled={loading}
@@ -194,7 +194,7 @@ const DemoForm = () => {
                 setFieldErrors({ ...fieldErrors, school_name: "" });
               }
             }}
-            className={`w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
+            className={`w-full rounded-lg border bg-white px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
               fieldErrors.school_name ? "border-red-500" : "border-gray-300"
             }`}
             disabled={loading}
@@ -224,7 +224,7 @@ const DemoForm = () => {
                 setFieldErrors({ ...fieldErrors, email: "" });
               }
             }}
-            className={`w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
+            className={`w-full rounded-lg border bg-white px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
               fieldErrors.email ? "border-red-500" : "border-gray-300"
             }`}
             disabled={loading}
@@ -252,7 +252,7 @@ const DemoForm = () => {
                 setFieldErrors({ ...fieldErrors, phone: "" });
               }
             }}
-            className={`w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
+            className={`w-full rounded-lg border bg-white px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44] ${
               fieldErrors.phone ? "border-red-500" : "border-gray-300"
             }`}
             placeholder="+91 1234567890"
@@ -278,7 +278,7 @@ const DemoForm = () => {
               setFormData({ ...formData, message: e.target.value })
             }
             rows={4}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44]"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0A1F44]"
             disabled={loading}
           />
         </div>
