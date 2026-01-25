@@ -2,7 +2,7 @@ import { GraduationCap, Microscope, Users, Rocket } from "lucide-react";
 
 const points = [
   {
-    title: "Built by IIT Founders",
+    title: "Built by IITian Founders",
     description:
       "Created by engineers and educators from IIT with deep expertise in technology and learning science",
     bgClass: "bg-blue-50/50",
