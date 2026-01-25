@@ -2,6 +2,37 @@ import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CookieOptions } from "@supabase/ssr";
 
+/**
+ * Cleanup legacy cookies from previous Supabase projects or incorrect domains
+ * This addresses issues where old session tokens cause authentication failures
+ */
+const cleanupSubdomainAuth = () => {
+  if (typeof window === "undefined") return;
+
+  const cookieNames = [
+    "sb-xgugcyguhzfevxvjdgbm-auth-token",
+    "sb-xgugcyguhzfevxvjdgbm-auth-token-code-verifier",
+    "sb-xgugcyguhzfevxvjdgbm-auth-token.0",
+    "sb-xgugcyguhzfevxvjdgbm-auth-token.1",
+  ];
+
+  const subdomains = ["www.skolist.com", "qgen.skolist.com"];
+
+  subdomains.forEach((domain) => {
+    cookieNames.forEach((name) => {
+      // Force delete by setting expiry to 1970
+      document.cookie = `${name}=; Path=/; Domain=${domain}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+      // Also try with a leading dot just in case
+      document.cookie = `${name}=; Path=/; Domain=.${domain}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    });
+  });
+};
+
+// Execute cleanup immediately on module load if in browser
+if (typeof window !== "undefined") {
+  cleanupSubdomainAuth();
+}
+
 let supabaseClient: SupabaseClient | null = null;
 
 /**
