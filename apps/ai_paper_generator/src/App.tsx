@@ -1,4 +1,3 @@
-// import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@skolist/auth";
 import { DashboardPage } from "./pages/dashboard";
