@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import CheckboxTree, { type Node } from "react-checkbox-tree";
+import CheckboxTree from "react-checkbox-tree";
 import "react-checkbox-tree/lib/react-checkbox-tree.css";
 import {
   ChevronRight,
@@ -17,73 +17,8 @@ import {
 
 import { Input, Checkbox } from "@skolist/ui";
 import { useConceptContext } from "../../../../../context/ConceptContext";
-
-/**
- * Recursively filters tree nodes based on search query.
- * Returns nodes where the label matches OR any descendant matches.
- * When a match is found, all ancestors are included.
- */
-function filterTreeNodes(
-  nodes: Node[],
-  query: string
-): { filteredNodes: Node[]; matchingNodeIds: string[] } {
-  const lowerQuery = query.toLowerCase();
-  const matchingNodeIds: string[] = [];
-
-  function filterNode(node: Node): Node | null {
-    const labelMatches = node.label
-      ?.toString()
-      .toLowerCase()
-      .includes(lowerQuery);
-
-    if (node.children && node.children.length > 0) {
-      const filteredChildren = node.children
-        .map(filterNode)
-        .filter((child): child is Node => child !== null);
-
-      if (labelMatches || filteredChildren.length > 0) {
-        if (labelMatches || filteredChildren.length > 0) {
-          matchingNodeIds.push(node.value);
-        }
-        return {
-          ...node,
-          children:
-            filteredChildren.length > 0 ? filteredChildren : node.children,
-        };
-      }
-      return null;
-    }
-
-    if (labelMatches) {
-      matchingNodeIds.push(node.value);
-      return node;
-    }
-    return null;
-  }
-
-  const filteredNodes = nodes
-    .map(filterNode)
-    .filter((node): node is Node => node !== null);
-
-  return { filteredNodes, matchingNodeIds };
-}
-
-/**
- * Gets all node IDs from a tree (for expanding all when searching)
- */
-function getAllNodeIds(nodes: Node[]): string[] {
-  const ids: string[] = [];
-  function collect(nodeList: Node[]) {
-    for (const node of nodeList) {
-      ids.push(node.value);
-      if (node.children) {
-        collect(node.children);
-      }
-    }
-  }
-  collect(nodes);
-  return ids;
-}
+import { filterTreeNodes, getAllNodeIds } from "./treeUtils";
+import "./ConceptSelectorTree.css";
 
 export function ConceptSelectorTree() {
   const { selection, treeNodes, isLoadingTree, setChecked, setExpanded } =
@@ -209,7 +144,12 @@ export function ConceptSelectorTree() {
           checked={selection.checked}
           expanded={searchQuery ? searchExpanded : selection.expanded}
           onCheck={setChecked}
-          onExpand={searchQuery ? setSearchExpanded : setExpanded}
+          // The typings for React Checkbox Tree can sometimes be messy with generic Expand handlers
+          // but we can trust the state setters here.
+
+          onExpand={(expand) =>
+            searchQuery ? setSearchExpanded(expand) : setExpanded(expand)
+          }
           icons={{
             check: <Checkbox checked={true} className="pointer-events-none" />,
             uncheck: (
@@ -233,63 +173,6 @@ export function ConceptSelectorTree() {
           noCascade={false}
         />
       )}
-      <style>{`
-        .concept-tree-container {
-          height: 500px; /* Adjust height as needed */
-          overflow-y: auto; /* Enable vertical scrolling */
-          overflow-x: hidden; /* Prevent horizontal scrolling */
-        }
-        .concept-tree-container .react-checkbox-tree {
-          font-size: 0.875rem;
-        }
-        .concept-tree-container .rct-node {
-          padding: 2px 0;
-        }
-        .concept-tree-container .rct-text {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          min-height: 24px; /* Fix height for consistent centering */
-        }
-        .concept-tree-container .rct-title {
-          padding-left: 2px;
-        }
-        .concept-tree-container .rct-collapse,
-        .concept-tree-container .rct-checkbox {
-          padding: 0 4px;
-          cursor: pointer;
-        }
-        .concept-tree-container .rct-node-icon {
-          padding: 0 2px;
-        }
-        .concept-tree-container ol {
-          padding-left: 20px;
-          position: relative;
-        }
-        /* Vertical connector line from parent to children */
-        .concept-tree-container ol ol {
-          margin-left: 8px;
-          border-left: 1px solid hsl(var(--border));
-        }
-        .concept-tree-container .rct-node-parent > .rct-text > .rct-node-icon svg {
-          color: hsl(var(--primary));
-        }
-        /* Level 1 - Chapters: green */
-        .concept-tree-container .react-checkbox-tree > ol > li > .rct-text .rct-title {
-          color: #16a34a !important;
-          font-weight: 600;
-        }
-        /* Level 2 - Topics: dark yellow/amber */
-        .concept-tree-container .react-checkbox-tree > ol > li > ol > li > .rct-text .rct-title {
-          color: #b45309 !important;
-          font-weight: 500;
-        }
-        /* Level 3 - Concepts: orange */
-        .concept-tree-container .react-checkbox-tree > ol > li > ol > li > ol > li > .rct-text .rct-title {
-          color: #2E0057 !important;
-          font-weight: 500;
-        }
-      `}</style>
     </div>
   );
 }

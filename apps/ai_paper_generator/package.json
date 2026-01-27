@@ -20,6 +20,7 @@
     "@skolist/db": "workspace:*",
     "@skolist/ui": "workspace:*",
     "@skolist/utils": "workspace:*",
+    "@tanstack/react-query": "^5.90.20",
     "@types/katex": "^0.16.8",
     "html-to-image": "^1.11.13",
     "katex": "^0.16.27",

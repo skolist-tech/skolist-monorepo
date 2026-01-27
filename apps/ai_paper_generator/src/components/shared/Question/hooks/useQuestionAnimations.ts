@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { GeneratedQuestionWithConcepts } from "../../../../services/questionService";
+import { type GeneratedQuestionWithConcepts } from "../../../../services/questionService";
 
 interface UseQuestionAnimationsProps {
   question: GeneratedQuestionWithConcepts;

@@ -25,8 +25,8 @@ import { PaperDetails } from "./PaperDetails";
 import { usePrevious } from "../../hooks/usePrevious";
 import { calculateDragUpdates } from "../../utils/questionDragLogic";
 import { moveQuestionsToDraftBatch } from "../../services/questionService";
-import { AddCustomQuestionGlobal } from "./AddCustomQuestionGlobal";
-import { SortableSection } from "./SortableSection";
+import { AddCustomQuestionGlobal } from "./structure/AddCustomQuestionGlobal";
+import { SortableSection } from "./structure/SortableSection";
 
 export function PaperStructure() {
   const { toast } = useToast();
@@ -81,7 +81,8 @@ export function PaperStructure() {
       }
     }
   }, [sections, prevSections]);
-
+  const { questions, updateQuestionLocal } = useQuestionsContext();
+  
   if (isLoading || !draft) {
     return <div className="p-4 text-center">Loading draft structure...</div>;
   }
@@ -92,7 +93,6 @@ export function PaperStructure() {
     setActiveId(event.active.id as string);
   };
 
-  const { questions, updateQuestionLocal } = useQuestionsContext();
 
   const handleDragOver = (event: DragEndEvent) => {
     const { active, over } = event;

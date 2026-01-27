@@ -1,9 +1,9 @@
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
-import { GeneratedQuestionCard } from "../shared/Question/GeneratedQuestionCard";
-import { useQuestionsContext } from "../../context/QuestionsContext";
-import { fastApiService } from "../../services/fastApiService";
-import { type GeneratedQuestionWithConcepts } from "../../services/questionService";
+import { GeneratedQuestionCard } from "../../shared/Question/GeneratedQuestionCard";
+import { useQuestionsContext } from "../../../context/QuestionsContext";
+import { fastApiService } from "../../../services/fastApiService";
+import { type GeneratedQuestionWithConcepts } from "../../../services/questionService";
 
 interface SortableQuestionProps {
   question: GeneratedQuestionWithConcepts;

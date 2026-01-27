@@ -3,12 +3,12 @@
  * Individual activity item in the sidebar with select, rename, and delete actions
  */
 
-import { useState, useRef, useEffect } from "react";
-import { Button, Input } from "@skolist/ui";
-import { Trash2, Pencil, Check, X } from "lucide-react";
 import type { Activity } from "@skolist/db";
 import { cn } from "@skolist/utils";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
+import { useActivityItemState } from "./use-activity-item-state";
+import { ActivityItemView } from "./ActivityItemView";
+import { ActivityItemEdit } from "./ActivityItemEdit";
 
 interface ActivityListItemProps {
   activity: Activity;
@@ -25,49 +25,19 @@ export function ActivityListItem({
   onRename,
   onDelete,
 }: ActivityListItemProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(activity.name);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  const handleSave = async () => {
-    const trimmedName = editName.trim();
-    if (trimmedName && trimmedName !== activity.name) {
-      await onRename(trimmedName);
-    }
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setEditName(activity.name);
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSave();
-    } else if (e.key === "Escape") {
-      handleCancel();
-    }
-  };
-
-  const handleDelete = async () => {
-    if (isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await onDelete();
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  const {
+    isEditing,
+    setIsEditing,
+    editName,
+    setEditName,
+    isDeleting,
+    isDeleteModalOpen,
+    setIsDeleteModalOpen,
+    inputRef,
+    handleSave,
+    handleCancel,
+    handleDelete,
+  } = useActivityItemState(activity, onRename, onDelete);
 
   return (
     <div
@@ -80,76 +50,21 @@ export function ActivityListItem({
       onClick={() => !isEditing && onSelect()}
     >
       {isEditing ? (
-        <div className="flex items-center gap-1">
-          <Input
-            ref={inputRef}
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={handleSave}
-            className="h-7 text-sm"
-            onClick={(e) => e.stopPropagation()}
-          />
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6 shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSave();
-            }}
-          >
-            <Check className="h-3 w-3" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6 shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCancel();
-            }}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
+        <ActivityItemEdit
+          value={editName}
+          onChange={setEditName}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          inputRef={inputRef}
+        />
       ) : (
-        <div className="flex items-start justify-between gap-2">
-          <span
-            className={cn(
-              "truncate font-medium",
-              isSelected ? "text-blue-700" : "text-foreground"
-            )}
-          >
-            {activity.name}
-          </span>
-
-          <div className="absolute right-2 top-2 flex rounded-md border border-border bg-white/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-6 w-6 hover:text-blue-600"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-              }}
-            >
-              <Pencil className="h-3 w-3" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-6 w-6 text-muted-foreground hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDeleteModalOpen(true);
-              }}
-              disabled={isDeleting}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
+        <ActivityItemView
+          activity={activity}
+          isSelected={isSelected}
+          onEdit={() => setIsEditing(true)}
+          onDelete={() => setIsDeleteModalOpen(true)}
+          isDeleting={isDeleting}
+        />
       )}
 
       <ConfirmDialog
@@ -164,8 +79,7 @@ export function ActivityListItem({
 
       {!isEditing && (
         <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-          {/* Placeholder for question count/status if needed later */}
-          {/* For now keeping it empty or maybe showing date? User said "only UI", so just matching the look */}
+          {/* Placeholder for future status/date metadata */}
         </div>
       )}
     </div>
