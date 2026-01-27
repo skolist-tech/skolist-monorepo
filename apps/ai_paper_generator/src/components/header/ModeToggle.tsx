@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@skolist/ui";
-import { useTheme } from "../theme-provider";
+import { useTheme } from "../../context/ThemeProvider";
 
 export function ModeToggle() {
   const { setTheme } = useTheme();
