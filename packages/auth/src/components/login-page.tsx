@@ -14,6 +14,19 @@ import {
   // type EmailLoginFormData,
   type EmailSignupFormData,
 } from "../schemas";
+
+declare global {
+  interface Window {
+    recaptchaVerifier: any;
+  }
+}
+
+import {
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  type ConfirmationResult,
+} from "firebase/auth";
+import { firebaseAuth } from "../firebase";
 import {
   LeftPanel,
   LeftPanelHeadline,
@@ -141,6 +154,26 @@ export function LoginPage({
     defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
 
+  // Firebase State
+  const [confirmationResult, setConfirmationResult] =
+    useState<ConfirmationResult | null>(null);
+
+  // Initialize Recaptcha
+  const setupRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        firebaseAuth,
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: () => {
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
+          },
+        }
+      );
+    }
+  };
+
   // Handlers
   const handlePhoneSubmit = async (
     data: PhoneLoginFormData & { name?: string }
@@ -159,17 +192,64 @@ export function LoginPage({
         }
       }
 
-      const name = isSignUp ? data.name || "" : "";
-      const { error } = await signInWithPhone(fullPhone, name);
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setPhoneNumber(fullPhone);
-        setOtpSent(true);
+      // 1. Setup Recaptcha
+      try {
+        setupRecaptcha();
+      } catch (e) {
+        console.error("Recaptcha setup error:", e);
+        // Continue anyway, it might be already set up
       }
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+
+      const appVerifier = window.recaptchaVerifier;
+
+      // 2. Trigger Firebase SMS
+      // We do this concurrently with Supabase to save time, OR sequentially.
+      // Let's do parallel but handle errors carefully.
+
+      const firebasePromise = signInWithPhoneNumber(
+        firebaseAuth,
+        fullPhone,
+        appVerifier
+      );
+
+      const name = isSignUp ? data.name || "" : "";
+      const supabasePromise = signInWithPhone(fullPhone, name);
+
+      const [firebaseResult, supabaseResult] = await Promise.allSettled([
+        firebasePromise,
+        supabasePromise,
+      ]);
+
+      // Check results
+      if (firebaseResult.status === "rejected") {
+        console.error("Firebase Auth Error:", firebaseResult.reason);
+        throw new Error(
+          firebaseResult.reason.message || "Failed to send SMS (Firebase)"
+        );
+      }
+
+      if (supabaseResult.status === "rejected") {
+        console.error("Supabase Auth Error:", supabaseResult.reason);
+        // If supabase fails, we can't login anyway
+        throw new Error("Failed to initialize login (Supabase)");
+      } else if (supabaseResult.value.error) {
+        throw new Error(supabaseResult.value.error.message);
+      }
+
+      // Success
+      setConfirmationResult(firebaseResult.value);
+      setPhoneNumber(fullPhone);
+      setOtpSent(true);
+    } catch (err: any) {
+      console.error(err);
+      setError(
+        err.message || "An unexpected error occurred. Please try again."
+      );
+      // Reset reCAPTCHA just in case
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = undefined;
+      }
     } finally {
       setIsLoading(false);
     }
@@ -178,12 +258,51 @@ export function LoginPage({
   const handleOtpSubmit = async (data: OtpVerificationFormData) => {
     setIsLoading(true);
     setError(null);
-    const { error } = await verifyOtp(phoneNumber, data.otp);
-    setIsLoading(false);
-    if (error) {
-      setError(error.message);
-    } else {
-      onSuccess?.();
+
+    try {
+      if (!confirmationResult) {
+        throw new Error("Session expired. Please request OTP again.");
+      }
+
+      // 1. Verify with Firebase
+      const result = await confirmationResult.confirm(data.otp);
+      const user = result.user;
+      const idToken = await user.getIdToken();
+
+      // 2. Exchange Token with Backend
+      const apiUrl =
+        import.meta.env.VITE_FASTAPI_URL || "http://localhost:8080";
+      const exchangeRes = await fetch(
+        `${apiUrl}/api/v1/auth/exchange-firebase-token`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firebase_token: idToken }),
+        }
+      );
+
+      if (!exchangeRes.ok) {
+        const errData = await exchangeRes.json();
+        throw new Error(
+          errData.detail || "Failed to retrieve authentication verification."
+        );
+      }
+
+      const { otp: supabaseOtp } = await exchangeRes.json();
+
+      // 3. Verify with Supabase
+      const { error } = await verifyOtp(phoneNumber, supabaseOtp);
+
+      if (error) {
+        throw error;
+      } else {
+        onSuccess?.();
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Invalid OTP");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -397,6 +516,7 @@ export function LoginPage({
                           "Send OTP"
                         )}
                       </button>
+                      <div id="recaptcha-container"></div>
                     </form>
                   ) : (
                     <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)}>
