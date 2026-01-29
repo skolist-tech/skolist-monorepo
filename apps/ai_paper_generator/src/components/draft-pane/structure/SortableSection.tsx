@@ -23,11 +23,11 @@ import {
 } from "lucide-react";
 import { QUESTION_TYPE } from "@skolist/db";
 import { type QgenDraftSection } from "@skolist/db";
-import { useDraftContext } from "../../context/DraftContext";
-import { useQuestionsContext } from "../../context/QuestionsContext";
-import { ConfirmDialog } from "../shared/ConfirmDialog";
-import { usePrevious } from "../../hooks/usePrevious";
-import { type GeneratedQuestionWithConcepts } from "../../services/questionService";
+import { useDraftContext } from "../../../context/DraftContext";
+import { useQuestionsContext } from "../../../context/QuestionsContext";
+import { ConfirmDialog } from "../../shared/ConfirmDialog";
+import { usePrevious } from "../../../hooks/usePrevious";
+import { type GeneratedQuestionWithConcepts } from "../../../services/questionService";
 import { SortableQuestion } from "./SortableQuestion";
 
 interface SortableSectionProps {
@@ -463,7 +463,7 @@ export function SortableSection({
               </SortableContext>
             )}
           </div>
-          <div className="border-t p-3 hidden md:block">
+          <div className="hidden border-t p-3 md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

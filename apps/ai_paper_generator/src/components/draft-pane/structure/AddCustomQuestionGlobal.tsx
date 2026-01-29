@@ -13,7 +13,7 @@ import {
   QUESTION_TYPE,
   type QuestionType,
 } from "@skolist/db";
-import { useQuestionsContext } from "../../context/QuestionsContext";
+import { useQuestionsContext } from "../../../context/QuestionsContext";
 
 export function AddCustomQuestionGlobal({
   sections,

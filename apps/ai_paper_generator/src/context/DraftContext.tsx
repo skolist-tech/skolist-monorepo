@@ -26,8 +26,8 @@ import {
   createDraftInstruction,
   updateDraftInstruction,
   deleteDraftInstruction,
-  type QgenInstruction,
 } from "../services/draftService";
+import type { QgenDraftInstructionAndQgenDraft } from "@skolist/db";
 import {
   updateQuestion,
   // upsertQuestions,
@@ -45,7 +45,7 @@ import type {
 interface DraftContextValue {
   draft: QgenDraft | null;
   sections: QgenDraftSection[];
-  instructions: QgenInstruction[];
+  instructions: QgenDraftInstructionAndQgenDraft[];
   isLoading: boolean;
   updateDraftSettings: (updates: UpdateQgenDraft) => Promise<void>;
   addSection: (name?: string) => Promise<QgenDraftSection | undefined>;
@@ -73,7 +73,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   const { questions, updateQuestionLocal } = useQuestionsContext();
   const [draft, setDraft] = useState<QgenDraft | null>(null);
   const [sections, setSections] = useState<QgenDraftSection[]>([]);
-  const [instructions, setInstructions] = useState<QgenInstruction[]>([]);
+  const [instructions, setInstructions] = useState<QgenDraftInstructionAndQgenDraft[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [logoVersion, setLogoVersion] = useState(0);
 

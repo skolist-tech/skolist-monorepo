@@ -12,8 +12,6 @@ import type {
   UpdateQgenDraftSection,
 } from "@skolist/db";
 
-export type QgenInstruction = QgenDraftInstructionAndQgenDraft;
-
 // -- Instructions Service --
 
 /**
@@ -21,7 +19,7 @@ export type QgenInstruction = QgenDraftInstructionAndQgenDraft;
  */
 export async function fetchDraftInstructions(
   draftId: string
-): Promise<QgenInstruction[]> {
+): Promise<QgenDraftInstructionAndQgenDraft[]> {
   const client = getSupabaseClient();
   const { data, error } = await client
     .from("qgen_draft_instructions_drafts_maps")
@@ -42,7 +40,7 @@ export async function fetchDraftInstructions(
 export async function createDraftInstruction(
   draftId: string,
   text: string
-): Promise<QgenInstruction> {
+): Promise<QgenDraftInstructionAndQgenDraft> {
   const client = getSupabaseClient();
   const { data, error } = await client
     .from("qgen_draft_instructions_drafts_maps")
@@ -66,7 +64,7 @@ export async function createDraftInstruction(
 export async function updateDraftInstruction(
   id: string,
   text: string
-): Promise<QgenInstruction> {
+): Promise<QgenDraftInstructionAndQgenDraft> {
   const client = getSupabaseClient();
   const { data, error } = await client
     .from("qgen_draft_instructions_drafts_maps")

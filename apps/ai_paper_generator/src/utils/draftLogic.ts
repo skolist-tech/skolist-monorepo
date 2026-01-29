@@ -67,7 +67,7 @@ export const calculatePositions = (
   // For simplicity, we filter out "questionsToMove" from "currentDraftQuestions"
   const movingIds = new Set(questionsToMove.map((q) => q.id));
 
-  let layoutQuestions = allQuestions
+  const layoutQuestions = allQuestions
     .filter((q) => q.is_in_draft && !movingIds.has(q.id))
     .map((q) => ({ ...q })); // shallow copy
 

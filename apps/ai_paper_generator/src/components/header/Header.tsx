@@ -5,7 +5,7 @@ import { UserProfile } from "./UserProfile";
 // import { ModeToggle } from "./ModeToggle";
 import { Button, useToast } from "@skolist/ui";
 import { Menu } from "lucide-react";
-import { useTheme } from "../theme-provider";
+import { useTheme } from "../../context/ThemeProvider";
 
 import { useUserCredits } from "../../hooks/useUserCredits";
 

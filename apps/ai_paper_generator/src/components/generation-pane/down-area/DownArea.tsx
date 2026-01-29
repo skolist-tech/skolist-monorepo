@@ -1,9 +1,3 @@
-/**
- * Down Area - Display generated questions
- * Shows LoadingQuestionCard when generating
- */
-
-import { useState } from "react";
 import {
   Button,
   Checkbox,
@@ -13,18 +7,17 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  useToast,
 } from "@skolist/ui";
 import { Filter } from "lucide-react";
 import { useQuestionsContext } from "../../../context/QuestionsContext";
-import { GeneratedQuestionCard } from "../../shared/Question/GeneratedQuestionCard";
-import { LoadingQuestionCard } from "../../shared/Question/LoadingQuestionCard";
-import { fastApiService } from "../../../services/fastApiService";
 import type { HardnessLevel } from "@skolist/db";
 import { GenerateMoreButton } from "./GenerateMoreButton";
 import { DraftProgress } from "../../shared/DraftProgress";
 import { formatQuestionType } from "../../../utils/formatters";
 import { useSmartDraftActions } from "../../../hooks/useSmartDraftActions";
+import { useQuestionFilters } from "./hooks/useQuestionFilters";
+import { useQuestionSelection } from "./hooks/useQuestionSelection";
+import { GeneratedQuestionsList } from "./GeneratedQuestionsList";
 
 interface DownAreaProps {
   hardnessLevels: Record<HardnessLevel, number>;
@@ -45,122 +38,34 @@ export function DownArea({
 
   const { handleSmartMoveToDraft } = useSmartDraftActions();
 
-  // Filter questions not in draft
-  const [filterTypes, setFilterTypes] = useState<Set<string>>(new Set());
-  const [filterDifficulties, setFilterDifficulties] = useState<Set<string>>(
-    new Set()
-  );
+  // -- Filters Hook --
+  const {
+    filterTypes,
+    filterDifficulties,
+    visibleQuestions,
+    uniqueTypes,
+    toggleFilterType,
+    toggleFilterDifficulty,
+    setFilterTypes,
+    setFilterDifficulties,
+  } = useQuestionFilters({ questions });
 
-  // Get unique question types
-  const uniqueTypes = Array.from(
-    new Set(questions.map((q) => q.question_type))
-  );
+  // -- Selection Hook --
+  const {
+    selectedIds,
+    isBulkMoving,
+    animatingIds,
+    isAllSelected,
+    handleToggleSelect,
+    handleSelectAll,
+    handleBulkMoveToDraft,
+  } = useQuestionSelection({ visibleQuestions });
 
-  const visibleQuestions = questions.filter((q) => {
-    if (q.is_in_draft) return false;
-
-    // WITHIN filter type -> OR operations
-    const typeMatch =
-      filterTypes.size === 0 || filterTypes.has(q.question_type);
-
-    // WITHIN filter type -> OR operations
-    const diffMatch =
-      filterDifficulties.size === 0 || filterDifficulties.has(q.hardness_level);
-
-    // ACROSS filter type -> AND operations
-    return typeMatch && diffMatch;
-  });
-
-  // Split questions based on is_old_local attribute
+  // Split visible questions based on is_old_local attribute
   // New questions (is_old_local: false) appear above loading card
   // Old questions (is_old_local: true/undefined) appear below loading card
   const newQuestions = visibleQuestions.filter((q) => q.is_old_local === false);
   const oldQuestions = visibleQuestions.filter((q) => q.is_old_local !== false);
-
-  const toggleFilterType = (type: string) => {
-    setFilterTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) {
-        next.delete(type);
-      } else {
-        next.add(type);
-      }
-      return next;
-    });
-  };
-
-  const toggleFilterDifficulty = (diff: string) => {
-    setFilterDifficulties((prev) => {
-      const next = new Set(prev);
-      if (next.has(diff)) {
-        next.delete(diff);
-      } else {
-        next.add(diff);
-      }
-      return next;
-    });
-  };
-
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isBulkMoving, setIsBulkMoving] = useState(false);
-  const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
-  const { toast } = useToast();
-
-  const handleToggleSelect = (id: string, selected: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (selected) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  };
-
-  const isAllSelected =
-    visibleQuestions.length > 0 &&
-    visibleQuestions.every((q) => selectedIds.has(q.id));
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allIds = visibleQuestions.map((q) => q.id);
-      setSelectedIds(new Set(allIds));
-    } else {
-      setSelectedIds(new Set());
-    }
-  };
-
-  const handleBulkMoveToDraft = async () => {
-    if (selectedIds.size === 0) return;
-
-    try {
-      setIsBulkMoving(true);
-      const idsToMove = Array.from(selectedIds);
-      const count = idsToMove.length;
-
-      // Mark all questions as animating
-      setAnimatingIds(new Set(idsToMove));
-
-      // Wait for animation to complete
-      await new Promise((resolve) => setTimeout(resolve, 400));
-
-      // Move questions to draft
-      await handleSmartMoveToDraft(idsToMove);
-
-      // Show success toast
-      toast({
-        title: "Moved to Draft",
-        description: `${count} question${count > 1 ? "s" : ""} moved to draft successfully.`,
-        className: "bg-green-500 text-white border-green-600",
-      });
-
-      setSelectedIds(new Set());
-      setAnimatingIds(new Set());
-    } catch (error) {
-      console.error("Failed to bulk move questions:", error);
-      setAnimatingIds(new Set());
-    } finally {
-      setIsBulkMoving(false);
-    }
-  };
 
   if (isLoading && questions.length === 0) {
     return (
@@ -182,6 +87,7 @@ export function DownArea({
           <div className="flex items-center gap-3">
             <Checkbox
               checked={isAllSelected}
+              // Cast to boolean to satisfy stricter Checkbox types if needed
               onCheckedChange={(checked) => handleSelectAll(checked === true)}
               aria-label="Select all questions"
             />
@@ -289,62 +195,18 @@ export function DownArea({
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
-          {/* New questions (received during current generation) */}
-          {newQuestions.map((question) => (
-            <GeneratedQuestionCard
-              key={question.id}
-              question={question}
-              onMoveToDraft={() => handleSmartMoveToDraft([question.id])}
-              onUpdate={(updated) => saveQuestion(updated)}
-              onDelete={deleteQuestion}
-              onRegenerate={async (prompt, files) => {
-                try {
-                  await fastApiService.regenerateQuestionWithPrompt(
-                    question.id,
-                    prompt,
-                    files
-                  );
-                  await refetchQuestions();
-                } catch (error) {
-                  console.error("Failed to regenerate question:", error);
-                }
-              }}
-              isSelected={selectedIds.has(question.id)}
-              onSelect={(selected) => handleToggleSelect(question.id, selected)}
-              isAnimating={animatingIds.has(question.id)}
-            />
-          ))}
-
-          {/* Loading Card - between new and old questions */}
-          {isGenerating && <LoadingQuestionCard />}
-
-          {/* Old questions (existed before generation started) */}
-          {oldQuestions.map((question) => (
-            <GeneratedQuestionCard
-              key={question.id}
-              question={question}
-              onMoveToDraft={() => handleSmartMoveToDraft([question.id])}
-              onUpdate={(updated) => saveQuestion(updated)}
-              onDelete={deleteQuestion}
-              onRegenerate={async (prompt, files) => {
-                try {
-                  await fastApiService.regenerateQuestionWithPrompt(
-                    question.id,
-                    prompt,
-                    files
-                  );
-                  await refetchQuestions();
-                } catch (error) {
-                  console.error("Failed to regenerate question:", error);
-                }
-              }}
-              isSelected={selectedIds.has(question.id)}
-              onSelect={(selected) => handleToggleSelect(question.id, selected)}
-              isAnimating={animatingIds.has(question.id)}
-            />
-          ))}
-        </div>
+        <GeneratedQuestionsList
+          newQuestions={newQuestions}
+          oldQuestions={oldQuestions}
+          isGenerating={isGenerating}
+          selectedIds={selectedIds}
+          animatingIds={animatingIds}
+          onMoveToDraft={(ids) => handleSmartMoveToDraft(ids)}
+          onSaveQuestion={saveQuestion}
+          onDeleteQuestion={deleteQuestion}
+          onRefetchQuestions={refetchQuestions}
+          onToggleSelect={handleToggleSelect}
+        />
       </div>
     </div>
   );
