@@ -345,6 +345,26 @@ export async function deleteQuestionImage(imageId: string): Promise<void> {
 }
 
 /**
+ * Update an image's SVG string
+ */
+export async function updateQuestionImageSvg(
+  imageId: string,
+  svgString: string
+): Promise<void> {
+  const client = getSupabaseClient();
+
+  const { error } = await client
+    .from("gen_images")
+    .update({ svg_string: svgString })
+    .eq("id", imageId);
+
+  if (error) {
+    console.error("Failed to update image SVG:", error);
+    throw error;
+  }
+}
+
+/**
  * Batch update questions for draft move
  */
 export async function moveQuestionsToDraftBatch(
@@ -352,9 +372,12 @@ export async function moveQuestionsToDraftBatch(
 ): Promise<void> {
   const client = getSupabaseClient();
 
-  const { error } = await client.rpc("update_question_position_and_section_ids", {
-    updates: updates, // Supabase RPC matches keys to arguments "updates"
-  });
+  const { error } = await client.rpc(
+    "update_question_position_and_section_ids",
+    {
+      updates: updates, // Supabase RPC matches keys to arguments "updates"
+    }
+  );
 
   if (error) {
     console.error("Failed to batch move questions to draft:", error);

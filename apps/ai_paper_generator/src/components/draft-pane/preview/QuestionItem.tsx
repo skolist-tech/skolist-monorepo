@@ -1,5 +1,6 @@
 import type { GeneratedQuestionWithConcepts } from "../../../services/questionService";
 import { LatexHtmlRenderer, LatexRenderer } from "../../shared/LatexRenderer";
+import { processSvgLatex } from "../../shared/Question/QuestionImages";
 
 export const QuestionItem = ({
   question,
@@ -32,7 +33,9 @@ export const QuestionItem = ({
                     <div
                       key={image.id}
                       className="question-image-svg max-w-full overflow-hidden"
-                      dangerouslySetInnerHTML={{ __html: image.svg_string }}
+                      dangerouslySetInnerHTML={{
+                        __html: processSvgLatex(image.svg_string),
+                      }}
                     />
                   );
                 }

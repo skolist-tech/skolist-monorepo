@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { GeneratedImage } from "@skolist/db";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@skolist/ui";
 import katex from "katex";
 
@@ -9,7 +9,7 @@ import katex from "katex";
  * Replaces text elements containing $...$ or $$...$$ with foreignObject elements
  * that contain rendered KaTeX HTML.
  */
-function processSvgLatex(svgString: string): string {
+export function processSvgLatex(svgString: string): string {
   if (!svgString) return svgString;
 
   // Parse the SVG string into a DOM
@@ -82,10 +82,10 @@ function processSvgLatex(svgString: string): string {
       );
 
       // Calculate position offset based on text-anchor
-      // The foreignObject needs width/height - we use a relatively large area
+      // The foreignObject needs width/height - use compact values
       const numericFontSize = parseFloat(fontSize);
-      const width = numericFontSize * 15; // Reasonable width for math content
-      const height = numericFontSize * 3; // Height for the content
+      const width = numericFontSize * 8; // Compact width for math content
+      const height = numericFontSize * 1.8; // Height for the content
 
       let xOffset = parseFloat(x);
       if (textAnchor === "middle") {
@@ -101,19 +101,24 @@ function processSvgLatex(svgString: string): string {
       );
       foreignObject.setAttribute("width", width.toString());
       foreignObject.setAttribute("height", height.toString());
+      // Ensure foreignObject doesn't clip or have background
+      foreignObject.setAttribute(
+        "style",
+        "overflow: visible; pointer-events: none;"
+      );
 
       // Create the HTML div inside foreignObject
       const div = doc.createElementNS("http://www.w3.org/1999/xhtml", "div");
       div.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
       div.setAttribute(
         "style",
-        `font-size: ${numericFontSize * 100}px; display: flex; align-items: center; justify-content: ${
+        `font-size: ${numericFontSize}px; display: flex; align-items: center; justify-content: ${
           textAnchor === "middle"
             ? "center"
             : textAnchor === "end"
               ? "flex-end"
               : "flex-start"
-        }; height: 100%; color: inherit;`
+        }; height: 100%; color: black; background: none;`
       );
       div.innerHTML = renderedContent;
 
@@ -134,6 +139,8 @@ interface QuestionImagesProps {
   /** Optional className for the container */
   className?: string;
   onDelete?: (id: string) => void;
+  /** Optional callback for editing an SVG image */
+  onEdit?: (image: GeneratedImage) => void;
   /** Optional max height class (default: max-h-32) */
   maxHeightClass?: string;
 }
@@ -148,6 +155,7 @@ export function QuestionImages({
   images,
   className = "",
   onDelete,
+  onEdit,
   maxHeightClass = "max-h-32",
 }: QuestionImagesProps) {
   // Process all SVG strings to render LaTeX
@@ -186,6 +194,21 @@ export function QuestionImages({
         return (
           <div key={image.id} className="group/image relative">
             {content}
+            {/* Edit button - only for SVG images (not img_url) */}
+            {onEdit && image.svg_string && (
+              <Button
+                size="icon"
+                variant="secondary"
+                className="absolute -left-2 -top-2 h-6 w-6 opacity-0 shadow-sm transition-opacity group-hover/image:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(image);
+                }}
+                title="Edit SVG"
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+            )}
             {onDelete && (
               <Button
                 size="icon"

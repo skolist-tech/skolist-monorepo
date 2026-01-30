@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@skolist/ui";
 import type { GeneratedQuestionWithConcepts } from "../../../../services/questionService";
-import type { GeneratedQuestion } from "@skolist/db";
+import type { GeneratedQuestion, GeneratedImage } from "@skolist/db";
 import {
   uploadQuestionImage,
   deleteQuestionImage,
+  updateQuestionImageSvg,
 } from "../../../../services/questionService";
 
 interface UseQuestionCardStateProps {
@@ -156,6 +157,59 @@ export function useQuestionCardState({
   const [prompt, setPrompt] = useState("");
   const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
 
+  // -- Edit SVG State --
+  const [isEditSvgOpen, setIsEditSvgOpen] = useState(false);
+  const [imageToEdit, setImageToEdit] = useState<GeneratedImage | null>(null);
+  const [isSavingSvg, setIsSavingSvg] = useState(false);
+
+  const handleEditSvg = (image: GeneratedImage) => {
+    setImageToEdit(image);
+    setIsEditSvgOpen(true);
+  };
+
+  const handleSaveSvg = async (imageId: string, svgString: string) => {
+    try {
+      setIsSavingSvg(true);
+
+      // Optimistic update
+      const updatedQuestion = {
+        ...editedQuestion,
+        position_in_draft: question.position_in_draft,
+        qgen_draft_section_id: question.qgen_draft_section_id,
+        is_page_break_below: question.is_page_break_below,
+        is_in_draft: question.is_in_draft,
+        images: (editedQuestion.images || []).map((img) =>
+          img.id === imageId ? { ...img, svg_string: svgString } : img
+        ),
+      };
+      setEditedQuestion(updatedQuestion);
+
+      // Save to database
+      await updateQuestionImageSvg(imageId, svgString);
+
+      if (onUpdate) {
+        onUpdate(updatedQuestion);
+      }
+
+      toast({
+        title: "SVG Updated",
+        description: "The SVG has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("[EDIT SVG] Failed to save SVG:", error);
+      setEditedQuestion(question); // Revert
+      toast({
+        title: "Error",
+        description: "Failed to save SVG changes",
+        variant: "destructive",
+      });
+      throw error; // Re-throw so the dialog knows it failed
+    } finally {
+      setIsSavingSvg(false);
+      setImageToEdit(null);
+    }
+  };
+
   return {
     isEditing,
     setIsEditing,
@@ -190,5 +244,13 @@ export function useQuestionCardState({
     setPrompt,
     isRegenerateOpen,
     setIsRegenerateOpen,
+
+    isEditSvgOpen,
+    setIsEditSvgOpen,
+    imageToEdit,
+    setImageToEdit,
+    isSavingSvg,
+    handleEditSvg,
+    handleSaveSvg,
   };
 }

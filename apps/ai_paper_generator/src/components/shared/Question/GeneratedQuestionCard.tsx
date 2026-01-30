@@ -38,6 +38,7 @@ import {
   RegenerateOverlay,
   ChatPromptOverlay,
 } from "./components/QuestionAnimationOverlays";
+import { EditSvgDialog } from "./components/EditSvgDialog";
 
 interface GeneratedQuestionCardProps {
   question: GeneratedQuestionWithConcepts;
@@ -398,6 +399,14 @@ export function GeneratedQuestionCard({
         confirmLabel="Delete"
       />
 
+      <EditSvgDialog
+        image={state.imageToEdit}
+        open={state.isEditSvgOpen}
+        onOpenChange={state.setIsEditSvgOpen}
+        onSave={state.handleSaveSvg}
+        isSaving={state.isSavingSvg}
+      />
+
       {/* --- Popover --- */}
       <RegeneratePopover
         isOpen={state.isRegenerateOpen}
@@ -491,6 +500,7 @@ export function GeneratedQuestionCard({
               images={state.editedQuestion.images}
               className="my-3"
               onDelete={state.handleDeleteImage}
+              onEdit={state.handleEditSvg}
             />
           )}
 
