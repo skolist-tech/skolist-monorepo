@@ -194,35 +194,38 @@ export function QuestionImages({
         return (
           <div key={image.id} className="group/image relative">
             {content}
-            {/* Edit button - only for SVG images (not img_url) */}
-            {onEdit && image.svg_string && (
-              <Button
-                size="icon"
-                variant="secondary"
-                className="absolute -left-2 -top-2 h-6 w-6 opacity-0 shadow-sm transition-opacity group-hover/image:opacity-100"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(image);
-                }}
-                title="Edit SVG"
-              >
-                <Pencil className="h-3 w-3" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                size="icon"
-                variant="destructive"
-                className="absolute -right-2 -top-2 h-6 w-6 opacity-0 shadow-sm transition-opacity group-hover/image:opacity-100"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(image.id);
-                }}
-                title="Delete Image"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
+            {/* Action buttons - top right corner */}
+            <div className="absolute -right-2 -top-2 flex gap-1 opacity-0 transition-opacity group-hover/image:opacity-100">
+              {/* Edit button - only for SVG images (not img_url) */}
+              {onEdit && image.svg_string && (
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="h-6 w-6 shadow-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(image);
+                  }}
+                  title="Edit SVG"
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  className="h-6 w-6 shadow-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(image.id);
+                  }}
+                  title="Delete Image"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           </div>
         );
       })}
