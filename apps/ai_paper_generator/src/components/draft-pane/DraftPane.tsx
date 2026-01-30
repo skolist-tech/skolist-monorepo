@@ -8,7 +8,7 @@ import { cn } from "@skolist/utils";
 type MobileTab = "structure" | "preview";
 
 export function DraftPane() {
-  const [mobileTab, setMobileTab] = useState<MobileTab>("structure");
+  const [mobileTab, setMobileTab] = useState<MobileTab>("preview");
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-background md:flex-row">
