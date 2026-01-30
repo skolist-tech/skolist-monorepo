@@ -210,6 +210,30 @@ export function useQuestionCardState({
     }
   };
 
+  // Handler for when AI updates an SVG (already saved to DB by the API)
+  const handleAiSvgUpdate = (imageId: string, svgString: string) => {
+    const updatedQuestion = {
+      ...editedQuestion,
+      position_in_draft: question.position_in_draft,
+      qgen_draft_section_id: question.qgen_draft_section_id,
+      is_page_break_below: question.is_page_break_below,
+      is_in_draft: question.is_in_draft,
+      images: (editedQuestion.images || []).map((img) =>
+        img.id === imageId ? { ...img, svg_string: svgString } : img
+      ),
+    };
+    setEditedQuestion(updatedQuestion);
+
+    if (onUpdate) {
+      onUpdate(updatedQuestion);
+    }
+
+    toast({
+      title: "SVG Updated",
+      description: "AI has updated the SVG successfully.",
+    });
+  };
+
   return {
     isEditing,
     setIsEditing,
@@ -252,5 +276,6 @@ export function useQuestionCardState({
     isSavingSvg,
     handleEditSvg,
     handleSaveSvg,
+    handleAiSvgUpdate,
   };
 }

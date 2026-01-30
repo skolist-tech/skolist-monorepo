@@ -349,4 +349,58 @@ export const fastApiService = {
       throw error;
     }
   },
+  /**
+   * info: Calls the FastAPI backend to edit an SVG using natural language
+   * endpoint: POST /api/v1/qgen/edit_svg
+   * @param gen_image_id - UUID of the image to edit
+   * @param instruction - Natural language instruction for editing
+   * @returns Updated image data with new svg_string
+   */
+  async editSvg(
+    gen_image_id: string,
+    instruction: string
+  ): Promise<{
+    id: string;
+    svg_string: string;
+    gen_question_id: string;
+    position: number | null;
+  }> {
+    try {
+      const {
+        data: { session },
+      } = await getSupabaseClient().auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error("User not authenticated");
+      }
+
+      const formData = new FormData();
+      formData.append("gen_image_id", gen_image_id);
+      formData.append("instruction", instruction);
+
+      const response = await fetch(`${API_URL}/api/v1/qgen/edit_svg`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        if (response.status === 402) {
+          window.dispatchEvent(new Event("credits-exhausted"));
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `Failed to edit SVG: ${response.statusText}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error editing SVG:", error);
+      throw error;
+    }
+  },
 };

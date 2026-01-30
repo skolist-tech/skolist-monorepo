@@ -404,6 +404,7 @@ export function GeneratedQuestionCard({
         open={state.isEditSvgOpen}
         onOpenChange={state.setIsEditSvgOpen}
         onSave={state.handleSaveSvg}
+        onAiUpdate={state.handleAiSvgUpdate}
         isSaving={state.isSavingSvg}
       />
 
