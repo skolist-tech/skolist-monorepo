@@ -14,14 +14,15 @@
     "lint:fix": "eslint src/ --fix"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.47.10",
-    "@supabase/ssr": "^0.5.2",
-    "react-hook-form": "^7.54.2",
     "@hookform/resolvers": "^3.9.1",
-    "lucide-react": "^0.469.0",
-    "zod": "^3.24.1",
     "@skolist/ui": "workspace:*",
-    "@skolist/utils": "workspace:*"
+    "@skolist/utils": "workspace:*",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.47.10",
+    "firebase": "^12.7.0",
+    "lucide-react": "^0.469.0",
+    "react-hook-form": "^7.54.2",
+    "zod": "^3.24.1"
   },
   "peerDependencies": {
     "react": "^18.3.1",
