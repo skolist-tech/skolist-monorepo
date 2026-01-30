@@ -199,20 +199,17 @@ export function GeneratedQuestionCard({
           );
           // For Storybook, wait 1 second then stop animation manually since question won't change
           await new Promise((resolve) => setTimeout(resolve, 1000));
-          anims.setIsChatPromptAnimating(false);
-          state.setPrompt("");
-          state.setAttachedFiles([]);
-          anims.questionTextAtAnimationStart.current = null;
         } else {
-          // Call the actual regenerate function
-          // Animation will stop via useEffect in useQuestionAnimations when question prop changes
-          onRegenerate(state.prompt, state.attachedFiles);
-          // We clear inputs now, logic hook will clear animation
-          state.setPrompt("");
-          state.setAttachedFiles([]);
+          // Call the actual regenerate function and await its completion
+          // This ensures the animation stops properly on both success and failure
+          await onRegenerate(state.prompt, state.attachedFiles);
+          // Give a brief moment for the question data to update via refetch
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       } catch (error) {
         console.error("Failed during regenerate with prompt", error);
+      } finally {
+        // Always stop the animation and clear state, regardless of success or failure
         anims.setIsChatPromptAnimating(false);
         state.setPrompt("");
         state.setAttachedFiles([]);
