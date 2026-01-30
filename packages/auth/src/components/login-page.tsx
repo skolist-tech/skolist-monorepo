@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Spinner } from "@skolist/ui";
@@ -158,20 +158,58 @@ export function LoginPage({
   const [confirmationResult, setConfirmationResult] =
     useState<ConfirmationResult | null>(null);
 
+  // Recaptcha Refs
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+
+  // Sync Recaptcha with DOM lifecycle
+  useEffect(() => {
+    // Cleanup verifier if auth method changes or OTP is sent
+    // this ensures we don't have a stale verifier pointing to a destroyed DOM element
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (e) {
+          console.warn("Error clearing recaptcha:", e);
+        }
+        recaptchaVerifierRef.current = null;
+        window.recaptchaVerifier = undefined;
+      }
+    };
+  }, [authMethod, otpSent]);
+
   // Initialize Recaptcha
   const setupRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        firebaseAuth,
-        "recaptcha-container",
-        {
-          size: "invisible",
-          callback: () => {
-            // reCAPTCHA solved, allow signInWithPhoneNumber.
-          },
-        }
-      );
+    if (recaptchaVerifierRef.current) {
+      return recaptchaVerifierRef.current;
     }
+
+    if (!recaptchaContainerRef.current) {
+      console.error("Recaptcha container ref is not available");
+      return null;
+    }
+
+    // Double check to prevent "already rendered" error
+    // If the container already has children, it might have been rendered by Google's scripts
+    if (recaptchaContainerRef.current.childNodes.length > 0) {
+      recaptchaContainerRef.current.innerHTML = "";
+    }
+
+    const verifier = new RecaptchaVerifier(
+      firebaseAuth,
+      recaptchaContainerRef.current,
+      {
+        size: "invisible",
+        callback: () => {
+          // reCAPTCHA solved
+        },
+      }
+    );
+
+    recaptchaVerifierRef.current = verifier;
+    window.recaptchaVerifier = verifier;
+    return verifier;
   };
 
   // Handlers
@@ -192,15 +230,12 @@ export function LoginPage({
         }
       }
 
-      // 1. Setup Recaptcha
-      try {
-        setupRecaptcha();
-      } catch (e) {
-        console.error("Recaptcha setup error:", e);
-        // Continue anyway, it might be already set up
+      const appVerifier = setupRecaptcha();
+      if (!appVerifier) {
+        throw new Error(
+          "Failed to initialize security verification (reCAPTCHA)"
+        );
       }
-
-      const appVerifier = window.recaptchaVerifier;
 
       // 2. Trigger Firebase SMS
       // We do this concurrently with Supabase to save time, OR sequentially.
@@ -246,8 +281,9 @@ export function LoginPage({
         err.message || "An unexpected error occurred. Please try again."
       );
       // Reset reCAPTCHA just in case
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
         window.recaptchaVerifier = undefined;
       }
     } finally {
@@ -516,7 +552,7 @@ export function LoginPage({
                           "Send OTP"
                         )}
                       </button>
-                      <div id="recaptcha-container"></div>
+                      <div ref={recaptchaContainerRef}></div>
                     </form>
                   ) : (
                     <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)}>
