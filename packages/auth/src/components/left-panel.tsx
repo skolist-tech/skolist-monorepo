@@ -1,5 +1,5 @@
 import React from "react";
-import "./login-page.css";
+import "./login-page/login-page.css";
 
 // Default feature pills from the reference design
 export const DEFAULT_FEATURES = [

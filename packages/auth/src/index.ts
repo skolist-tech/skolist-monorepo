@@ -4,13 +4,18 @@
  */
 
 // Client
-export { createClient, getSupabaseClient, getCurrentUserId, isAuthenticated } from "./client";
+export {
+  createClient,
+  getSupabaseClient,
+  getCurrentUserId,
+  isAuthenticated,
+} from "./client";
 
 // Context & Hooks
 export { AuthProvider, useAuth, type AuthContextValue } from "./context";
 
 // Components
-export { LoginPage } from "./components/login-page";
+export { LoginPage } from "./components/login-page/index";
 export { ProtectedRoute } from "./components/protected-route";
 export { UserMenu } from "./components/user-menu";
 export { AuthButton } from "./components/auth-button";
