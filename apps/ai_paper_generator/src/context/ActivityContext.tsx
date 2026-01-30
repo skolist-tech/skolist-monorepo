@@ -32,6 +32,8 @@ interface ActivityContextValue {
   refreshActivities: () => Promise<void>;
 }
 
+const STORAGE_KEY = "ai_paper_generator_current_activity_id";
+
 export const ActivityContext = createContext<ActivityContextValue | undefined>(
   undefined
 );
@@ -58,12 +60,19 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       const data = await fetchUserActivities();
       setActivities(data);
 
-      // Auto-select first activity if none selected
+      // Auto-select activity: try localStorage first, then first activity
       setCurrentActivity((prev) => {
-        if (data.length > 0 && !prev) {
-          return data[0] ?? null;
+        if (prev) return prev;
+        if (data.length === 0) return null;
+
+        // Try to restore from localStorage
+        const savedActivityId = localStorage.getItem(STORAGE_KEY);
+        if (savedActivityId) {
+          const savedActivity = data.find((a) => a.id === savedActivityId);
+          if (savedActivity) return savedActivity;
         }
-        return prev;
+
+        return data[0] ?? null;
       });
     } catch (err) {
       console.error("Failed to fetch activities:", err);
@@ -93,6 +102,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         const newActivity = await createActivityService(name);
         setActivities((prev) => [newActivity, ...prev]);
         setCurrentActivity(newActivity);
+        localStorage.setItem(STORAGE_KEY, newActivity.id);
         return newActivity;
       } catch (err) {
         console.error("Failed to create activity:", err);
@@ -108,6 +118,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       const activity = activities.find((a) => a.id === activityId);
       if (activity) {
         setCurrentActivity(activity);
+        localStorage.setItem(STORAGE_KEY, activityId);
       }
     },
     [activities]
@@ -125,7 +136,13 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         setCurrentActivity((prevCurrent) => {
           // If the deleted activity was the current one, select the first remaining
           if (prevCurrent?.id === activityId) {
-            return remaining[0] ?? null;
+            const next = remaining[0] ?? null;
+            if (next) {
+              localStorage.setItem(STORAGE_KEY, next.id);
+            } else {
+              localStorage.removeItem(STORAGE_KEY);
+            }
+            return next;
           }
           // If current activity still exists in remaining, keep it
           // Otherwise (edge case), select first remaining or null
@@ -133,7 +150,13 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
           if (stillExists) {
             return prevCurrent;
           }
-          return remaining[0] ?? null;
+          const next = remaining[0] ?? null;
+          if (next) {
+            localStorage.setItem(STORAGE_KEY, next.id);
+          } else {
+            localStorage.removeItem(STORAGE_KEY);
+          }
+          return next;
         });
 
         return remaining;
