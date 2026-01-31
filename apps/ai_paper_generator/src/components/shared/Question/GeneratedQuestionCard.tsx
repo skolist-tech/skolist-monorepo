@@ -42,6 +42,7 @@ import {
   ChatPromptOverlay,
 } from "./components/QuestionAnimationOverlays";
 import { EditSvgDialog } from "./components/EditSvgDialog";
+import { CameraCaptureDialog } from "./components/CameraCaptureDialog";
 
 interface GeneratedQuestionCardProps {
   question: GeneratedQuestionWithConcepts;
@@ -291,6 +292,53 @@ export function GeneratedQuestionCard({
     onRemoveFromDraft(question.id);
   };
 
+  // Camera capture handler - sends photo to regenerate with prompt endpoint
+  const handleCameraCapture = async (file: File) => {
+    // Prompt to describe what the AI should do with the captured image
+    const cameraPrompt = `I've captured an image as a reference. Please analyze this image and regenerate the question based on its content. If it contains a diagram, figure, or mathematical expression, incorporate it appropriately. If it shows text or a problem, use that as context to improve or modify the current question.`;
+
+    state.setIsCameraProcessing(true);
+    try {
+      // Store current question text to detect when it changes
+      anims.questionTextAtAnimationStart.current = question.question_text;
+      anims.setIsChatPromptAnimating(true);
+
+      if (onRegenerateWithPrompt) {
+        await onRegenerateWithPrompt(question.id, cameraPrompt, [file]);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } else if (onRegenerate) {
+        await onRegenerate(cameraPrompt, [file]);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } else {
+        // Fallback to fastApiService directly
+        await fastApiService.regenerateQuestionWithPrompt(
+          question.id,
+          cameraPrompt,
+          [file]
+        );
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      toast({
+        title: "Photo Processed",
+        description: "Question regenerated based on the captured image.",
+        className: "bg-green-500 text-white border-green-600",
+      });
+    } catch (error) {
+      console.error("Failed to process captured image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process the captured image.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      anims.setIsChatPromptAnimating(false);
+      anims.questionTextAtAnimationStart.current = null;
+      state.setIsCameraProcessing(false);
+    }
+  };
+
   const isMcqOrMsq = ["mcq4", "msq4"].includes(question.question_type);
 
   // -- Render --
@@ -420,6 +468,7 @@ export function GeneratedQuestionCard({
         onAttachClick={() => state.fileInputRef.current?.click()}
         onRegenerateClick={handleDirectRegenerate}
         onRegenerateWithPromptClick={() => state.setIsRegenerateOpen(true)}
+        onCameraClick={() => state.setIsCameraOpen(true)}
         onEditClick={() => state.setIsEditing(true)}
         onMoveToDraft={handleMoveToDraft}
         onRemoveFromDraftClick={handleRemoveFromDraft}
@@ -456,6 +505,13 @@ export function GeneratedQuestionCard({
         onSave={state.handleSaveSvg}
         onAiUpdate={state.handleAiSvgUpdate}
         isSaving={state.isSavingSvg}
+      />
+
+      <CameraCaptureDialog
+        open={state.isCameraOpen}
+        onOpenChange={state.setIsCameraOpen}
+        onCapture={handleCameraCapture}
+        isProcessing={state.isCameraProcessing}
       />
 
       {/* --- Popover --- */}

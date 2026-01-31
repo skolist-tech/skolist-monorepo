@@ -5,6 +5,7 @@ export type ActionId =
   | "attachment"
   | "regenerate"
   | "regenerate_with_prompt"
+  | "camera_capture"
   | "move"
   | "delete"
   | "edit";
@@ -59,6 +60,12 @@ export const CARD_ACTIONS_CONFIG: ActionConfig[] = [
     label: "Regenerate with Prompt",
     mobile: { location: "menu", order: 60, visible: true },
     desktop: { order: 60, visible: true },
+  },
+  {
+    id: "camera_capture",
+    label: "Capture Photo",
+    mobile: { location: "card", order: 25, visible: true },
+    desktop: { order: 25, visible: false },
   },
   {
     id: "edit",

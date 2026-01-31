@@ -16,6 +16,7 @@ import {
   Loader2,
   RefreshCw,
   MessageSquare,
+  Camera,
   Edit2,
   ArrowLeft,
   ArrowRight,
@@ -43,6 +44,7 @@ interface QuestionCardActionsProps {
   onAttachClick: () => void;
   onRegenerateClick: () => void;
   onRegenerateWithPromptClick: (e: React.MouseEvent) => void;
+  onCameraClick: () => void;
   onEditClick: () => void;
   onMoveToDraft: () => void;
   onRemoveFromDraftClick: () => void;
@@ -69,6 +71,7 @@ export function QuestionCardActions({
   onAttachClick,
   onRegenerateClick,
   onRegenerateWithPromptClick,
+  onCameraClick,
   onEditClick,
   onMoveToDraft,
   onRemoveFromDraftClick,
@@ -271,6 +274,35 @@ export function QuestionCardActions({
               {mode === "icon" && (
                 <TooltipContent>
                   <p>Regenerate with Prompt</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case "camera_capture":
+        return (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size={mode === "menu" ? "default" : "icon"}
+                  variant="ghost"
+                  className={mode === "menu" ? btnClass : undefined}
+                  disabled={!onRegenerate || isChatPromptAnimating}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCameraClick();
+                  }}
+                >
+                  <Camera
+                    className={`${iconSizeClass} text-muted-foreground hover:text-primary ${isChatPromptAnimating ? "opacity-50" : ""}`}
+                  />
+                  {mode === "menu" && <span>Capture Photo</span>}
+                </Button>
+              </TooltipTrigger>
+              {mode === "icon" && (
+                <TooltipContent>
+                  <p>Capture Photo</p>
                 </TooltipContent>
               )}
             </Tooltip>

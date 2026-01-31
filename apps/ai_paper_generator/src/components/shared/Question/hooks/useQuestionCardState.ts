@@ -157,7 +157,10 @@ export function useQuestionCardState({
   const [prompt, setPrompt] = useState("");
   const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
 
-  // -- Edit SVG State --
+  // -- Camera Capture State --
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isCameraProcessing, setIsCameraProcessing] = useState(false);
+
   const [isEditSvgOpen, setIsEditSvgOpen] = useState(false);
   const [imageToEdit, setImageToEdit] = useState<GeneratedImage | null>(null);
   const [isSavingSvg, setIsSavingSvg] = useState(false);
@@ -268,6 +271,11 @@ export function useQuestionCardState({
     setPrompt,
     isRegenerateOpen,
     setIsRegenerateOpen,
+
+    isCameraOpen,
+    setIsCameraOpen,
+    isCameraProcessing,
+    setIsCameraProcessing,
 
     isEditSvgOpen,
     setIsEditSvgOpen,
