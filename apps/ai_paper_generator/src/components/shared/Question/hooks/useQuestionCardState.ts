@@ -24,13 +24,13 @@ export function useQuestionCardState({
   const [editedQuestion, setEditedQuestion] =
     useState<GeneratedQuestionWithConcepts>(question);
 
-  // Sync images from question prop when they change
+  // Sync editedQuestion with question prop when it changes (but not during editing)
+  // This ensures that after regenerate/auto-correct, the edit form shows fresh data
   useEffect(() => {
-    setEditedQuestion((prev) => ({
-      ...prev,
-      images: question.images,
-    }));
-  }, [question.images]);
+    if (!isEditing) {
+      setEditedQuestion(question);
+    }
+  }, [question, isEditing]);
 
   const updateField = <K extends keyof GeneratedQuestion>(
     field: K,
