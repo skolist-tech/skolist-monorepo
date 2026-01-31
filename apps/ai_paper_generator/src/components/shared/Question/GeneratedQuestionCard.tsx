@@ -15,7 +15,9 @@ import {
 } from "@skolist/ui";
 import { ChevronUp, ChevronDown, Info, GripVertical } from "lucide-react";
 import type { GeneratedQuestionWithConcepts } from "../../../services/questionService";
+import { updateQuestion } from "../../../services/questionService";
 import { fastApiService } from "../../../services/fastApiService";
+import type { HardnessLevel } from "@skolist/db";
 import { QuestionMarks } from "./QuestionMarks";
 import { QuestionTags } from "./QuestionTags";
 import { QuestionText } from "./QuestionText";
@@ -93,6 +95,50 @@ export function GeneratedQuestionCard({
   });
 
   // -- Handlers (Logic bridging hooks and props) --
+
+  const handleMarksUpdate = async (newMarks: number) => {
+    try {
+      await updateQuestion(question.id, { marks: newMarks });
+      if (onUpdate) {
+        onUpdate({ ...question, marks: newMarks });
+      }
+      toast({
+        title: "Marks Updated",
+        description: `Marks updated to ${newMarks}.`,
+        className: "bg-green-500 text-white border-green-600",
+      });
+    } catch (error) {
+      console.error("Failed to update marks:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update marks.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const handleHardnessUpdate = async (newHardness: HardnessLevel) => {
+    try {
+      await updateQuestion(question.id, { hardness_level: newHardness });
+      if (onUpdate) {
+        onUpdate({ ...question, hardness_level: newHardness });
+      }
+      toast({
+        title: "Difficulty Updated",
+        description: `Difficulty updated to ${newHardness}.`,
+        className: "bg-green-500 text-white border-green-600",
+      });
+    } catch (error) {
+      console.error("Failed to update hardness:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update difficulty level.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
 
   const handleDeleteWithAnimation = async () => {
     state.setIsDeleteModalOpen(false);
@@ -429,10 +475,18 @@ export function GeneratedQuestionCard({
             {formatQuestionType(question.question_type)}
           </Badge>
           <span>•</span>
-          <QuestionMarks marks={question.marks} />
+          <QuestionMarks
+            marks={question.marks}
+            editable={true}
+            onUpdate={handleMarksUpdate}
+          />
           <span>•</span>
-          <QuestionTags hardness={question.hardness_level} concepts={[]} />
-          <span>•</span>
+          <QuestionTags
+            hardness={question.hardness_level}
+            concepts={[]}
+            editable={true}
+            onHardnessUpdate={handleHardnessUpdate}
+          />
         </div>
 
         {/* Reorder Buttons */}
