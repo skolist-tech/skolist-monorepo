@@ -28,6 +28,7 @@ const QUESTION_TYPE_API_MAP: Record<QuestionType, string> = {
   long_answer: "long_answer",
   true_or_false: "true_false",
   fill_in_the_blanks: "fill_in_the_blank",
+  match_the_following: "match_the_following",
 };
 
 // All available types for the dropdown
@@ -38,6 +39,7 @@ const AVAILABLE_TYPES: QuestionType[] = [
   "long_answer",
   "true_or_false",
   "fill_in_the_blanks",
+  "match_the_following",
 ];
 
 interface GenerateMoreButtonProps {

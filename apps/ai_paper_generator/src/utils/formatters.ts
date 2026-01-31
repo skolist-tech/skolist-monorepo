@@ -12,6 +12,8 @@ export const formatQuestionType = (type: string): string => {
       return "True/False";
     case "fill_in_the_blanks":
       return "Fill in the Blanks";
+    case "match_the_following":
+      return "Match the Following";
     default:
       return type.replace(/_/g, " ");
   }

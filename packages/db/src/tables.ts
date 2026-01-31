@@ -60,6 +60,7 @@ export const QUESTION_TYPE = {
   TRUE_OR_FALSE: "true_or_false",
   FILL_IN_THE_BLANKS: "fill_in_the_blanks",
   LONG_ANSWER: "long_answer",
+  MATCH_THE_FOLLOWING: "match_the_following",
 } as const satisfies Record<string, QuestionType>;
 
 export const HARDNESS_LEVEL = {
@@ -67,7 +68,6 @@ export const HARDNESS_LEVEL = {
   MEDIUM: "medium",
   HARD: "hard",
 } as const satisfies Record<string, HardnessLevel>;
-
 
 export type GeneratedPDF = Tables["gen_artifacts"]["Row"]; // PDFs generated in the AI Paper Generator Product
 export type InsertGeneratedPDF = Tables["gen_artifacts"]["Insert"];
@@ -95,14 +95,21 @@ export type QgenDraft = Tables["qgen_drafts"]["Row"];
 export type InsertQgenDraft = Tables["qgen_drafts"]["Insert"];
 export type UpdateQgenDraft = Tables["qgen_drafts"]["Update"];
 
-export type QgenGenerationPaneStatus = Tables["qgen_generation_panes"]["Row"]
-export type InsertQgenGenerationPaneStatus = Tables["qgen_generation_panes"]["Insert"]
-export type UpdateQgenGenerationPaneStatus = Tables["qgen_generation_panes"]["Update"]
+export type QgenGenerationPaneStatus = Tables["qgen_generation_panes"]["Row"];
+export type InsertQgenGenerationPaneStatus =
+  Tables["qgen_generation_panes"]["Insert"];
+export type UpdateQgenGenerationPaneStatus =
+  Tables["qgen_generation_panes"]["Update"];
 
-export type QgenGenerationPaneConcept = Tables["generation_pane_concepts_maps"]["Row"]
-export type InsertQgenGenerationPaneConcept = Tables["generation_pane_concepts_maps"]["Insert"]
-export type UpdateQgenGenerationPaneConcept = Tables["generation_pane_concepts_maps"]["Update"]
+export type QgenGenerationPaneConcept =
+  Tables["generation_pane_concepts_maps"]["Row"];
+export type InsertQgenGenerationPaneConcept =
+  Tables["generation_pane_concepts_maps"]["Insert"];
+export type UpdateQgenGenerationPaneConcept =
+  Tables["generation_pane_concepts_maps"]["Update"];
 
 export type ConceptAndActivity = Tables["concepts_activities_maps"]["Row"];
-export type InsertConceptAndActivity = Tables["concepts_activities_maps"]["Insert"];
-export type UpdateConceptAndActivity = Tables["concepts_activities_maps"]["Update"];
+export type InsertConceptAndActivity =
+  Tables["concepts_activities_maps"]["Insert"];
+export type UpdateConceptAndActivity =
+  Tables["concepts_activities_maps"]["Update"];

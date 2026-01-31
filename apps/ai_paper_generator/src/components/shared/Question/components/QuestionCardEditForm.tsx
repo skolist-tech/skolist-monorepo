@@ -112,7 +112,68 @@ export function QuestionCardEditForm({
           </div>
         )}
 
-        {!isMcqOrMsq && (
+        {question.question_type === "match_the_following" && (
+          <div className="space-y-4">
+            <Label>Match the Following Columns</Label>
+            <div className="grid grid-cols-2 gap-4">
+              {Object.entries(
+                (editedQuestion.match_the_following_columns as Record<
+                  string,
+                  string[]
+                >) || {}
+              ).map(([colName, items], colIdx) => (
+                <div key={colIdx} className="space-y-2">
+                  <Input
+                    value={colName}
+                    placeholder={`Column ${colIdx + 1} Name`}
+                    onChange={(e) => {
+                      const newColumns = {
+                        ...(editedQuestion.match_the_following_columns as Record<
+                          string,
+                          string[]
+                        >),
+                      };
+                      const oldItems = newColumns[colName] || [];
+                      delete newColumns[colName];
+                      newColumns[e.target.value] = oldItems;
+                      onUpdateField("match_the_following_columns", newColumns);
+                    }}
+                    className="text-xs font-bold uppercase"
+                  />
+                  {items?.map((item, itemIdx) => (
+                    <div key={itemIdx} className="flex gap-2">
+                      <span className="mt-2 min-w-[20px] text-xs font-medium">
+                        {colIdx === 0
+                          ? `${itemIdx + 1}.`
+                          : `${String.fromCharCode(65 + itemIdx)}.`}
+                      </span>
+                      <Input
+                        value={item}
+                        onChange={(e) => {
+                          const newColumns = {
+                            ...(editedQuestion.match_the_following_columns as Record<
+                              string,
+                              string[]
+                            >),
+                          };
+                          const newItems = [...(newColumns[colName] || [])];
+                          newItems[itemIdx] = e.target.value;
+                          newColumns[colName] = newItems;
+                          onUpdateField(
+                            "match_the_following_columns",
+                            newColumns
+                          );
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isMcqOrMsq && question.question_type !== "match_the_following" && (
           <div className="space-y-2">
             <Label>Answer Text</Label>
             <Textarea

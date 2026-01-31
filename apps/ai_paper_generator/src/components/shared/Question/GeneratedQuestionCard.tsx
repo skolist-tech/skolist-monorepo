@@ -22,6 +22,7 @@ import { QuestionMarks } from "./QuestionMarks";
 import { QuestionTags } from "./QuestionTags";
 import { QuestionText } from "./QuestionText";
 import { QuestionOptions } from "./QuestionOptions";
+import { QuestionMatchTheFollowing } from "./QuestionMatchTheFollowing";
 import { QuestionImages } from "./QuestionImages";
 import { ExplanationToggle } from "./ExplanationToggle";
 import { AnswerToggle } from "./AnswerToggle";
@@ -622,6 +623,8 @@ export function GeneratedQuestionCard({
         {/* Options / Answer */}
         {isMcqOrMsq ? (
           <QuestionOptions question={question} showCorrect={true} />
+        ) : question.question_type === "match_the_following" ? (
+          <QuestionMatchTheFollowing question={question} />
         ) : (
           question.answer_text && <AnswerToggle answer={question.answer_text} />
         )}

@@ -29,6 +29,7 @@ const QUESTION_TYPE_API_MAP: Record<QuestionType, string> = {
   long_answer: "long_answer",
   true_or_false: "true_false",
   fill_in_the_blanks: "fill_in_the_blank",
+  match_the_following: "match_the_following",
 };
 
 // Default values for generation pane
@@ -39,6 +40,7 @@ const DEFAULT_QUESTION_COUNTS: Record<QuestionType, number> = {
   long_answer: 2,
   true_or_false: 2,
   fill_in_the_blanks: 2,
+  match_the_following: 2,
 };
 
 interface UpAreaProps {
@@ -115,6 +117,9 @@ export function UpArea({
             fill_in_the_blanks:
               savedStatus.fill_in_the_blanks_count ??
               DEFAULT_QUESTION_COUNTS.fill_in_the_blanks,
+            match_the_following:
+              (savedStatus as any).match_the_following_count ??
+              DEFAULT_QUESTION_COUNTS.match_the_following,
           });
           setTotalQuestions(savedStatus.total_questions_count ?? 12);
           setTotalMarks(savedStatus.total_marks_count ?? 30);
@@ -252,8 +257,36 @@ export function UpArea({
   const handleQuestionCountChange = (type: QuestionType, count: number) => {
     setQuestionCounts((prev) => {
       const newCounts = { ...prev, [type]: count };
-      const newTotal = Object.values(newCounts).reduce((a, b) => a + b, 0);
+      const newTotal = Object.entries(newCounts).reduce(
+        (sum, [, val]) => sum + val,
+        0
+      );
       setTotalQuestions(newTotal);
+
+      // Simple mark/time estimation based on counts (if they are still at default/sync levels)
+      // This helps with the "relevant constraints" objective
+      const estimatedMarks =
+        newCounts.mcq4 * 1 +
+        newCounts.msq4 * 1 +
+        newCounts.true_or_false * 1 +
+        newCounts.fill_in_the_blanks * 1 +
+        newCounts.short_answer * 3 +
+        newCounts.long_answer * 5 +
+        newCounts.match_the_following * 4;
+
+      const estimatedTime =
+        newCounts.mcq4 * 1 +
+        newCounts.msq4 * 2 +
+        newCounts.true_or_false * 1 +
+        newCounts.fill_in_the_blanks * 1 +
+        newCounts.short_answer * 5 +
+        newCounts.long_answer * 15 +
+        newCounts.match_the_following * 5;
+
+      // Only auto-update if they are close to old defaults or at low values
+      if (totalMarks <= 30) setTotalMarks(estimatedMarks);
+      if (totalTime <= 60) setTotalTime(estimatedTime);
+
       return newCounts;
     });
   };
@@ -263,16 +296,6 @@ export function UpArea({
     setTotalQuestions(newTotal);
 
     setQuestionCounts((prev) => {
-      // If increasing, just add to MCQ (first priority)
-      if (diff > 0) {
-        return {
-          ...prev,
-          mcq4: prev.mcq4 + diff,
-        };
-      }
-
-      // If decreasing, cascade through types
-      let remainingDiff = Math.abs(diff);
       const newCounts = { ...prev };
 
       const priorityOrder: QuestionType[] = [
@@ -282,16 +305,33 @@ export function UpArea({
         "long_answer",
         "true_or_false",
         "fill_in_the_blanks",
+        "match_the_following",
       ];
 
-      for (const type of priorityOrder) {
-        if (remainingDiff === 0) break;
+      if (diff > 0) {
+        // Distribute increase among active types first, then MCQ
+        let remainingDiff = diff;
+        const activeTypes = priorityOrder.filter((t) => prev[t] > 0);
+        const typesToIncrement =
+          activeTypes.length > 0 ? activeTypes : ["mcq4" as QuestionType];
 
-        const currentCount = newCounts[type];
-        const deduct = Math.min(currentCount, remainingDiff);
-
-        newCounts[type] = currentCount - deduct;
-        remainingDiff -= deduct;
+        while (remainingDiff > 0) {
+          for (const type of typesToIncrement) {
+            if (remainingDiff === 0) break;
+            newCounts[type] = (newCounts[type] || 0) + 1;
+            remainingDiff--;
+          }
+        }
+      } else if (diff < 0) {
+        // Cascade decrease
+        let remainingDiff = Math.abs(diff);
+        for (const type of priorityOrder) {
+          if (remainingDiff === 0) break;
+          const currentCount = newCounts[type];
+          const deduct = Math.min(currentCount, remainingDiff);
+          newCounts[type] = currentCount - deduct;
+          remainingDiff -= deduct;
+        }
       }
 
       return newCounts;
@@ -448,6 +488,7 @@ export function UpArea({
           long_answer_count: questionCounts.long_answer,
           true_false_count: questionCounts.true_or_false,
           fill_in_the_blanks_count: questionCounts.fill_in_the_blanks,
+          match_the_following_count: questionCounts.match_the_following,
           difficulty_level_easy_count: hardnessLevels.easy,
           difficulty_level_medium_count: hardnessLevels.medium,
           difficulty_level_hard_count: hardnessLevels.hard,

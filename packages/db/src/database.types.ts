@@ -463,6 +463,7 @@ export type Database = {
           is_in_draft: boolean
           is_page_break_below: boolean
           marks: number
+          match_the_following_columns: Json | null
           msq_option1_answer: boolean | null
           msq_option2_answer: boolean | null
           msq_option3_answer: boolean | null
@@ -488,6 +489,7 @@ export type Database = {
           is_in_draft?: boolean
           is_page_break_below?: boolean
           marks: number
+          match_the_following_columns?: Json | null
           msq_option1_answer?: boolean | null
           msq_option2_answer?: boolean | null
           msq_option3_answer?: boolean | null
@@ -513,6 +515,7 @@ export type Database = {
           is_in_draft?: boolean
           is_page_break_below?: boolean
           marks?: number
+          match_the_following_columns?: Json | null
           msq_option1_answer?: boolean | null
           msq_option2_answer?: boolean | null
           msq_option3_answer?: boolean | null
@@ -663,6 +666,24 @@ export type Database = {
           },
         ]
       }
+      phonenum_otps: {
+        Row: {
+          created_at: string
+          otp: string
+          phone_number: string
+        }
+        Insert: {
+          created_at?: string
+          otp: string
+          phone_number: string
+        }
+        Update: {
+          created_at?: string
+          otp?: string
+          phone_number?: string
+        }
+        Relationships: []
+      }
       qgen_draft_instructions_drafts_maps: {
         Row: {
           created_at: string
@@ -737,7 +758,7 @@ export type Database = {
           id: string
           institute_name: string | null
           logo_url: string | null
-          max_position: number
+          max_position: number | null
           maximum_marks: number | null
           paper_datetime: string | null
           paper_duration: string | null
@@ -753,7 +774,7 @@ export type Database = {
           id?: string
           institute_name?: string | null
           logo_url?: string | null
-          max_position?: number
+          max_position?: number | null
           maximum_marks?: number | null
           paper_datetime?: string | null
           paper_duration?: string | null
@@ -769,7 +790,7 @@ export type Database = {
           id?: string
           institute_name?: string | null
           logo_url?: string | null
-          max_position?: number
+          max_position?: number | null
           maximum_marks?: number | null
           paper_datetime?: string | null
           paper_duration?: string | null
@@ -800,6 +821,7 @@ export type Database = {
           fill_in_the_blanks_count: number | null
           id: string
           long_answer_count: number | null
+          match_the_following_count: number
           mcq_count: number | null
           msq_count: number | null
           school_class_id: string | null
@@ -821,6 +843,7 @@ export type Database = {
           fill_in_the_blanks_count?: number | null
           id?: string
           long_answer_count?: number | null
+          match_the_following_count?: number
           mcq_count?: number | null
           msq_count?: number | null
           school_class_id?: string | null
@@ -842,6 +865,7 @@ export type Database = {
           fill_in_the_blanks_count?: number | null
           id?: string
           long_answer_count?: number | null
+          match_the_following_count?: number
           mcq_count?: number | null
           msq_count?: number | null
           school_class_id?: string | null
@@ -994,7 +1018,6 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           credits: number
-          dark_mode: boolean
           email: string | null
           id: string
           last_active_at: string
@@ -1012,7 +1035,6 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           credits?: number
-          dark_mode?: boolean
           email?: string | null
           id: string
           last_active_at?: string
@@ -1030,7 +1052,6 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           credits?: number
-          dark_mode?: boolean
           email?: string | null
           id?: string
           last_active_at?: string
@@ -1058,7 +1079,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_question_position_and_section_ids: {
+        Args: { updates: Json }
+        Returns: undefined
+      }
     }
     Enums: {
       hardness_level_enum: "easy" | "medium" | "hard"
@@ -1070,6 +1094,7 @@ export type Database = {
         | "true_or_false"
         | "fill_in_the_blanks"
         | "long_answer"
+        | "match_the_following"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1206,6 +1231,7 @@ export const Constants = {
         "true_or_false",
         "fill_in_the_blanks",
         "long_answer",
+        "match_the_following",
       ],
     },
   },

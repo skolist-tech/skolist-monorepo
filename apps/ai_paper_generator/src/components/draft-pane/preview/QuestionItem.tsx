@@ -53,6 +53,53 @@ export const QuestionItem = ({
               })}
             </div>
           )}
+          {question.question_type === "match_the_following" && (
+            <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-2">
+              {/* Headers */}
+              {Object.keys(
+                (question.match_the_following_columns as Record<
+                  string,
+                  string[]
+                >) || {}
+              ).map((name, i) => (
+                <div key={i} className="text-sm font-bold uppercase underline">
+                  {name}
+                </div>
+              ))}
+              {/* Items */}
+              {(() => {
+                const cols =
+                  (question.match_the_following_columns as Record<
+                    string,
+                    string[]
+                  >) || {};
+                const colNames = Object.keys(cols);
+                if (colNames.length < 2) return null;
+
+                const leftColName = colNames[0] as string;
+                const rightColName = colNames[1] as string;
+
+                const leftCol = cols[leftColName] || [];
+                const rightCol = cols[rightColName] || [];
+                const maxRows = Math.max(leftCol.length, rightCol.length);
+
+                return Array.from({ length: maxRows }).map((_, i) => (
+                  <div key={i} className="contents">
+                    <div className="flex items-start gap-2 text-sm">
+                      <span className="font-semibold">{i + 1}.</span>
+                      <LatexRenderer content={leftCol[i] || ""} />
+                    </div>
+                    <div className="flex items-start gap-2 text-sm">
+                      <span className="font-semibold">
+                        {String.fromCharCode(65 + i)}.
+                      </span>
+                      <LatexRenderer content={rightCol[i] || ""} />
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          )}
           {/* Render Options if MCQ/MSQ */}
           {(["mcq4", "msq4"] as string[]).includes(question.question_type) && (
             <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">

@@ -8,6 +8,7 @@ import {
   Circle,
   Underline,
   ListChecks,
+  Columns,
 } from "lucide-react";
 
 interface QuestionTypeSelectorProps {
@@ -49,6 +50,11 @@ const QUESTION_TYPES: Array<{
     type: QUESTION_TYPE.FILL_IN_THE_BLANKS,
     label: "Fill in the Blanks",
     icon: <Underline className="h-4 w-4 text-primary" />,
+  },
+  {
+    type: QUESTION_TYPE.MATCH_THE_FOLLOWING,
+    label: "Match the Following",
+    icon: <Columns className="h-4 w-4 text-primary" />,
   },
 ];
 
