@@ -58,7 +58,7 @@ export function LatexRenderer({
   return (
     <span
       className={className}
-      style={style}
+      style={{ whiteSpace: "pre-wrap", ...style }}
       dangerouslySetInnerHTML={{ __html: renderedContent }}
     />
   );
@@ -113,7 +113,7 @@ export function LatexHtmlRenderer({
   return (
     <div
       className={className}
-      style={style}
+      style={{ whiteSpace: "pre-wrap", ...style }}
       dangerouslySetInnerHTML={{ __html: renderedContent }}
     />
   );
