@@ -22,6 +22,7 @@
     "@skolist/utils": "workspace:*",
     "@tanstack/react-query": "^5.90.20",
     "@types/katex": "^0.16.8",
+    "fabric": "^7.1.0",
     "html-to-image": "^1.11.13",
     "katex": "^0.16.27",
     "lottie-react": "^2.4.1",
