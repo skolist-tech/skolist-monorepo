@@ -50,7 +50,7 @@ export function RegeneratePopover({
               onChange={(e) => setPrompt(e.target.value)}
               className="h-16 resize-none py-2 text-sm"
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                   e.preventDefault();
                   onRegenerateSubmit();
                 }
