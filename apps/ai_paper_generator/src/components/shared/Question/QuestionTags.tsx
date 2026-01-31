@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@skolist/ui";
-import { ChevronDown } from "lucide-react";
+
 import type { GeneratedQuestion, HardnessLevel } from "@skolist/db";
 
 interface QuestionTagsProps {
