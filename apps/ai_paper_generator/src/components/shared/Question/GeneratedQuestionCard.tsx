@@ -289,7 +289,7 @@ export function GeneratedQuestionCard({
   return (
     <div
       ref={cardRef}
-      className={`group relative rounded-lg border bg-background p-4 shadow-sm transition-all hover:shadow-md ${
+      className={`group relative min-h-[140px] rounded-lg border bg-background p-4 shadow-sm transition-all hover:shadow-md ${
         isSelected ? "border-primary ring-2 ring-primary" : ""
       } ${anims.slideDirection ? "pointer-events-none" : ""} ${anims.isDisintegrating ? "pointer-events-none" : ""}`}
       style={{
@@ -437,7 +437,7 @@ export function GeneratedQuestionCard({
 
         {/* Reorder Buttons */}
         {showReorder && (
-          <div className="absolute -right-3 top-1/2 flex -translate-y-1/2 transform flex-col gap-1">
+          <div className="absolute -right-3 top-1/2 z-50 flex -translate-y-1/2 transform flex-col gap-1">
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -453,7 +453,7 @@ export function GeneratedQuestionCard({
                     <ChevronUp className="h-3 w-3" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent side="left">
                   <p>Move Up</p>
                 </TooltipContent>
               </Tooltip>
@@ -473,7 +473,7 @@ export function GeneratedQuestionCard({
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent side="left">
                   <p>Move Down</p>
                 </TooltipContent>
               </Tooltip>
@@ -526,7 +526,7 @@ export function GeneratedQuestionCard({
         )}
       </div>
 
-      <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+      <div className="absolute bottom-2 right-2 z-10 flex flex-col gap-1">
         {dragHandleProps && (
           <TooltipProvider delayDuration={0}>
             <Tooltip>
@@ -540,7 +540,7 @@ export function GeneratedQuestionCard({
                   <GripVertical className="!h-6 !w-6" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent side="left">
                 <p>Drag to Reorder</p>
               </TooltipContent>
             </Tooltip>
@@ -560,7 +560,7 @@ export function GeneratedQuestionCard({
                       <Info className="!h-6 !w-6" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent side="left">
                     <p>View Concepts</p>
                   </TooltipContent>
                 </Tooltip>
