@@ -23,6 +23,7 @@ import { QuestionTags } from "./QuestionTags";
 import { QuestionText } from "./QuestionText";
 import { QuestionOptions } from "./QuestionOptions";
 import { QuestionImages } from "./QuestionImages";
+import { ExplanationToggle } from "./ExplanationToggle";
 import { LatexRenderer } from "../LatexRenderer";
 import { ConfirmDialog } from "../ConfirmDialog";
 
@@ -571,12 +572,9 @@ export function GeneratedQuestionCard({
           )
         )}
 
-        {/* Explanation */}
+        {/* Explanation - Read More Style */}
         {question.explanation && (
-          <div className="mt-2 text-sm text-muted-foreground">
-            <span className="font-semibold">Explanation: </span>
-            <LatexRenderer content={question.explanation} />
-          </div>
+          <ExplanationToggle explanation={question.explanation} />
         )}
       </div>
 
