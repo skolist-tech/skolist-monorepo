@@ -44,7 +44,7 @@ export const CARD_ACTIONS_CONFIG: ActionConfig[] = [
   },
   {
     id: "attachment",
-    label: "Attach Image",
+    label: "Attach Figure",
     mobile: { location: "menu", order: 40, visible: true },
     desktop: { order: 40, visible: true },
   },

@@ -205,12 +205,12 @@ export function QuestionCardActions({
                       className={`${iconSizeClass} text-muted-foreground hover:text-primary`}
                     />
                   )}
-                  {mode === "menu" && <span>Attach Image</span>}
+                  {mode === "menu" && <span>Attach Figure</span>}
                 </Button>
               </TooltipTrigger>
               {mode === "icon" && (
                 <TooltipContent>
-                  <p>Attach Image</p>
+                  <p>Attach Figure</p>
                 </TooltipContent>
               )}
             </Tooltip>

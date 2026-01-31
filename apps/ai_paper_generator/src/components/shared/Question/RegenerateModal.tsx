@@ -81,7 +81,7 @@ export function RegenerateModal({
             <Label htmlFor="image" className="cursor-pointer">
               <div className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
                 <ImagePlus className="h-4 w-4" />
-                <span>Attach Image (optional)</span>
+                <span>Attach Figure (optional)</span>
               </div>
             </Label>
             <input

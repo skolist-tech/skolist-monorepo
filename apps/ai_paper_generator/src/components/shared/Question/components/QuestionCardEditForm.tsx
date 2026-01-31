@@ -176,7 +176,7 @@ export function QuestionCardEditForm({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Attach Image</p>
+                <p>Attach Figure</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
