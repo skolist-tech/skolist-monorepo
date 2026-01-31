@@ -24,7 +24,7 @@ import { QuestionText } from "./QuestionText";
 import { QuestionOptions } from "./QuestionOptions";
 import { QuestionImages } from "./QuestionImages";
 import { ExplanationToggle } from "./ExplanationToggle";
-import { LatexRenderer } from "../LatexRenderer";
+import { AnswerToggle } from "./AnswerToggle";
 import { ConfirmDialog } from "../ConfirmDialog";
 
 // Hooks
@@ -564,12 +564,7 @@ export function GeneratedQuestionCard({
         {isMcqOrMsq ? (
           <QuestionOptions question={question} showCorrect={true} />
         ) : (
-          question.answer_text && (
-            <div className="mt-2 rounded-md bg-muted/50 p-3 text-sm">
-              <span className="font-semibold text-primary">Answer: </span>
-              <LatexRenderer content={question.answer_text} />
-            </div>
-          )
+          question.answer_text && <AnswerToggle answer={question.answer_text} />
         )}
 
         {/* Explanation - Read More Style */}
