@@ -27,6 +27,7 @@ import { calculateDragUpdates } from "../../utils/questionDragLogic";
 import { moveQuestionsToDraftBatch } from "../../services/questionService";
 import { AddCustomQuestionGlobal } from "./structure/AddCustomQuestionGlobal";
 import { SortableSection } from "./structure/SortableSection";
+import { ImportBulkQuestions } from "./structure/ImportBulkQuestions";
 
 export function PaperStructure() {
   const { toast } = useToast();
@@ -82,7 +83,7 @@ export function PaperStructure() {
     }
   }, [sections, prevSections]);
   const { questions, updateQuestionLocal } = useQuestionsContext();
-  
+
   if (isLoading || !draft) {
     return <div className="p-4 text-center">Loading draft structure...</div>;
   }
@@ -92,7 +93,6 @@ export function PaperStructure() {
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
-
 
   const handleDragOver = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -305,6 +305,7 @@ export function PaperStructure() {
             </div>
             <div className="flex items-center gap-1 md:gap-2">
               <AddCustomQuestionGlobal sections={sections} />
+              <ImportBulkQuestions />
               <Button
                 size="sm"
                 variant="outline"

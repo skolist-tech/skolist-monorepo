@@ -403,4 +403,75 @@ export const fastApiService = {
       throw error;
     }
   },
+  /**
+   * info: Calls the FastAPI backend to extract questions from a file (image/PDF)
+   * endpoint: POST /api/v1/qgen/extract_questions
+   * @param file - Image or PDF file containing questions to extract
+   * @param activity_id - UUID of the activity
+   * @param qgen_draft_id - UUID of the draft to add section to
+   * @param prompt - Optional custom instructions for extraction
+   * @param section_name - Optional name for the new section
+   * @returns Object with section_id, section_name, questions_extracted count, and question IDs
+   */
+  async extractQuestions(
+    file: File,
+    activity_id: string,
+    qgen_draft_id: string,
+    prompt?: string,
+    section_name?: string
+  ): Promise<{
+    section_id: string | null;
+    section_name: string | null;
+    questions_extracted: number;
+    questions: { id: string; question_type: string }[];
+  }> {
+    try {
+      const {
+        data: { session },
+      } = await getSupabaseClient().auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error("User not authenticated");
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("activity_id", activity_id);
+      formData.append("qgen_draft_id", qgen_draft_id);
+
+      if (prompt) {
+        formData.append("prompt", prompt);
+      }
+
+      if (section_name) {
+        formData.append("section_name", section_name);
+      }
+
+      const response = await fetch(`${API_URL}/api/v1/qgen/extract_questions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Note: Don't set Content-Type for FormData, browser will set it with boundary
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        if (response.status === 402) {
+          window.dispatchEvent(new Event("credits-exhausted"));
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail ||
+            `Failed to extract questions: ${response.statusText}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error extracting questions:", error);
+      throw error;
+    }
+  },
 };

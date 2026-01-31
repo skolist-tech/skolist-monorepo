@@ -57,6 +57,7 @@ interface DraftContextValue {
     sectionId: string,
     index: number
   ) => Promise<void>;
+  refetchSections: () => Promise<void>;
 
   // Instructions
   addInstruction: (text: string) => Promise<void>;
@@ -73,7 +74,9 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   const { questions, updateQuestionLocal } = useQuestionsContext();
   const [draft, setDraft] = useState<QgenDraft | null>(null);
   const [sections, setSections] = useState<QgenDraftSection[]>([]);
-  const [instructions, setInstructions] = useState<QgenDraftInstructionAndQgenDraft[]>([]);
+  const [instructions, setInstructions] = useState<
+    QgenDraftInstructionAndQgenDraft[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [logoVersion, setLogoVersion] = useState(0);
 
@@ -175,6 +178,16 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       console.error("Failed to delete section:", err);
     }
   }, []);
+
+  const refetchSections = useCallback(async () => {
+    if (!draft?.id) return;
+    try {
+      const sectionsData = await fetchSections(draft.id);
+      setSections(sectionsData);
+    } catch (err) {
+      console.error("Failed to refetch sections:", err);
+    }
+  }, [draft?.id]);
 
   const moveSection = useCallback(
     async (activeId: string, overId: string) => {
@@ -359,6 +372,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       removeSection,
       moveSection,
       moveQuestionToSection,
+      refetchSections,
       addInstruction,
       editInstruction,
       removeInstruction,
@@ -376,6 +390,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       removeSection,
       moveSection,
       moveQuestionToSection,
+      refetchSections,
       addInstruction,
       editInstruction,
       removeInstruction,
