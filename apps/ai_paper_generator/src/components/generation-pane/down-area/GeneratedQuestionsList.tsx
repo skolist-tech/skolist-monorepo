@@ -9,6 +9,7 @@ interface GeneratedQuestionsListProps {
   isGenerating: boolean;
   selectedIds: Set<string>;
   animatingIds: Set<string>;
+  deletingIds: Set<string>;
   onMoveToDraft: (ids: string[]) => Promise<void>;
   onSaveQuestion: (question: GeneratedQuestionWithConcepts) => Promise<void>;
   onDeleteQuestion: (id: string) => Promise<void>;
@@ -22,6 +23,7 @@ export function GeneratedQuestionsList({
   isGenerating,
   selectedIds,
   animatingIds,
+  deletingIds,
   onMoveToDraft,
   onSaveQuestion,
   onDeleteQuestion,
@@ -58,6 +60,7 @@ export function GeneratedQuestionsList({
           isSelected={selectedIds.has(question.id)}
           onSelect={(selected) => onToggleSelect(question.id, selected)}
           isAnimating={animatingIds.has(question.id)}
+          isDeleting={deletingIds.has(question.id)}
         />
       ))}
 
@@ -78,6 +81,7 @@ export function GeneratedQuestionsList({
           isSelected={selectedIds.has(question.id)}
           onSelect={(selected) => onToggleSelect(question.id, selected)}
           isAnimating={animatingIds.has(question.id)}
+          isDeleting={deletingIds.has(question.id)}
         />
       ))}
     </div>

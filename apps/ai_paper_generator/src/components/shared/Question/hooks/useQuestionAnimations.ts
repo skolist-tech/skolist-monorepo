@@ -4,11 +4,13 @@ import { type GeneratedQuestionWithConcepts } from "../../../../services/questio
 interface UseQuestionAnimationsProps {
   question: GeneratedQuestionWithConcepts;
   isAnimatingProp?: boolean; // External trigger (e.g. bulk move)
+  isDeletingProp?: boolean; // External trigger for delete animation (e.g. bulk delete)
 }
 
 export function useQuestionAnimations({
   question,
   isAnimatingProp = false,
+  isDeletingProp = false,
 }: UseQuestionAnimationsProps) {
   // -- Slide Animation --
   const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(
@@ -23,6 +25,13 @@ export function useQuestionAnimations({
 
   // -- Delete / Disintegrate Animation --
   const [isDisintegrating, setIsDisintegrating] = useState(false);
+
+  // Trigger disintegrate animation when isDeletingProp becomes true
+  useEffect(() => {
+    if (isDeletingProp && !isDisintegrating) {
+      setIsDisintegrating(true);
+    }
+  }, [isDeletingProp, isDisintegrating]);
 
   const particleData = useMemo(
     () =>

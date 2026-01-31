@@ -58,6 +58,7 @@ interface GeneratedQuestionCardProps {
   isSelected?: boolean;
   onSelect?: (selected: boolean) => void;
   isAnimating?: boolean; // External trigger for slide animation (used for bulk moves)
+  isDeleting?: boolean; // External trigger for delete animation (used for bulk deletes)
   onAutoCorrect?: (questionId: string) => Promise<void>; // Optional override for auto-correct (useful for Storybook)
   onRegenerateWithPrompt?: (
     questionId: string,
@@ -81,6 +82,7 @@ export function GeneratedQuestionCard({
   isSelected = false,
   onSelect,
   isAnimating = false,
+  isDeleting = false,
   onAutoCorrect,
   onRegenerateWithPrompt,
   dragHandleProps,
@@ -93,6 +95,7 @@ export function GeneratedQuestionCard({
   const anims = useQuestionAnimations({
     question,
     isAnimatingProp: isAnimating,
+    isDeletingProp: isDeleting,
   });
 
   // -- Handlers (Logic bridging hooks and props) --

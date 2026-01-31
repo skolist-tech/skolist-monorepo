@@ -8,7 +8,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@skolist/ui";
-import { Filter } from "lucide-react";
+import { Filter, Trash2 } from "lucide-react";
 import { useQuestionsContext } from "../../../context/QuestionsContext";
 import type { HardnessLevel } from "@skolist/db";
 import { GenerateMoreButton } from "./GenerateMoreButton";
@@ -18,6 +18,7 @@ import { useSmartDraftActions } from "../../../hooks/useSmartDraftActions";
 import { useQuestionFilters } from "./hooks/useQuestionFilters";
 import { useQuestionSelection } from "./hooks/useQuestionSelection";
 import { GeneratedQuestionsList } from "./GeneratedQuestionsList";
+import { ConfirmDialog } from "../../shared/ConfirmDialog";
 
 interface DownAreaProps {
   hardnessLevels: Record<HardnessLevel, number>;
@@ -54,11 +55,17 @@ export function DownArea({
   const {
     selectedIds,
     isBulkMoving,
+    isBulkDeleting,
     animatingIds,
+    deletingIds,
     isAllSelected,
+    isDeleteConfirmOpen,
+    setIsDeleteConfirmOpen,
     handleToggleSelect,
     handleSelectAll,
     handleBulkMoveToDraft,
+    handleBulkDeleteClick,
+    handleBulkDeleteConfirm,
   } = useQuestionSelection({ visibleQuestions });
 
   // Split visible questions based on is_old_local attribute
@@ -177,10 +184,26 @@ export function DownArea({
             <GenerateMoreButton hardnessLevels={hardnessLevels} />
 
             <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDeleteClick}
+              disabled={
+                selectedIds.size === 0 || isBulkDeleting || isBulkMoving
+              }
+              className="gap-1"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Delete</span>
+              {selectedIds.size > 0 && ` (${selectedIds.size})`}
+            </Button>
+
+            <Button
               className="bg-orange-500 text-white hover:bg-orange-600"
               size="sm"
               onClick={handleBulkMoveToDraft}
-              disabled={selectedIds.size === 0 || isBulkMoving}
+              disabled={
+                selectedIds.size === 0 || isBulkMoving || isBulkDeleting
+              }
             >
               <span className="hidden sm:inline">Move To Draft</span>
               <span className="sm:hidden">Move</span>
@@ -201,6 +224,7 @@ export function DownArea({
           isGenerating={isGenerating}
           selectedIds={selectedIds}
           animatingIds={animatingIds}
+          deletingIds={deletingIds}
           onMoveToDraft={(ids) => handleSmartMoveToDraft(ids)}
           onSaveQuestion={saveQuestion}
           onDeleteQuestion={deleteQuestion}
@@ -208,6 +232,17 @@ export function DownArea({
           onToggleSelect={handleToggleSelect}
         />
       </div>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+        title="Delete Questions"
+        description={`Are you sure you want to delete ${selectedIds.size} question${selectedIds.size > 1 ? "s" : ""}? This action cannot be undone.`}
+        onConfirm={handleBulkDeleteConfirm}
+        variant="destructive"
+        confirmLabel="Delete"
+      />
     </div>
   );
 }
