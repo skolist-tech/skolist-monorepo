@@ -43,6 +43,7 @@ const createMockQuestion = (
   msq_option2_answer: false,
   msq_option3_answer: false,
   msq_option4_answer: false,
+  match_the_following_columns: "",
   explanation:
     "Using the power rule, the derivative of $x^2$ is $2x$, and the derivative of $3x$ is $3$. The constant $2$ has a derivative of $0$.",
   marks: 4,

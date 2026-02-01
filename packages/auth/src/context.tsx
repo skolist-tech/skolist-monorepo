@@ -1,3 +1,5 @@
+"use client";
+
 import {
   createContext,
   useContext,
@@ -55,9 +57,13 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
   children: ReactNode;
+  apiUrl?: string;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({
+  children,
+  apiUrl = "http://localhost:8080",
+}: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,8 +179,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const checkUserExists = useCallback(async (phone: string) => {
     try {
-      const apiUrl =
-        import.meta.env.VITE_FASTAPI_URL || "http://localhost:8080";
+      // Use the apiUrl from props
       const response = await fetch(
         `${apiUrl}/api/v1/security/check_phone_number`,
         {

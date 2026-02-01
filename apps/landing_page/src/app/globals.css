@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import "@skolist/ui/globals.css";
 
 /* Landing page specific styles */

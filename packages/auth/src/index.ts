@@ -11,6 +11,8 @@ export {
   isAuthenticated,
 } from "./client";
 
+export { initializeFirebase } from "./firebase";
+
 // Context & Hooks
 export { AuthProvider, useAuth, type AuthContextValue } from "./context";
 

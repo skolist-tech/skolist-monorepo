@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 export function Footer() {
   return (
@@ -11,9 +11,10 @@ export function Footer() {
               Skolist
             </h3>
             <p className="max-w-xs text-xs leading-relaxed text-blue-200">
-              Empowering School with
-Personalized
-Student Strategies
+              Empowering Schools to Provide Personalized Strategy-Based Learning
+              for Every Child's Better Future. AI-powered platform to identify
+              learning gaps and implement strategic solutions. Free pilot
+              program available.
             </p>
           </div>
 
@@ -23,14 +24,17 @@ Student Strategies
               Quick Links
             </h3>
             <div className="flex gap-8 text-sm font-medium text-blue-100">
-              <Link to="/" className="transition-colors hover:text-white">
+              <Link href="/" className="transition-colors hover:text-white">
                 Home
               </Link>
-              <Link to="/vision" className="transition-colors hover:text-white">
+              <Link
+                href="/vision"
+                className="transition-colors hover:text-white"
+              >
                 Vision
               </Link>
               <Link
-                to="/contact"
+                href="/contact"
                 className="transition-colors hover:text-white"
               >
                 Contact
@@ -52,7 +56,7 @@ Student Strategies
           </div>
         </div>
 
-        <div className="border-t border-blue-900/50 md:pt-8 text-center">
+        <div className="border-t border-blue-900/50 text-center md:pt-8">
           <p className="text-[10px] font-medium text-blue-300">
             2025 Skolist. Built by IIT Founders.
           </p>

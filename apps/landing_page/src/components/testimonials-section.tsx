@@ -1,3 +1,5 @@
+"use client";
+
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -93,7 +95,7 @@ export function TestimonialsSection() {
   return (
     <section className="overflow-hidden bg-white py-8 md:py-24">
       <div className="container mx-auto px-4">
-        <h2 className="mb-8 md:mb-20 text-center text-4xl font-bold tracking-tight text-[#1a2b3b]">
+        <h2 className="mb-8 text-center text-4xl font-bold tracking-tight text-[#1a2b3b] md:mb-20">
           Know What Other Schools Have To Say!
         </h2>
 

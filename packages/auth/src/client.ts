@@ -32,25 +32,36 @@ let supabaseClient: SupabaseClient | null = null;
 
 /**
  * Get environment variables for Supabase
- * Supports both VITE_ prefix (for Vite apps) and fallback
+ * Supports both VITE_ prefix (for Vite apps) and NEXT_PUBLIC_ prefix (for Next.js apps)
  */
 function getSupabaseConfig() {
   // Try VITE_ prefix first (Vite apps)
-  const url =
+  let url =
     (typeof import.meta !== "undefined" &&
       (import.meta as unknown as { env?: Record<string, string> }).env
         ?.VITE_SUPABASE_URL) ||
     "";
-  const anonKey =
+  let anonKey =
     (typeof import.meta !== "undefined" &&
       (import.meta as unknown as { env?: Record<string, string> }).env
         ?.VITE_SUPABASE_ANON_KEY) ||
     "";
-  const cookieDomain =
+  let cookieDomain =
     (typeof import.meta !== "undefined" &&
       (import.meta as unknown as { env?: Record<string, string> }).env
         ?.VITE_COOKIE_DOMAIN) ||
     "";
+
+  // Fallback to NEXT_PUBLIC_ prefix (Next.js apps)
+  if (!url && typeof process !== "undefined" && process.env) {
+    url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  }
+  if (!anonKey && typeof process !== "undefined" && process.env) {
+    anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+  }
+  if (!cookieDomain && typeof process !== "undefined" && process.env) {
+    cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || "";
+  }
 
   return { url, anonKey, cookieDomain };
 }

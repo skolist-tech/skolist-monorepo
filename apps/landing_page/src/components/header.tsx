@@ -1,14 +1,17 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@skolist/ui";
 import { useAuth, UserMenu } from "@skolist/auth";
 
 export function Header() {
   const { isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
+  const pathname = usePathname();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => pathname === path;
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
@@ -29,7 +32,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <div className="flex flex-1 items-center">
-          <Link to="/" className="flex items-center">
+          <Link href="/" className="flex items-center">
             <img
               src={isDarkMode ? "/logo.svg" : "/logo.svg"}
               alt="Skolist Logo"
@@ -40,16 +43,16 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-8 md:flex">
-          <Link to="/" className={navLinkClass("/")}>
+          <Link href="/" className={navLinkClass("/")}>
             Home
           </Link>
-          <Link to="/vision" className={navLinkClass("/vision")}>
+          <Link href="/vision" className={navLinkClass("/vision")}>
             Vision
           </Link>
-          {/* <Link to="/product" className={navLinkClass("/product")}>
+          {/* <Link href="/product" className={navLinkClass("/product")}>
             Product
           </Link> */}
-          <Link to="/contact" className={navLinkClass("/contact")}>
+          <Link href="/contact" className={navLinkClass("/contact")}>
             Contact
           </Link>
         </nav>
@@ -59,7 +62,7 @@ export function Header() {
             <UserMenu />
           ) : (
             <Button asChild className="bg-blue-900">
-              <Link to="/login">Sign Up</Link>
+              <Link href="/login">Sign Up</Link>
             </Button>
           )}
         </div>
@@ -70,7 +73,7 @@ export function Header() {
             <UserMenu />
           ) : (
             <Button asChild size="sm" className="bg-blue-900">
-              <Link to="/login">Sign Up</Link>
+              <Link href="/login">Sign Up</Link>
             </Button>
           )}
 
@@ -117,28 +120,28 @@ export function Header() {
         <div className="border-t bg-background md:hidden">
           <nav className="container flex flex-col gap-4 py-4">
             <Link
-              to="/"
+              href="/"
               className={`py-2 ${navLinkClass("/")}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Home
             </Link>
             <Link
-              to="/vision"
+              href="/vision"
               className={`py-2 ${navLinkClass("/vision")}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Vision
             </Link>
             {/* <Link
-              to="/product"
+              href="/product"
               className={`py-2 ${navLinkClass("/product")}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Product
             </Link> */}
             <Link
-              to="/contact"
+              href="/contact"
               className={`py-2 ${navLinkClass("/contact")}`}
               onClick={() => setMobileMenuOpen(false)}
             >

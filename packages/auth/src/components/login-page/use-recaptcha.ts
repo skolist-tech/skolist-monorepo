@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { RecaptchaVerifier } from "firebase/auth";
-import { firebaseAuth } from "../../firebase";
+import { getFirebaseAuth } from "../../firebase";
 
 declare global {
   interface Window {
@@ -47,7 +47,7 @@ export function useRecaptcha(authMethod: "phone" | "email", otpSent: boolean) {
     }
 
     const verifier = new RecaptchaVerifier(
-      firebaseAuth,
+      getFirebaseAuth(),
       recaptchaContainerRef.current,
       {
         size: "invisible",

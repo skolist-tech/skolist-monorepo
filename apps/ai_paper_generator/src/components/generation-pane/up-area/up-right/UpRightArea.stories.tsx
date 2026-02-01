@@ -22,6 +22,7 @@ const defaultQuestionCounts: Record<QuestionType, number> = {
   long_answer: 2,
   true_or_false: 2,
   fill_in_the_blanks: 2,
+  match_the_following: 2,
 };
 
 const defaultHardnessLevels: Record<HardnessLevel, number> = {
@@ -74,6 +75,7 @@ export const WithCustomValues: Story = {
       long_answer: 1,
       true_or_false: 2,
       fill_in_the_blanks: 2,
+      match_the_following: 2,
     },
     hardnessLevels: {
       easy: 10,
@@ -99,6 +101,7 @@ export const WithValidationState: Story = {
       long_answer: 0,
       true_or_false: 0,
       fill_in_the_blanks: 0,
+      match_the_following: 0,
     },
   },
 };

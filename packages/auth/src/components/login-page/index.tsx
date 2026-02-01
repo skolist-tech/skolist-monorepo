@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +16,7 @@ import {
 } from "../../schemas";
 
 import { signInWithPhoneNumber, type ConfirmationResult } from "firebase/auth";
-import { firebaseAuth } from "../../firebase";
+import { getFirebaseAuth } from "../../firebase";
 import {
   LeftPanel,
   LeftPanelHeadline,
@@ -41,6 +43,8 @@ interface LoginPageProps {
   productTagline?: string;
   showLeftPanel?: boolean;
   logoUrl?: string;
+  apiUrl?: string;
+  isPhoneAvailable?: boolean;
 }
 
 export function LoginPage({
@@ -51,6 +55,8 @@ export function LoginPage({
   productTagline = "To use the QGEN",
   showLeftPanel = true,
   logoUrl,
+  apiUrl = "http://localhost:8080",
+  isPhoneAvailable = false,
 }: LoginPageProps) {
   const {
     signInWithOAuth,
@@ -63,10 +69,6 @@ export function LoginPage({
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Check valid env var
-  const envVite = import.meta.env.VITE_PHONE_SMS_AVAILABLE;
-  const isPhoneAvailable = (envVite || "false").toLowerCase() !== "false";
 
   // Auth state management
   const [isSignUp, setIsSignUp] = useState(true);
@@ -135,7 +137,7 @@ export function LoginPage({
       }
 
       const firebasePromise = signInWithPhoneNumber(
-        firebaseAuth,
+        getFirebaseAuth(),
         fullPhone,
         appVerifier
       );
@@ -188,8 +190,6 @@ export function LoginPage({
       const user = result.user;
       const idToken = await user.getIdToken();
 
-      const apiUrl =
-        import.meta.env.VITE_FASTAPI_URL || "http://localhost:8080";
       const exchangeRes = await fetch(
         `${apiUrl}/api/v1/auth/exchange-firebase-token`,
         {

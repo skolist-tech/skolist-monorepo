@@ -1,8 +1,9 @@
+"use client";
+
 import { useEffect, useRef } from "react";
 
 import { EcosystemSvg } from "./ecosystem_svg_laptop";
 import { EcosystemSVGMobile } from "./ecosystem_svg_mobile";
-
 
 export function EcosystemSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -11,7 +12,8 @@ export function EcosystemSection() {
     if (scrollRef.current) {
       const container = scrollRef.current;
       // Centers the horizontal scroll for mobile users on load
-      container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
+      container.scrollLeft =
+        (container.scrollWidth - container.clientWidth) / 2;
     }
   }, []);
 
@@ -32,19 +34,18 @@ export function EcosystemSection() {
         {/* The Scroll & Scaling Container */}
         <div
           ref={scrollRef}
-          className="-overflow-x-auto md:pb-4 md:overflow-visible custom-scrollbar"
+          className="custom-scrollbar -overflow-x-auto md:overflow-visible md:pb-4"
         >
-          <div className="flex origin-top scale-[0.4] justify-center transition-transform duration-300 md:min-w-0 md:scale-100 -mb-[85%] md:mb-0">
+          <div className="-mb-[85%] flex origin-top scale-[0.4] justify-center transition-transform duration-300 md:mb-0 md:min-w-0 md:scale-100">
             {/* Conditional SVG Logic Merged Here */}
-            <div className="w-full flex justify-center">
+            <div className="flex w-full justify-center">
               <div className="md:hidden">
                 <EcosystemSVGMobile />
               </div>
-              <div className="hidden md:block w-full max-w-5xl">
+              <div className="hidden w-full max-w-5xl md:block">
                 <EcosystemSvg />
               </div>
             </div>
-
           </div>
         </div>
       </div>

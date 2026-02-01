@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@skolist/ui";
 
 // Replace this with your actual YouTube video ID
