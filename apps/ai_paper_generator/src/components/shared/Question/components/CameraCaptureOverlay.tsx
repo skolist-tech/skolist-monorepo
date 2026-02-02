@@ -28,7 +28,7 @@ export function CameraCaptureOverlay({
           }}
         >
           <span className="text-lg font-bold text-foreground">
-            We are capturing
+            We are extracting
           </span>
           <span className="text-lg font-bold text-foreground after:inline-block after:min-w-[1.5em] after:animate-[dots_2s_infinite_steps(1)] after:text-left after:content-['']" />
         </div>
