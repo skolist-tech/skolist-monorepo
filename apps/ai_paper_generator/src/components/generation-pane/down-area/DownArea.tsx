@@ -206,7 +206,7 @@ export function DownArea({
               }
             >
               <span className="hidden sm:inline">Move To Draft</span>
-              <span className="sm:hidden">Move</span>
+              <span className="sm:hidden">Draft</span>
               {selectedIds.size > 0 && ` (${selectedIds.size})`} →
             </Button>
           </div>
