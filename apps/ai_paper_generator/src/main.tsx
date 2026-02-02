@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from "@vercel/analytics/react";
 
 import { AuthProvider } from "@skolist/auth";
 import { Toaster } from "@skolist/ui";
@@ -16,12 +16,12 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       {/* <QueryClientProvider client={queryClient}> */}
-        <AuthProvider>
-          <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-            <App />
-            <Toaster />
-          </ThemeProvider>
-        </AuthProvider>
+      <AuthProvider apiUrl={import.meta.env.VITE_FASTAPI_URL}>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <App />
+          <Toaster />
+        </ThemeProvider>
+      </AuthProvider>
       {/* </QueryClientProvider> */}
     </BrowserRouter>
     <Analytics />
