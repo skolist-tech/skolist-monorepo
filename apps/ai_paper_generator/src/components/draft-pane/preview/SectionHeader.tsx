@@ -13,7 +13,7 @@ export const SectionHeader = ({
     </h3>
     {totalMarks !== undefined && totalMarks > 0 && (
       <span className="whitespace-nowrap text-sm font-bold text-black">
-        [{totalMarks} marks]
+        [{totalMarks}]
       </span>
     )}
   </div>

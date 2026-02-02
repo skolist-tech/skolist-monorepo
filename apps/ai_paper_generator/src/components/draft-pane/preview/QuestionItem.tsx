@@ -124,7 +124,7 @@ export const QuestionItem = ({
           )}
         </div>
         <span className="ml-2 whitespace-nowrap text-sm font-semibold text-gray-500">
-          [{question.marks} marks]
+          [{question.marks}]
         </span>
       </div>
     </div>
