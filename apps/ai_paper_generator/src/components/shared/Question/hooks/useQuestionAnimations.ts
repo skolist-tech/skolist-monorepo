@@ -83,6 +83,12 @@ export function useQuestionAnimations({
     }
   }, [question.question_text, isChatPromptAnimating]);
 
+  // -- Camera Capture Animation --
+  const [isCameraCapturing, setIsCameraCapturing] = useState(false);
+  const [isCameraReturning, setIsCameraReturning] = useState(false);
+  const [cameraOrigin, setCameraOrigin] = useState({ top: 12, right: 12 });
+  const cameraBtnRef = useRef<HTMLButtonElement>(null);
+
   return {
     slideDirection,
     setSlideDirection,
@@ -110,5 +116,14 @@ export function useQuestionAnimations({
     isChatPromptAnimating,
     setIsChatPromptAnimating,
     questionTextAtAnimationStart,
+
+    // Camera capture animation
+    isCameraCapturing,
+    setIsCameraCapturing,
+    isCameraReturning,
+    setIsCameraReturning,
+    cameraOrigin,
+    setCameraOrigin,
+    cameraBtnRef,
   };
 }

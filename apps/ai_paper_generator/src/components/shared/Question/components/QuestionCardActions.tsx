@@ -37,6 +37,7 @@ interface QuestionCardActionsProps {
   isUploading: boolean;
   isRegenerating: boolean;
   isChatPromptAnimating: boolean;
+  isCameraCapturing: boolean;
   slideDirection: "left" | "right" | null;
 
   // Handlers
@@ -53,6 +54,7 @@ interface QuestionCardActionsProps {
   // Refs for animations
   autoCorrectBtnRef: React.RefObject<HTMLButtonElement>;
   regenerateBtnRef: React.RefObject<HTMLButtonElement>;
+  cameraBtnRef: React.RefObject<HTMLButtonElement>;
 }
 
 export function QuestionCardActions({
@@ -65,6 +67,7 @@ export function QuestionCardActions({
   isUploading,
   isRegenerating,
   isChatPromptAnimating,
+  isCameraCapturing,
   slideDirection,
 
   onAutoCorrect,
@@ -79,6 +82,7 @@ export function QuestionCardActions({
 
   autoCorrectBtnRef,
   regenerateBtnRef,
+  cameraBtnRef,
 }: QuestionCardActionsProps) {
   const ActionButton = ({
     actionId,
@@ -285,17 +289,20 @@ export function QuestionCardActions({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                  ref={mode === "icon" ? cameraBtnRef : undefined}
                   size={mode === "menu" ? "default" : "icon"}
                   variant="ghost"
                   className={mode === "menu" ? btnClass : undefined}
-                  disabled={!onRegenerate || isChatPromptAnimating}
+                  disabled={
+                    !onRegenerate || isChatPromptAnimating || isCameraCapturing
+                  }
                   onClick={(e) => {
                     e.stopPropagation();
                     onCameraClick();
                   }}
                 >
                   <Camera
-                    className={`${iconSizeClass} text-muted-foreground hover:text-primary ${isChatPromptAnimating ? "opacity-50" : ""}`}
+                    className={`${iconSizeClass} text-muted-foreground hover:text-primary ${isChatPromptAnimating || isCameraCapturing ? "opacity-50" : ""}`}
                   />
                   {mode === "menu" && <span>Capture Photo</span>}
                 </Button>

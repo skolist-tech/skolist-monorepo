@@ -41,6 +41,7 @@ import {
   AutoCorrectOverlay,
   RegenerateOverlay,
   ChatPromptOverlay,
+  CameraCaptureOverlay,
 } from "./components/QuestionAnimationOverlays";
 import { EditSvgDialog } from "./components/EditSvgDialog";
 import { CameraCaptureDialog } from "./components/CameraCaptureDialog";
@@ -294,22 +295,33 @@ export function GeneratedQuestionCard({
   };
 
   // Camera capture handler - sends photo to regenerate with prompt endpoint
-  const handleCameraCapture = async (file: File) => {
-    // Prompt to describe what the AI should do with the captured image
-    const cameraPrompt = `I've captured an image as a reference. Please analyze this image and regenerate the question based on its content. If it contains a diagram, figure, or mathematical expression, incorporate it appropriately. If it shows text or a problem, use that as context to improve or modify the current question.`;
+  const handleCameraCapture = async (file: File, customPrompt?: string) => {
+    // Default prompt if none provided
+    const defaultPrompt = `I've captured an image as a reference. Please analyze this image and regenerate the question based on its content. If it contains a diagram, figure, or mathematical expression, incorporate it appropriately. If it shows text or a problem, use that as context to improve or modify the current question.`;
+    const cameraPrompt = customPrompt || defaultPrompt;
 
-    state.setIsCameraProcessing(true);
+    // Calculate animation origin from camera button
+    if (cardRef.current && anims.cameraBtnRef.current) {
+      const cardRect = cardRef.current.getBoundingClientRect();
+      const btnRect = anims.cameraBtnRef.current.getBoundingClientRect();
+      anims.setCameraOrigin({
+        top: btnRect.top - cardRect.top + 6,
+        right: cardRect.right - btnRect.right + 6,
+      });
+    }
+
     try {
-      // Store current question text to detect when it changes
-      anims.questionTextAtAnimationStart.current = question.question_text;
-      anims.setIsChatPromptAnimating(true);
+      // Start camera animation
+      anims.setIsCameraCapturing(true);
+      anims.setIsCameraReturning(false);
+
+      // Tiny yield to let the browser paint the "start" of the animation
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       if (onRegenerateWithPrompt) {
         await onRegenerateWithPrompt(question.id, cameraPrompt, [file]);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
       } else if (onRegenerate) {
         await onRegenerate(cameraPrompt, [file]);
-        await new Promise((resolve) => setTimeout(resolve, 500));
       } else {
         // Fallback to fastApiService directly
         await fastApiService.regenerateQuestionWithPrompt(
@@ -317,8 +329,11 @@ export function GeneratedQuestionCard({
           cameraPrompt,
           [file]
         );
-        await new Promise((resolve) => setTimeout(resolve, 500));
       }
+
+      // Trigger return animation
+      anims.setIsCameraReturning(true);
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       toast({
         title: "Photo Processed",
@@ -332,11 +347,9 @@ export function GeneratedQuestionCard({
         description: "Failed to process the captured image.",
         variant: "destructive",
       });
-      throw error;
     } finally {
-      anims.setIsChatPromptAnimating(false);
-      anims.questionTextAtAnimationStart.current = null;
-      state.setIsCameraProcessing(false);
+      anims.setIsCameraCapturing(false);
+      anims.setIsCameraReturning(false);
     }
   };
 
@@ -360,6 +373,13 @@ export function GeneratedQuestionCard({
         ref={state.attachmentInputRef}
         className="hidden"
         onChange={state.handleAttachmentSelect}
+      />
+      <input
+        type="file"
+        ref={state.cameraInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={state.handleCameraFileSelect}
       />
     </>
   );
@@ -443,6 +463,13 @@ export function GeneratedQuestionCard({
 
       {anims.isChatPromptAnimating && <ChatPromptOverlay />}
 
+      {anims.isCameraCapturing && (
+        <CameraCaptureOverlay
+          isReturning={anims.isCameraReturning}
+          cameraOrigin={anims.cameraOrigin}
+        />
+      )}
+
       {/* --- Selection --- */}
       {onSelect && (
         <div className="absolute left-3 top-3.5 z-10">
@@ -464,18 +491,20 @@ export function GeneratedQuestionCard({
         isUploading={state.isUploading}
         isRegenerating={anims.isRegenerating}
         isChatPromptAnimating={anims.isChatPromptAnimating}
+        isCameraCapturing={anims.isCameraCapturing}
         slideDirection={anims.slideDirection}
         onAutoCorrect={handleAutoCorrect}
         onAttachClick={() => state.fileInputRef.current?.click()}
         onRegenerateClick={handleDirectRegenerate}
         onRegenerateWithPromptClick={() => state.setIsRegenerateOpen(true)}
-        onCameraClick={() => state.setIsCameraOpen(true)}
+        onCameraClick={() => state.cameraInputRef.current?.click()}
         onEditClick={() => state.setIsEditing(true)}
         onMoveToDraft={handleMoveToDraft}
         onRemoveFromDraftClick={handleRemoveFromDraft}
         onDeleteClick={() => state.setIsDeleteModalOpen(true)}
         autoCorrectBtnRef={anims.autoCorrectBtnRef}
         regenerateBtnRef={anims.regenerateBtnRef}
+        cameraBtnRef={anims.cameraBtnRef}
       />
 
       {/* --- Dialogs --- */}
@@ -510,9 +539,12 @@ export function GeneratedQuestionCard({
 
       <CameraCaptureDialog
         open={state.isCameraOpen}
-        onOpenChange={state.setIsCameraOpen}
+        onOpenChange={(open) => {
+          state.setIsCameraOpen(open);
+          if (!open) state.setSelectedCameraFile(null);
+        }}
+        initialFile={state.selectedCameraFile}
         onCapture={handleCameraCapture}
-        isProcessing={state.isCameraProcessing}
       />
 
       {/* --- Popover --- */}

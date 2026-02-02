@@ -159,7 +159,22 @@ export function useQuestionCardState({
 
   // -- Camera Capture State --
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isCameraProcessing, setIsCameraProcessing] = useState(false);
+  const [selectedCameraFile, setSelectedCameraFile] = useState<File | null>(
+    null
+  );
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCameraFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedCameraFile(file);
+      setIsCameraOpen(true);
+    }
+    // Clear input so same file can be selected again
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
+  };
 
   const [isEditSvgOpen, setIsEditSvgOpen] = useState(false);
   const [imageToEdit, setImageToEdit] = useState<GeneratedImage | null>(null);
@@ -274,8 +289,10 @@ export function useQuestionCardState({
 
     isCameraOpen,
     setIsCameraOpen,
-    isCameraProcessing,
-    setIsCameraProcessing,
+    selectedCameraFile,
+    setSelectedCameraFile,
+    cameraInputRef,
+    handleCameraFileSelect,
 
     isEditSvgOpen,
     setIsEditSvgOpen,
