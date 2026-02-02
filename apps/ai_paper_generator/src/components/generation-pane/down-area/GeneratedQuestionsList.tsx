@@ -34,10 +34,16 @@ export function GeneratedQuestionsList({
   const handleRegenerate = async (
     id: string,
     prompt: string,
-    files?: File[]
+    files?: File[],
+    isCameraCapture?: boolean
   ) => {
     try {
-      await fastApiService.regenerateQuestionWithPrompt(id, prompt, files);
+      await fastApiService.regenerateQuestionWithPrompt(
+        id,
+        prompt,
+        files,
+        isCameraCapture
+      );
       await onRefetchQuestions();
     } catch (error) {
       console.error("Failed to regenerate question:", error);
@@ -54,8 +60,8 @@ export function GeneratedQuestionsList({
           onMoveToDraft={() => onMoveToDraft([question.id])}
           onUpdate={(updated) => onSaveQuestion(updated)}
           onDelete={onDeleteQuestion}
-          onRegenerate={(prompt, files) =>
-            handleRegenerate(question.id, prompt, files)
+          onRegenerate={(prompt, files, isCameraCapture) =>
+            handleRegenerate(question.id, prompt, files, isCameraCapture)
           }
           isSelected={selectedIds.has(question.id)}
           onSelect={(selected) => onToggleSelect(question.id, selected)}

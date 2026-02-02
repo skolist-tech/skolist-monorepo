@@ -53,7 +53,11 @@ interface GeneratedQuestionCardProps {
   onUpdate?: (updatedQuestion: GeneratedQuestionWithConcepts) => void;
   onDelete?: (id: string) => Promise<void>;
   onDirectRegenerate?: () => void;
-  onRegenerate?: (prompt: string, files: File[]) => void;
+  onRegenerate?: (
+    prompt: string,
+    files: File[],
+    isCameraCapture?: boolean
+  ) => void;
   index?: number; // Kept for reference if needed, but won't be displayed as rank
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -66,7 +70,8 @@ interface GeneratedQuestionCardProps {
   onRegenerateWithPrompt?: (
     questionId: string,
     prompt: string,
-    files: File[]
+    files: File[],
+    isCameraCapture?: boolean
   ) => Promise<void>; // Optional override for regenerate with prompt (useful for Storybook)
   dragHandleProps?: Record<string, any>;
 }
@@ -319,15 +324,16 @@ export function GeneratedQuestionCard({
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       if (onRegenerateWithPrompt) {
-        await onRegenerateWithPrompt(question.id, cameraPrompt, [file]);
+        await onRegenerateWithPrompt(question.id, cameraPrompt, [file], true);
       } else if (onRegenerate) {
-        await onRegenerate(cameraPrompt, [file]);
+        await onRegenerate(cameraPrompt, [file], true);
       } else {
         // Fallback to fastApiService directly
         await fastApiService.regenerateQuestionWithPrompt(
           question.id,
           cameraPrompt,
-          [file]
+          [file],
+          true
         );
       }
 

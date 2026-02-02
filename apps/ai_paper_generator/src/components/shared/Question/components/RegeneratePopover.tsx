@@ -68,6 +68,7 @@ export function RegeneratePopover({
                     <button
                       className="ml-1 rounded-full p-0.5 hover:bg-black/10"
                       onClick={() => onRemoveAttachment(i)}
+                      type="button"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -82,6 +83,7 @@ export function RegeneratePopover({
               size="icon"
               className="h-8 w-8 shrink-0"
               onClick={onRegenerateSubmit}
+              type="button"
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -91,6 +93,7 @@ export function RegeneratePopover({
               className="h-8 w-8 shrink-0 border"
               disabled={isAttaching}
               onClick={onAttachmentClick}
+              type="button"
             >
               {isAttaching ? (
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />

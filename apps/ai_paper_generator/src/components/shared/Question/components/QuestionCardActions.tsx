@@ -115,6 +115,7 @@ export function QuestionCardActions({
                   onClick={(e) => {
                     if (mode === "menu") e.stopPropagation();
                   }}
+                  type="button"
                 >
                   <Undo2 className={iconSizeClass} />
                   {mode === "menu" && <span>Undo</span>}
@@ -145,6 +146,7 @@ export function QuestionCardActions({
                   onClick={(e) => {
                     if (mode === "menu") e.stopPropagation();
                   }}
+                  type="button"
                 >
                   <Redo2 className={iconSizeClass} />
                   {mode === "menu" && <span>Redo</span>}
@@ -173,6 +175,7 @@ export function QuestionCardActions({
                     onAutoCorrect();
                   }}
                   disabled={isAutoCorrecting}
+                  type="button"
                 >
                   <Sparkles
                     className={`${iconSizeClass} text-yellow-400 ${isAutoCorrecting ? "opacity-50" : ""}`}
@@ -202,6 +205,7 @@ export function QuestionCardActions({
                     onAttachClick();
                   }}
                   disabled={isUploading}
+                  type="button"
                 >
                   {isUploading ? (
                     <Loader2
@@ -238,6 +242,7 @@ export function QuestionCardActions({
                     onRegenerateClick();
                   }}
                   disabled={isRegenerating}
+                  type="button"
                 >
                   <RefreshCw
                     className={`${iconSizeClass} text-muted-foreground hover:text-primary ${isRegenerating ? "opacity-50" : ""}`}
@@ -267,6 +272,7 @@ export function QuestionCardActions({
                     e.stopPropagation();
                     onRegenerateWithPromptClick(e);
                   }}
+                  type="button"
                 >
                   <MessageSquare
                     className={`${iconSizeClass} text-muted-foreground hover:text-primary ${isChatPromptAnimating ? "opacity-50" : ""}`}
@@ -300,6 +306,7 @@ export function QuestionCardActions({
                     e.stopPropagation();
                     onCameraClick();
                   }}
+                  type="button"
                 >
                   <Camera
                     className={`${iconSizeClass} text-muted-foreground hover:text-primary ${isChatPromptAnimating || isCameraCapturing ? "opacity-50" : ""}`}
@@ -328,6 +335,7 @@ export function QuestionCardActions({
                     if (mode === "menu") e.stopPropagation();
                     onEditClick();
                   }}
+                  type="button"
                 >
                   <Edit2
                     className={`${iconSizeClass} text-muted-foreground hover:text-primary`}
@@ -358,6 +366,7 @@ export function QuestionCardActions({
                       onRemoveFromDraftClick();
                     }}
                     disabled={slideDirection !== null}
+                    type="button"
                   >
                     <ArrowLeft
                       className={`${iconSizeClass} text-red-500 hover:text-red-700 ${slideDirection ? "opacity-50" : ""}`}
@@ -387,6 +396,7 @@ export function QuestionCardActions({
                       onMoveToDraft();
                     }}
                     disabled={slideDirection !== null}
+                    type="button"
                   >
                     <ArrowRight
                       className={`${iconSizeClass} text-orange-500 hover:text-orange-700 ${slideDirection ? "opacity-50" : ""}`}
@@ -419,6 +429,7 @@ export function QuestionCardActions({
                     if (mode === "menu") e.stopPropagation();
                     onDeleteClick();
                   }}
+                  type="button"
                 >
                   <Trash2
                     className={`${iconSizeClass} text-red-500 hover:text-red-700`}

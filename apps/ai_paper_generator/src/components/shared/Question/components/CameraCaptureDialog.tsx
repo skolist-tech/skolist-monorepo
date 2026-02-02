@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,14 @@ import {
   Button,
   Textarea,
 } from "@skolist/ui";
-import { Camera, Check, X, Loader2, Crop, Move } from "lucide-react";
-import Cropper from "react-easy-crop";
-import type { Area } from "react-easy-crop";
+import { Camera, Check, X, Loader2 } from "lucide-react";
+import ReactCrop, {
+  centerCrop,
+  makeAspectCrop,
+  Crop as CropType,
+  PixelCrop,
+} from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 
 interface CameraCaptureDialogProps {
   open: boolean;
@@ -21,34 +26,55 @@ interface CameraCaptureDialogProps {
 }
 
 // Utility to create a cropped image from the original
+
 async function getCroppedImg(
-  imageSrc: string,
-  pixelCrop: Area
+  image: HTMLImageElement,
+  pixelCrop: PixelCrop
 ): Promise<Blob | null> {
-  const image = new Image();
-  image.src = imageSrc;
-
-  await new Promise((resolve) => {
-    image.onload = resolve;
-  });
-
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  // Handle object-fit: contain offsets
+  // The image might be rendered smaller than the element if visible constraints apply
+  const { width: elementWidth, height: elementHeight } = image;
+  const { naturalWidth, naturalHeight } = image;
+  const aspect = naturalWidth / naturalHeight;
+  const elementAspect = elementWidth / elementHeight;
+
+  let renderWidth = elementWidth;
+  let renderHeight = elementHeight;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  if (aspect > elementAspect) {
+    // Image is wider than element (fits width), empty space top/bottom
+    renderHeight = elementWidth / aspect;
+    offsetY = (elementHeight - renderHeight) / 2;
+  } else if (aspect < elementAspect) {
+    // Image is taller than element (fits height), empty space left/right
+    renderWidth = elementHeight * aspect;
+    offsetX = (elementWidth - renderWidth) / 2;
+  }
+
+  const scaleX = naturalWidth / renderWidth;
+  const scaleY = naturalHeight / renderHeight;
+
+  canvas.width = pixelCrop.width * scaleX;
+  canvas.height = pixelCrop.height * scaleY;
+
+  ctx.imageSmoothingQuality = "high";
 
   ctx.drawImage(
     image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
+    (pixelCrop.x - offsetX) * scaleX,
+    (pixelCrop.y - offsetY) * scaleY,
+    pixelCrop.width * scaleX,
+    pixelCrop.height * scaleY,
     0,
     0,
-    pixelCrop.width,
-    pixelCrop.height
+    pixelCrop.width * scaleX,
+    pixelCrop.height * scaleY
   );
 
   return new Promise((resolve) => {
@@ -57,9 +83,40 @@ async function getCroppedImg(
         resolve(blob);
       },
       "image/jpeg",
-      0.9
+      0.95
     );
   });
+}
+
+function centerAspectCrop(
+  mediaWidth: number,
+  mediaHeight: number,
+  aspect: number | undefined
+) {
+  if (aspect === undefined) {
+    return centerCrop(
+      {
+        unit: "%",
+        width: 90,
+        height: 90,
+      },
+      mediaWidth,
+      mediaHeight
+    );
+  }
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: "%",
+        width: 90,
+      },
+      aspect,
+      mediaWidth,
+      mediaHeight
+    ),
+    mediaWidth,
+    mediaHeight
+  );
 }
 
 export function CameraCaptureDialog({
@@ -70,11 +127,11 @@ export function CameraCaptureDialog({
 }: CameraCaptureDialogProps) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   // Cropping state
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [crop, setCrop] = useState<CropType>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isCropping, setIsCropping] = useState(true);
 
   // Custom prompt state
@@ -85,8 +142,8 @@ export function CameraCaptureDialog({
     if (open && initialFile) {
       setError(null);
       setCustomPrompt("");
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
+      setCrop(undefined);
+      setCompletedCrop(undefined);
       setIsCropping(true);
 
       const reader = new FileReader();
@@ -103,33 +160,20 @@ export function CameraCaptureDialog({
     }
   }, [open, initialFile]);
 
-  // Handle crop complete
-  const onCropComplete = useCallback(
-    (_croppedArea: Area, croppedAreaPixels: Area) => {
-      setCroppedAreaPixels(croppedAreaPixels);
-    },
-    []
-  );
-
-  // Toggle cropping mode
-  const toggleCropMode = useCallback(() => {
-    setIsCropping((prev) => !prev);
-    if (!isCropping) {
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-    }
-  }, [isCropping]);
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const { width, height } = e.currentTarget;
+    setCrop(centerAspectCrop(width, height, undefined));
+  }
 
   // Confirm and send photo
   const confirmPhoto = useCallback(async () => {
-    if (!capturedImage) return;
+    if (!capturedImage || !imgRef.current) return;
 
     let blobToSend: Blob | null = null;
 
-    if (isCropping && croppedAreaPixels) {
-      blobToSend = await getCroppedImg(capturedImage, croppedAreaPixels);
+    if (isCropping && completedCrop) {
+      blobToSend = await getCroppedImg(imgRef.current, completedCrop);
     } else if (initialFile) {
-      // Use original file if not cropping
       blobToSend = initialFile;
     }
 
@@ -151,7 +195,7 @@ export function CameraCaptureDialog({
   }, [
     capturedImage,
     isCropping,
-    croppedAreaPixels,
+    completedCrop,
     onCapture,
     onOpenChange,
     customPrompt,
@@ -160,133 +204,102 @@ export function CameraCaptureDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[95vh] max-w-2xl overflow-y-auto p-4 sm:p-6">
-        <DialogHeader className="space-y-1">
+      <DialogContent className="flex max-h-[95vh] max-w-2xl flex-col p-4 sm:max-h-[90vh] sm:p-6">
+        {/* Header (Fixed) */}
+        <DialogHeader className="mb-2 space-y-1">
           <DialogTitle className="flex items-center gap-2 text-base sm:text-xl">
             <Camera className="h-4 w-4 sm:h-5" />
             Process Photo
           </DialogTitle>
-          <DialogDescription className="text-xs leading-tight sm:text-sm">
-            Adjust your image and add optional instructions for the AI.
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="relative mt-2 sm:mt-4">
-          {error && (
-            <div className="flex h-48 items-center justify-center rounded-lg border border-destructive bg-destructive/10 p-4 text-center sm:h-64">
-              <div className="text-destructive">
-                <X className="mx-auto mb-2 h-6 w-6 sm:h-8 sm:w-8" />
-                <p className="text-xs sm:text-sm">{error}</p>
+        {/* Center Cropper Section - Fixed Height & Scaling */}
+        <div className="mb-2 flex min-h-0 flex-1 items-center justify-center rounded-lg bg-black/5">
+          <div className="relative flex h-full w-full items-center justify-center p-2">
+            {error && (
+              <div className="p-4 text-center">
+                <X className="mx-auto mb-2 h-6 w-6 text-destructive" />
+                <p className="text-xs text-destructive">{error}</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {!error && !capturedImage && (
-            <div className="flex h-48 items-center justify-center rounded-lg border bg-muted sm:h-64">
-              <div className="text-center text-muted-foreground">
-                <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin sm:h-8 sm:w-8" />
-                <p className="text-xs sm:text-sm">Loading image...</p>
+            {!error && !capturedImage && (
+              <div className="p-4 text-center text-muted-foreground">
+                <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
+                <p className="text-xs">Loading image...</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {!error && capturedImage && (
-            <div className="relative overflow-hidden rounded-lg bg-black/5">
-              {isCropping ? (
-                <div
-                  className="relative w-full rounded-lg"
-                  style={{ height: "250px" }}
-                >
-                  <Cropper
-                    image={capturedImage}
+            {!error && capturedImage && (
+              <>
+                {isCropping ? (
+                  <ReactCrop
                     crop={crop}
-                    zoom={zoom}
-                    aspect={undefined} // Free-form cropping
-                    onCropChange={setCrop}
-                    onCropComplete={onCropComplete}
-                    onZoomChange={setZoom}
-                    showGrid={true}
-                  />
-                  {/* Zoom slider */}
-                  <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-background/80 px-2 py-0.5 backdrop-blur-sm sm:px-3 sm:py-1">
-                    <span className="text-[10px] text-muted-foreground sm:text-xs">
-                      Zoom:
-                    </span>
-                    <input
-                      type="range"
-                      min={1}
-                      max={3}
-                      step={0.1}
-                      value={zoom}
-                      onChange={(e) => setZoom(Number(e.target.value))}
-                      className="w-16 sm:w-24"
+                    onChange={(c) => setCrop(c)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    className="max-h-full"
+                  >
+                    {/* 
+                        Use a responsive height that fits nicely. 
+                        object-contain ensures it SCALES, doesn't crop.
+                    */}
+                    <img
+                      ref={imgRef}
+                      src={capturedImage}
+                      alt="Crop source"
+                      onLoad={onImageLoad}
+                      className="h-[50vh] w-auto object-contain sm:h-[60vh]"
+                      style={{ maxHeight: "100%" }}
                     />
-                  </div>
-                </div>
-              ) : (
-                <img
-                  src={capturedImage}
-                  alt="Original"
-                  className="max-h-[250px] w-full rounded-lg sm:max-h-[400px]"
-                  style={{ objectFit: "contain" }}
-                />
-              )}
-            </div>
-          )}
+                  </ReactCrop>
+                ) : (
+                  <img
+                    src={capturedImage}
+                    alt="Original"
+                    className="h-[50vh] w-auto object-contain sm:h-[60vh]"
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </div>
 
-          {/* Custom prompt input (shown after capture) */}
+        {/* Sticky Footer Area (Prompt + Buttons) */}
+        <div className="flex-shrink-0 space-y-4 border-t pt-4">
           {capturedImage && (
-            <div className="mt-3 sm:mt-4">
+            <div className="space-y-1.5">
               <label
                 htmlFor="custom-prompt"
-                className="mb-1 block text-xs font-medium text-foreground sm:text-sm"
+                className="block text-xs font-medium text-foreground sm:text-sm"
               >
                 Custom Instructions{" "}
                 <span className="text-muted-foreground">(optional)</span>
               </label>
               <Textarea
                 id="custom-prompt"
-                placeholder="Add instructions... e.g. 'Extract 2nd Question' or 'Use the diagram'"
+                placeholder="e.g. 'Extract 2nd Question' or 'Use the diagram'"
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
-                className="min-h-[60px] resize-none text-xs sm:min-h-[80px] sm:text-sm"
+                className="max-h-[80px] min-h-[50px] resize-none text-xs sm:text-sm"
               />
             </div>
           )}
-        </div>
 
-        {/* Action buttons */}
-        <div className="mt-4 flex flex-col justify-end gap-2 sm:flex-row">
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-row">
+          <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-row sm:justify-end">
             <Button
-              variant="outline"
-              className="h-9 text-xs sm:h-10 sm:text-sm"
+              variant="destructive"
+              className="h-10 text-xs sm:text-sm"
               onClick={() => onOpenChange(false)}
+              type="button"
             >
               Cancel
             </Button>
             <Button
-              variant="outline"
-              className="h-9 text-xs sm:h-10 sm:text-sm"
-              onClick={toggleCropMode}
-            >
-              {isCropping ? (
-                <>
-                  <Move className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
-                  Original
-                </>
-              ) : (
-                <>
-                  <Crop className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
-                  Crop
-                </>
-              )}
-            </Button>
-            <Button
-              className="col-span-2 h-9 sm:col-auto sm:h-10"
+              className="h-10 bg-blue-600 text-xs text-white hover:bg-blue-700 sm:text-sm"
               onClick={confirmPhoto}
               variant="default"
               disabled={!capturedImage}
+              type="button"
             >
               <Check className="mr-1 h-4 w-4 sm:mr-2" />
               Extract Question

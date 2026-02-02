@@ -56,12 +56,13 @@ export function SortableQuestion({
           onRemoveFromDraft={() => moveQuestionToGeneration(question.id)}
           onUpdate={saveQuestion}
           onDelete={deleteQuestion}
-          onRegenerate={async (prompt, files) => {
+          onRegenerate={async (prompt, files, isCameraCapture) => {
             try {
               await fastApiService.regenerateQuestionWithPrompt(
                 question.id,
                 prompt,
-                files
+                files,
+                isCameraCapture
               );
               await refetchQuestions();
             } catch (error) {

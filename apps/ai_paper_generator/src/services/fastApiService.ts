@@ -179,7 +179,8 @@ export const fastApiService = {
   async regenerateQuestionWithPrompt(
     gen_question_id: string,
     prompt?: string,
-    files?: File[]
+    files?: File[],
+    isCameraCapture?: boolean
   ) {
     try {
       const {
@@ -194,6 +195,10 @@ export const fastApiService = {
       // Use FormData for multipart/form-data request (required for file uploads)
       const formData = new FormData();
       formData.append("gen_question_id", gen_question_id);
+
+      if (isCameraCapture) {
+        formData.append("is_camera_capture", "true");
+      }
 
       if (prompt) {
         formData.append("prompt", prompt);
