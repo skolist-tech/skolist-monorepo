@@ -5,8 +5,8 @@
   "description": "Skolist Landing Page - skolist.com",
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 3000",
-    "build": "next build",
+    "dev": "cp ../../.env .env 2>/dev/null || : && next dev --port 3000",
+    "build": "cp ../../.env .env 2>/dev/null || : && next build",
     "start": "next start",
     "lint": "next lint"
   },
