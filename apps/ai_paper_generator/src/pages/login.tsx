@@ -22,7 +22,10 @@ export function LoginPage() {
     <AuthLoginPage
       onSuccess={() => navigate(from, { replace: true })}
       apiUrl={import.meta.env.VITE_FASTAPI_URL}
-      isPhoneAvailable={import.meta.env.VITE_PHONE_SMS_AVAILABLE === "true"}
+      isPhoneAvailable={
+        (import.meta.env.VITE_PHONE_SMS_AVAILABLE || "false").toLowerCase() ===
+        "true"
+      }
     />
   );
 }
