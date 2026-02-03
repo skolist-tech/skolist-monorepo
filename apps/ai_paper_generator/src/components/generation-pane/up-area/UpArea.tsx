@@ -75,7 +75,7 @@ export function UpArea({
     Record<QuestionType, number>
   >(DEFAULT_QUESTION_COUNTS);
 
-  const [totalQuestions, setTotalQuestions] = useState(12);
+  const [totalQuestions, setTotalQuestions] = useState(14);
   const [internalIsGenerating, setInternalIsGenerating] = useState(false);
 
   // Use prop if available, otherwise local state
@@ -102,7 +102,7 @@ export function UpArea({
         const savedStatus = await fetchGenerationPaneStatus(currentActivity.id);
         if (savedStatus) {
           // Restore question counts
-          setQuestionCounts({
+          const newCounts = {
             mcq4: savedStatus.mcq_count ?? DEFAULT_QUESTION_COUNTS.mcq4,
             msq4: savedStatus.msq_count ?? DEFAULT_QUESTION_COUNTS.msq4,
             short_answer:
@@ -120,8 +120,16 @@ export function UpArea({
             match_the_following:
               (savedStatus as any).match_the_following_count ??
               DEFAULT_QUESTION_COUNTS.match_the_following,
-          });
-          setTotalQuestions(savedStatus.total_questions_count ?? 12);
+          };
+
+          setQuestionCounts(newCounts);
+
+          // Calculate total questions by summing counts since it's no longer stored in DB
+          const total = Object.values(newCounts).reduce(
+            (sum, val) => sum + val,
+            0
+          );
+          setTotalQuestions(total || 12);
           setTotalMarks(savedStatus.total_marks_count ?? 30);
           setTotalTime(savedStatus.total_time_count ?? 60);
           setCustomPrompt(savedStatus.custom_instructions ?? "");
@@ -492,7 +500,6 @@ export function UpArea({
           difficulty_level_easy_count: hardnessLevels.easy,
           difficulty_level_medium_count: hardnessLevels.medium,
           difficulty_level_hard_count: hardnessLevels.hard,
-          total_questions_count: totalQuestions,
           total_marks_count: totalMarks,
           total_time_count: totalTime,
           custom_instructions: customPrompt || null,
