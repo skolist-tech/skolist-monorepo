@@ -828,7 +828,6 @@ export type Database = {
           short_answer_count: number | null
           subject_id: string | null
           total_marks_count: number | null
-          total_questions_count: number | null
           total_time_count: number | null
           true_false_count: number | null
           updated_at: string | null
@@ -850,7 +849,6 @@ export type Database = {
           short_answer_count?: number | null
           subject_id?: string | null
           total_marks_count?: number | null
-          total_questions_count?: number | null
           total_time_count?: number | null
           true_false_count?: number | null
           updated_at?: string | null
@@ -872,7 +870,6 @@ export type Database = {
           short_answer_count?: number | null
           subject_id?: string | null
           total_marks_count?: number | null
-          total_questions_count?: number | null
           total_time_count?: number | null
           true_false_count?: number | null
           updated_at?: string | null
