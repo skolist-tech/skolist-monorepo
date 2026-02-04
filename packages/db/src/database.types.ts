@@ -60,7 +60,13 @@ export type Database = {
             | Database["public"]["Enums"]["hardness_level_enum"]
             | null
           id: string
+          is_from_exercise: boolean
+          is_image_needed: boolean
+          is_incomplete: boolean
+          is_solved_example: boolean
+          is_true: boolean | null
           marks: number | null
+          match_columns: string | null
           msq_option1_answer: boolean | null
           msq_option2_answer: boolean | null
           msq_option3_answer: boolean | null
@@ -73,6 +79,7 @@ export type Database = {
           question_type: Database["public"]["Enums"]["question_type_enum"]
           reference: string | null
           subject_id: string
+          svgs: string | null
           updated_at: string | null
         }
         Insert: {
@@ -85,7 +92,13 @@ export type Database = {
             | Database["public"]["Enums"]["hardness_level_enum"]
             | null
           id?: string
+          is_from_exercise?: boolean
+          is_image_needed?: boolean
+          is_incomplete?: boolean
+          is_solved_example?: boolean
+          is_true?: boolean | null
           marks?: number | null
+          match_columns?: string | null
           msq_option1_answer?: boolean | null
           msq_option2_answer?: boolean | null
           msq_option3_answer?: boolean | null
@@ -98,6 +111,7 @@ export type Database = {
           question_type: Database["public"]["Enums"]["question_type_enum"]
           reference?: string | null
           subject_id: string
+          svgs?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -110,7 +124,13 @@ export type Database = {
             | Database["public"]["Enums"]["hardness_level_enum"]
             | null
           id?: string
+          is_from_exercise?: boolean
+          is_image_needed?: boolean
+          is_incomplete?: boolean
+          is_solved_example?: boolean
+          is_true?: boolean | null
           marks?: number | null
+          match_columns?: string | null
           msq_option1_answer?: boolean | null
           msq_option2_answer?: boolean | null
           msq_option3_answer?: boolean | null
@@ -123,6 +143,7 @@ export type Database = {
           question_type?: Database["public"]["Enums"]["question_type_enum"]
           reference?: string | null
           subject_id?: string
+          svgs?: string | null
           updated_at?: string | null
         }
         Relationships: [
