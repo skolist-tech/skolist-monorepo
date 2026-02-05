@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { APP_CONFIG } from "../config/app_config";
 
 type Theme = "dark" | "light" | "system";
 
@@ -25,14 +26,20 @@ export function ThemeProvider({
   defaultTheme = "system",
   storageKey = "vite-ui-theme",
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+  const [theme, setTheme] = useState<Theme>(() =>
+    APP_CONFIG.FORCE_LIGHT_MODE
+      ? "light"
+      : (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
 
   useEffect(() => {
     const root = window.document.documentElement;
-
     root.classList.remove("light", "dark");
+
+    if (APP_CONFIG.FORCE_LIGHT_MODE) {
+      root.classList.add("light");
+      return;
+    }
 
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
@@ -50,6 +57,7 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (theme: Theme) => {
+      if (APP_CONFIG.FORCE_LIGHT_MODE) return;
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
     },

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { APP_CONFIG } from "../../config/app_config";
 import { Logo } from "./Logo";
 import { PaneNavigationButtons } from "./PaneNavigationButtons";
 import { UserProfile } from "./UserProfile";
@@ -70,14 +71,18 @@ export function Header({ onMenuClick }: HeaderProps) {
           {/* Mobile: theme toggle is in UserProfile menu */}
           <div className="md:hidden">
             <UserProfile
-              showThemeToggle
+              showThemeToggle={!APP_CONFIG.FORCE_LIGHT_MODE}
               theme={theme}
               onThemeChange={setTheme}
             />
           </div>
-          {/* Desktop: UserProfile without theme toggle */}
+          {/* Desktop: UserProfile */}
           <div className="hidden md:block">
-            <UserProfile />
+            <UserProfile
+              showThemeToggle={!APP_CONFIG.FORCE_LIGHT_MODE}
+              theme={theme}
+              onThemeChange={setTheme}
+            />
           </div>
         </div>
       </div>
