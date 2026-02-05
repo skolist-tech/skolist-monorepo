@@ -38,6 +38,7 @@ export const BankManagementPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
+  const [chapters, setChapters] = useState<{ id: string; name: string; subject_id: string }[]>([]);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,9 +80,27 @@ export const BankManagementPage = () => {
     }
   };
 
+  const fetchChapters = async (subjectId?: string) => {
+    try {
+      const data = await bankService.fetchChapters(subjectId);
+      setChapters(data);
+    } catch (e) {
+      console.error("Failed to fetch chapters");
+    }
+  };
+
   useEffect(() => {
     fetchSubjects();
   }, []);
+
+  useEffect(() => {
+    // Fetch chapters when subject filter changes
+    fetchChapters(filters.subject_id);
+    // Reset chapter filter when subject changes
+    if (filters.chapter_id) {
+      setFilters(prev => ({ ...prev, chapter_id: undefined }));
+    }
+  }, [filters.subject_id]);
 
   useEffect(() => {
     fetchQuestions();
@@ -210,6 +229,27 @@ export const BankManagementPage = () => {
                 {subjects.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-1.5">
+            <label className="text-xs font-medium">Chapter</label>
+            <Select
+              value={filters.chapter_id || "all"}
+              onValueChange={(v) => handleFilterChange("chapter_id", v)}
+              disabled={!filters.subject_id}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={filters.subject_id ? "All Chapters" : "Select Subject First"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Chapters</SelectItem>
+                {chapters.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>

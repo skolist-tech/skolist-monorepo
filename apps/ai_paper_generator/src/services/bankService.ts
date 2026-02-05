@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_FASTAPI_URL;
 
 export interface BankFilter {
   subject_id?: string;
+  chapter_id?: string;
   question_type?: string;
   hardness_level?: string;
   is_solved_example?: boolean;
@@ -207,6 +208,31 @@ export const bankService = {
       return data || [];
     } catch (error) {
       console.error("Error fetching subjects:", error);
+      return [];
+    }
+  },
+
+  /**
+   * info: Fetch chapters, optionally filtered by subject_id
+   */
+  async fetchChapters(subject_id?: string) {
+    try {
+      const client = getSupabaseClient();
+      let query = client
+        .from("chapters")
+        .select("id, name, subject_id")
+        .order("name");
+
+      if (subject_id) {
+        query = query.eq("subject_id", subject_id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching chapters:", error);
       return [];
     }
   },

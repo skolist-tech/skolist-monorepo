@@ -52,6 +52,7 @@ export type Database = {
       bank_questions: {
         Row: {
           answer_text: string
+          chapter_id: string | null
           correct_mcq_option: number | null
           created_at: string
           explanation: string | null
@@ -84,6 +85,7 @@ export type Database = {
         }
         Insert: {
           answer_text: string
+          chapter_id?: string | null
           correct_mcq_option?: number | null
           created_at?: string
           explanation?: string | null
@@ -116,6 +118,7 @@ export type Database = {
         }
         Update: {
           answer_text?: string
+          chapter_id?: string | null
           correct_mcq_option?: number | null
           created_at?: string
           explanation?: string | null
@@ -147,6 +150,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bank_questions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bank_questions_subject_id_fkey"
             columns: ["subject_id"]
@@ -845,16 +855,16 @@ export type Database = {
           difficulty_level_easy_count: number | null
           difficulty_level_hard_count: number | null
           difficulty_level_medium_count: number | null
-          exercise_questions_count: number
+          exercise_questions_count: number | null
           fill_in_the_blanks_count: number | null
           id: string
           long_answer_count: number | null
-          match_the_following_count: number
+          match_the_following_count: number | null
           mcq_count: number | null
           msq_count: number | null
           school_class_id: string | null
           short_answer_count: number | null
-          solved_examples_count: number
+          solved_examples_count: number | null
           subject_id: string | null
           total_marks_count: number | null
           total_time_count: number | null
@@ -868,16 +878,16 @@ export type Database = {
           difficulty_level_easy_count?: number | null
           difficulty_level_hard_count?: number | null
           difficulty_level_medium_count?: number | null
-          exercise_questions_count?: number
+          exercise_questions_count?: number | null
           fill_in_the_blanks_count?: number | null
           id?: string
           long_answer_count?: number | null
-          match_the_following_count?: number
+          match_the_following_count?: number | null
           mcq_count?: number | null
           msq_count?: number | null
           school_class_id?: string | null
           short_answer_count?: number | null
-          solved_examples_count?: number
+          solved_examples_count?: number | null
           subject_id?: string | null
           total_marks_count?: number | null
           total_time_count?: number | null
@@ -891,16 +901,16 @@ export type Database = {
           difficulty_level_easy_count?: number | null
           difficulty_level_hard_count?: number | null
           difficulty_level_medium_count?: number | null
-          exercise_questions_count?: number
+          exercise_questions_count?: number | null
           fill_in_the_blanks_count?: number | null
           id?: string
           long_answer_count?: number | null
-          match_the_following_count?: number
+          match_the_following_count?: number | null
           mcq_count?: number | null
           msq_count?: number | null
           school_class_id?: string | null
           short_answer_count?: number | null
-          solved_examples_count?: number
+          solved_examples_count?: number | null
           subject_id?: string | null
           total_marks_count?: number | null
           total_time_count?: number | null
