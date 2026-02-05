@@ -6,13 +6,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { UpLeftArea } from "./up-left/UpLeftArea";
 import { UpRightArea } from "./up-right/UpRightArea";
-import type { QuestionType, HardnessLevel } from "@skolist/db";
+import type { HardnessLevel } from "@skolist/db";
 
-// Extend QuestionType locally to support API-only types
-type ExtendedQuestionType =
-  | QuestionType
-  | "solved_examples"
-  | "exercise_questions";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { useConceptContext } from "../../../context/ConceptContext";
 import { useQuestionsContext } from "../../../context/QuestionsContext";
@@ -41,21 +36,9 @@ const QUESTION_TYPE_API_MAP: Record<ExtendedQuestionType, string> = {
 
 import {
   SUBJECT_QUESTION_CONFIG,
-  DEFAULT_QUESTION_TYPES,
+  ExtendedQuestionType,
 } from "../../../config/question_types_config";
-
-// Default values for generation pane
-const DEFAULT_QUESTION_COUNTS: Record<ExtendedQuestionType, number> = {
-  mcq4: 2,
-  msq4: 2,
-  short_answer: 2,
-  long_answer: 2,
-  true_or_false: 2,
-  fill_in_the_blanks: 2,
-  match_the_following: 2,
-  solved_examples: 0,
-  exercise_questions: 0,
-};
+import { useQuestionCounts } from "../../../hooks/useQuestionCounts";
 
 interface UpAreaProps {
   hardnessLevels: Record<HardnessLevel, number>;
@@ -85,11 +68,26 @@ export function UpArea({
   const { markAllQuestionsOld } = useQuestionsContext();
   const { toast } = useToast();
 
-  const [questionCounts, setQuestionCounts] = useState<
-    Record<ExtendedQuestionType, number>
-  >(DEFAULT_QUESTION_COUNTS);
+  // Get subject name for config
+  const subjectName = useMemo<string>(() => {
+    const subject = subjects.find((s) => s.id === selection.subjectId);
+    return subject?.name?.trim().toLowerCase() ?? "";
+  }, [subjects, selection.subjectId]);
 
-  const [totalQuestions, setTotalQuestions] = useState(14);
+  // State to hold restored counts from database
+  const [restoredCounts, setRestoredCounts] = useState<Partial<
+    Record<ExtendedQuestionType, number>
+  > | null>(null);
+
+  // Custom hook for question counts logic
+  const {
+    questionCounts,
+    setQuestionCounts,
+    handleCountChange,
+    totalQuestions,
+    setTotalQuestions,
+  } = useQuestionCounts(subjectName, restoredCounts);
+
   const [internalIsGenerating, setInternalIsGenerating] = useState(false);
 
   // Use prop if available, otherwise local state
@@ -115,41 +113,34 @@ export function UpArea({
       try {
         const savedStatus = await fetchGenerationPaneStatus(currentActivity.id);
         if (savedStatus) {
-          // Restore question counts
-          const newCounts = {
-            mcq4: savedStatus.mcq_count ?? DEFAULT_QUESTION_COUNTS.mcq4,
-            msq4: savedStatus.msq_count ?? DEFAULT_QUESTION_COUNTS.msq4,
-            short_answer:
-              savedStatus.short_answer_count ??
-              DEFAULT_QUESTION_COUNTS.short_answer,
-            long_answer:
-              savedStatus.long_answer_count ??
-              DEFAULT_QUESTION_COUNTS.long_answer,
-            true_or_false:
-              savedStatus.true_false_count ??
-              DEFAULT_QUESTION_COUNTS.true_or_false,
-            fill_in_the_blanks:
-              savedStatus.fill_in_the_blanks_count ??
-              DEFAULT_QUESTION_COUNTS.fill_in_the_blanks,
-            match_the_following:
-              savedStatus.match_the_following_count ??
-              DEFAULT_QUESTION_COUNTS.match_the_following,
-            solved_examples:
-              savedStatus.solved_examples_count ??
-              DEFAULT_QUESTION_COUNTS.solved_examples,
-            exercise_questions:
-              savedStatus.exercise_questions_count ??
-              DEFAULT_QUESTION_COUNTS.exercise_questions,
-          };
+          // Restore question counts (using defaults as fallback if fields are missing)
+          const restored: Partial<Record<ExtendedQuestionType, number>> = {};
 
-          setQuestionCounts(newCounts);
+          // Apply saved values if exist
+          if (savedStatus.mcq_count !== null)
+            restored.mcq4 = savedStatus.mcq_count;
+          if (savedStatus.msq_count !== null)
+            restored.msq4 = savedStatus.msq_count;
+          if (savedStatus.short_answer_count !== null)
+            restored.short_answer = savedStatus.short_answer_count;
+          if (savedStatus.long_answer_count !== null)
+            restored.long_answer = savedStatus.long_answer_count;
+          if (savedStatus.true_false_count !== null)
+            restored.true_or_false = savedStatus.true_false_count;
+          if (savedStatus.fill_in_the_blanks_count !== null)
+            restored.fill_in_the_blanks = savedStatus.fill_in_the_blanks_count;
+          if (savedStatus.match_the_following_count !== null)
+            restored.match_the_following =
+              savedStatus.match_the_following_count;
+          if (savedStatus.solved_examples_count !== null)
+            restored.solved_examples = savedStatus.solved_examples_count;
+          if (savedStatus.exercise_questions_count !== null)
+            restored.exercise_questions = savedStatus.exercise_questions_count;
 
-          // Calculate total questions by summing counts since it's no longer stored in DB
-          const total = Object.values(newCounts).reduce(
-            (sum, val) => sum + val,
-            0
-          );
-          setTotalQuestions(total || 12);
+          setRestoredCounts(restored);
+
+          // Note: Total questions is derived from counts by the hook, so we don't set it manually here.
+          // However, we set other independent fields.
           setTotalMarks(savedStatus.total_marks_count ?? 30);
           setTotalTime(savedStatus.total_time_count ?? 60);
           setCustomPrompt(savedStatus.custom_instructions ?? "");
@@ -282,56 +273,6 @@ export function UpArea({
     setSelectedConcepts,
   ]);
 
-  const handleQuestionCountChange = (
-    type: ExtendedQuestionType | QuestionType,
-    count: number
-  ) => {
-    setQuestionCounts((prev) => {
-      const newCounts = { ...prev, [type as ExtendedQuestionType]: count };
-      const newTotal = Object.entries(newCounts).reduce(
-        (sum, [, val]) => sum + val,
-        0
-      );
-      setTotalQuestions(newTotal);
-
-      // Simple mark/time estimation based on counts (if they are still at default/sync levels)
-      // This helps with the "relevant constraints" objective
-      const estimatedMarks =
-        newCounts.mcq4 * 1 +
-        newCounts.msq4 * 1 +
-        newCounts.true_or_false * 1 +
-        newCounts.fill_in_the_blanks * 1 +
-        newCounts.short_answer * 3 +
-        newCounts.long_answer * 5 +
-        newCounts.match_the_following * 4 +
-        newCounts.solved_examples * 5 + // Explicit marks logic for new types?
-        newCounts.exercise_questions * 3;
-
-      const estimatedTime =
-        newCounts.mcq4 * 1 +
-        newCounts.msq4 * 2 +
-        newCounts.true_or_false * 1 +
-        newCounts.fill_in_the_blanks * 1 +
-        newCounts.short_answer * 5 +
-        newCounts.long_answer * 15 +
-        newCounts.match_the_following * 5 +
-        newCounts.solved_examples * 10 +
-        newCounts.exercise_questions * 5;
-
-      // Only auto-update if they are close to old defaults or at low values
-      if (totalMarks <= 30) setTotalMarks(estimatedMarks);
-      if (totalTime <= 60) setTotalTime(estimatedTime);
-
-      return newCounts;
-    });
-  };
-
-  // Get subject name for config
-  const subjectName = useMemo<string>(() => {
-    const subject = subjects.find((s) => s.id === selection.subjectId);
-    return subject?.name?.toLowerCase() ?? "";
-  }, [subjects, selection.subjectId]);
-
   const handleGenerateQuestions = async () => {
     // Validation
     if (!currentActivity) {
@@ -381,15 +322,15 @@ export function UpArea({
     }
 
     // Determine allowed types for current subject
-    const allowedTypes =
-      SUBJECT_QUESTION_CONFIG[subjectName] || DEFAULT_QUESTION_TYPES;
+    // Logic: If config exists, only keys present are allowed?
+    // OR: All types allowed, but filtered from UI if count is 0 and not in explicit list?
+    // Let's stick to: All non-hidden types.
+    // For generation, we just use counts > 0.
+    // But we need to support the case where user sets count > 0 manually.
 
-    // Build question_types array with only non-zero counts AND allowed types
+    // Simplification: Send any type with count > 0.
     const questionTypes = Object.entries(questionCounts)
-      .filter(([type, count]) => {
-        // Must have count > 0 AND be in the allowed list for this subject
-        return count > 0 && allowedTypes.includes(type as ExtendedQuestionType);
-      })
+      .filter(([, count]) => count > 0)
       .map(([type, count]) => ({
         type: QUESTION_TYPE_API_MAP[type as ExtendedQuestionType],
         count,
@@ -533,24 +474,29 @@ export function UpArea({
     setQuestionCounts((prev) => {
       const newCounts = { ...prev };
 
-      // Determine allowed types for current subject
-      const allowedTypes =
-        SUBJECT_QUESTION_CONFIG[subjectName] || DEFAULT_QUESTION_TYPES;
+      // Determine allowed types from Config or Defaults
+      // If Subject Config exists, prioritize keys that are set there?
+      // Or just prioritize Global Order
+      const globalOrder: ExtendedQuestionType[] = [
+        "mcq4",
+        "msq4",
+        "short_answer",
+        "long_answer",
+        "true_or_false",
+        "fill_in_the_blanks",
+        "match_the_following",
+        "solved_examples",
+        "exercise_questions",
+      ];
 
-      // Filter priority order to only include allowed types AND respect config order
-      const filteredPriorityOrder: ExtendedQuestionType[] = allowedTypes.filter(
-        (t) =>
-          [
-            "mcq4",
-            "msq4",
-            "short_answer",
-            "long_answer",
-            "true_or_false",
-            "fill_in_the_blanks",
-            "match_the_following",
-            "solved_examples",
-            "exercise_questions",
-          ].includes(t)
+      const subjectConfig = SUBJECT_QUESTION_CONFIG[subjectName];
+      const allowedTypes = subjectConfig
+        ? (Object.keys(subjectConfig) as ExtendedQuestionType[])
+        : globalOrder;
+
+      // Filter priority order to only include types relevant for this subject
+      const filteredPriorityOrder: ExtendedQuestionType[] = globalOrder.filter(
+        (t) => allowedTypes.includes(t)
       );
 
       if (diff > 0) {
@@ -560,12 +506,9 @@ export function UpArea({
         const activeTypes = filteredPriorityOrder.filter((t) => prev[t] > 0);
 
         // If no active types, try to use the first allowed type (e.g. MCQ)
-        const typesToIncrement =
-          activeTypes.length > 0
-            ? activeTypes
-            : filteredPriorityOrder.length > 0
-              ? [filteredPriorityOrder[0] as ExtendedQuestionType]
-              : [];
+        const firstType = filteredPriorityOrder[0];
+        const typesToIncrement: ExtendedQuestionType[] =
+          activeTypes.length > 0 ? activeTypes : firstType ? [firstType] : [];
 
         if (typesToIncrement.length > 0) {
           while (remainingDiff > 0) {
@@ -604,7 +547,7 @@ export function UpArea({
         <div className="relative z-10 h-full pt-2 lg:pt-0">
           <UpRightArea
             questionCounts={questionCounts}
-            onQuestionCountChange={handleQuestionCountChange}
+            onQuestionCountChange={handleCountChange}
             onGenerate={handleGenerateQuestions}
             isGenerating={isBusy}
             hardnessLevels={hardnessLevels}

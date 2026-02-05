@@ -6,29 +6,34 @@ export type ExtendedQuestionType =
   | "solved_examples"
   | "exercise_questions";
 
-// Default fallback list of question types
-export const DEFAULT_QUESTION_TYPES: ExtendedQuestionType[] = [
-  "mcq4",
-  "match_the_following",
-//   "msq4",
-  "short_answer",
-  "long_answer",
-  "true_or_false",
-  "fill_in_the_blanks",
-//   "solved_examples",
-//   "exercise_questions",
-];
+// Default counts for all question types
+export const DEFAULT_QUESTION_COUNTS: Partial<
+  Record<ExtendedQuestionType, number>
+> = {
+  mcq4: 2,
+  match_the_following: 2,
+  // msq4: 0,
+  short_answer: 2,
+  long_answer: 2,
+  true_or_false: 2,
+  fill_in_the_blanks: 2,
+  // solved_examples: 2,
+  // exercise_questions: 2,
+};
 
-// Configuration mapping normalized subject names to allowed question types
-// Keys should be lowercase and trimmed
-export const SUBJECT_QUESTION_CONFIG: Record<string, ExtendedQuestionType[]> = {
+// Configuration mapping normalized subject names to specific question counts
+// Keys in the inner object determine both the ALLOWED types and their DEFAULT counts
+export const SUBJECT_QUESTION_CONFIG: Record<
+  string,
+  Partial<Record<ExtendedQuestionType, number>>
+> = {
   // Example configuration
-  "maths - corodova": [
-    "mcq4",
-    "match_the_following",
-    "short_answer",
-    "long_answer",
-    "solved_examples",
-    "exercise_questions",
-  ],
+  "maths - corodova": {
+    mcq4: 4,
+    match_the_following: 2,
+    short_answer: 2,
+    long_answer: 2,
+    solved_examples: 2,
+    exercise_questions: 2,
+  },
 };

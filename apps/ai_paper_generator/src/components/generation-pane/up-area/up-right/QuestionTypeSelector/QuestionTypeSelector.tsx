@@ -21,7 +21,7 @@ type ExtendedQuestionType =
 
 import {
   SUBJECT_QUESTION_CONFIG,
-  DEFAULT_QUESTION_TYPES,
+  DEFAULT_QUESTION_COUNTS,
 } from "../../../../../config/question_types_config";
 
 interface QuestionTypeSelectorProps {
@@ -91,13 +91,19 @@ export function QuestionTypeSelector({
   subjectName,
 }: QuestionTypeSelectorProps) {
   // Determine allowed types for current subject
-  const allowedTypes =
-    SUBJECT_QUESTION_CONFIG[subjectName] || DEFAULT_QUESTION_TYPES;
+  // If subject config exists, use its keys.
+  // Otherwise use keys from DEFAULT_QUESTION_COUNTS (which includes all types)
+  const subjectConfig = SUBJECT_QUESTION_CONFIG[subjectName];
+
+  const allowedTypes: ExtendedQuestionType[] = subjectConfig
+    ? (Object.keys(subjectConfig) as ExtendedQuestionType[])
+    : (Object.keys(DEFAULT_QUESTION_COUNTS) as ExtendedQuestionType[]);
 
   // Filter types to display and respect config order
-  const filteredQuestionTypes = allowedTypes
-    .map((type) => QUESTION_TYPES.find((qt) => qt.type === type))
-    .filter((qt): qt is (typeof QUESTION_TYPES)[number] => !!qt);
+  // We use the QUESTION_TYPES array to determine display order and metadata
+  const filteredQuestionTypes = QUESTION_TYPES.filter((qt) =>
+    allowedTypes.includes(qt.type)
+  );
 
   // Calculate total ONLY for visible types
   const visibleTotalQuestions = filteredQuestionTypes.reduce(
