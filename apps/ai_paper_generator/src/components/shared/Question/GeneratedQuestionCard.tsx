@@ -81,6 +81,7 @@ interface GeneratedQuestionCardProps {
     isCameraCapture?: boolean
   ) => Promise<void>; // Optional override for regenerate with prompt (useful for Storybook)
   dragHandleProps?: Record<string, any>;
+  isReadOnly?: boolean;
 }
 
 export function GeneratedQuestionCard({
@@ -101,6 +102,7 @@ export function GeneratedQuestionCard({
   onAutoCorrect,
   onRegenerateWithPrompt,
   dragHandleProps,
+  isReadOnly = false,
 }: GeneratedQuestionCardProps) {
   const { toast } = useToast();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -435,6 +437,9 @@ export function GeneratedQuestionCard({
                 : "none",
       }}
     >
+      {/* Read Only Overlay / Pointer Events Control */}
+      {isReadOnly && <div className="absolute inset-0 z-50 bg-transparent" />}
+
       {/* Slide Animation Styles */}
       <style>{`
         @keyframes slideOutRight {
@@ -495,30 +500,32 @@ export function GeneratedQuestionCard({
       )}
 
       {/* --- Actions --- */}
-      <QuestionCardActions
-        question={question}
-        onRemoveFromDraft={onRemoveFromDraft}
-        onDelete={onDelete}
-        onRegenerate={onRegenerate}
-        isAutoCorrecting={anims.isAutoCorrecting}
-        isUploading={state.isUploading}
-        isRegenerating={anims.isRegenerating}
-        isChatPromptAnimating={anims.isChatPromptAnimating}
-        isCameraCapturing={anims.isCameraCapturing}
-        slideDirection={anims.slideDirection}
-        onAutoCorrect={handleAutoCorrect}
-        onAttachClick={() => state.fileInputRef.current?.click()}
-        onRegenerateClick={handleDirectRegenerate}
-        onRegenerateWithPromptClick={() => state.setIsRegenerateOpen(true)}
-        onCameraClick={() => state.cameraInputRef.current?.click()}
-        onEditClick={() => state.setIsEditing(true)}
-        onMoveToDraft={handleMoveToDraft}
-        onRemoveFromDraftClick={handleRemoveFromDraft}
-        onDeleteClick={() => state.setIsDeleteModalOpen(true)}
-        autoCorrectBtnRef={anims.autoCorrectBtnRef}
-        regenerateBtnRef={anims.regenerateBtnRef}
-        cameraBtnRef={anims.cameraBtnRef}
-      />
+      {!isReadOnly && (
+        <QuestionCardActions
+          question={question}
+          onRemoveFromDraft={onRemoveFromDraft}
+          onDelete={onDelete}
+          onRegenerate={onRegenerate}
+          isAutoCorrecting={anims.isAutoCorrecting}
+          isUploading={state.isUploading}
+          isRegenerating={anims.isRegenerating}
+          isChatPromptAnimating={anims.isChatPromptAnimating}
+          isCameraCapturing={anims.isCameraCapturing}
+          slideDirection={anims.slideDirection}
+          onAutoCorrect={handleAutoCorrect}
+          onAttachClick={() => state.fileInputRef.current?.click()}
+          onRegenerateClick={handleDirectRegenerate}
+          onRegenerateWithPromptClick={() => state.setIsRegenerateOpen(true)}
+          onCameraClick={() => state.cameraInputRef.current?.click()}
+          onEditClick={() => state.setIsEditing(true)}
+          onMoveToDraft={handleMoveToDraft}
+          onRemoveFromDraftClick={handleRemoveFromDraft}
+          onDeleteClick={() => state.setIsDeleteModalOpen(true)}
+          autoCorrectBtnRef={anims.autoCorrectBtnRef}
+          regenerateBtnRef={anims.regenerateBtnRef}
+          cameraBtnRef={anims.cameraBtnRef}
+        />
+      )}
 
       {/* --- Dialogs --- */}
       <ConfirmDialog
@@ -616,14 +623,14 @@ export function GeneratedQuestionCard({
           <span>•</span>
           <QuestionMarks
             marks={question.marks}
-            editable={true}
+            editable={!isReadOnly}
             onUpdate={handleMarksUpdate}
           />
           <span>•</span>
           <QuestionTags
             hardness={question.hardness_level}
             concepts={[]}
-            editable={true}
+            editable={!isReadOnly}
             onHardnessUpdate={handleHardnessUpdate}
           />
         </div>
