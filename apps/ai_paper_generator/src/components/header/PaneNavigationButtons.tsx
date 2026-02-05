@@ -23,7 +23,7 @@ export function PaneNavigationButtons({
   const panes: { type: PaneType; label: string; icon: React.ReactNode }[] = [
     {
       type: "generation",
-      label: "Generate",
+      label: "Questions",
       icon: <Sparkles className="h-4 w-4" />,
     },
     { type: "draft", label: "Draft", icon: <FileEdit className="h-4 w-4" /> },
