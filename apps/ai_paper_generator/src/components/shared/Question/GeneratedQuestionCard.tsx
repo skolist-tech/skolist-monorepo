@@ -578,7 +578,7 @@ export function GeneratedQuestionCard({
         {/* Meta info (Type, Marks, Hardness) */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {question.is_solved_example && (
-            <>
+            <div className="hidden items-center gap-2 md:flex">
               <Badge
                 variant="secondary"
                 className="gap-1 bg-amber-100 text-amber-800 hover:bg-amber-100"
@@ -587,10 +587,10 @@ export function GeneratedQuestionCard({
                 Solved Example
               </Badge>
               <span>•</span>
-            </>
+            </div>
           )}
           {question.is_exercise_question && ( // Use is_exercise_question based on DB schema
-            <>
+            <div className="hidden items-center gap-2 md:flex">
               <Badge
                 variant="secondary"
                 className="gap-1 bg-blue-100 text-blue-800 hover:bg-blue-100"
@@ -599,7 +599,7 @@ export function GeneratedQuestionCard({
                 Exercise
               </Badge>
               <span>•</span>
-            </>
+            </div>
           )}
           <Badge variant="outline" className="capitalize">
             {formatQuestionType(question.question_type)}
@@ -704,7 +704,7 @@ export function GeneratedQuestionCard({
         )}
       </div>
 
-      <div className="absolute bottom-2 right-2 z-10 flex flex-col gap-1">
+      <div className="absolute bottom-2 right-2 z-10 flex flex-col items-end gap-1">
         {dragHandleProps && (
           <TooltipProvider delayDuration={0}>
             <Tooltip>
@@ -724,50 +724,70 @@ export function GeneratedQuestionCard({
             </Tooltip>
           </TooltipProvider>
         )}
-        <Popover>
-          <PopoverTrigger asChild>
-            <div>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-9 w-9 text-muted-foreground hover:text-primary"
+        <div className="flex items-center gap-2">
+          {question.is_solved_example && (
+            <Badge
+              variant="secondary"
+              className="gap-1 bg-amber-100 text-amber-800 hover:bg-amber-100 md:hidden"
+            >
+              <Lightbulb className="h-3 w-3" />
+              Solved Example
+            </Badge>
+          )}
+          {question.is_exercise_question && (
+            <Badge
+              variant="secondary"
+              className="gap-1 bg-blue-100 text-blue-800 hover:bg-blue-100 md:hidden"
+            >
+              <Dumbbell className="h-3 w-3" />
+              Exercise
+            </Badge>
+          )}
+          <Popover>
+            <PopoverTrigger asChild>
+              <div>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-9 w-9 text-muted-foreground hover:text-primary"
+                      >
+                        <Info className="!h-6 !w-6" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>View Concepts</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3" align="end">
+              <h4 className="mb-2 text-sm font-medium leading-none">
+                Related Concepts
+              </h4>
+              <div className="flex flex-wrap gap-1">
+                {question.concepts && question.concepts.length > 0 ? (
+                  question.concepts.map((concept) => (
+                    <Badge
+                      key={concept.id}
+                      variant="secondary"
+                      className="text-xs"
                     >
-                      <Info className="!h-6 !w-6" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left">
-                    <p>View Concepts</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-3" align="end">
-            <h4 className="mb-2 text-sm font-medium leading-none">
-              Related Concepts
-            </h4>
-            <div className="flex flex-wrap gap-1">
-              {question.concepts && question.concepts.length > 0 ? (
-                question.concepts.map((concept) => (
-                  <Badge
-                    key={concept.id}
-                    variant="secondary"
-                    className="text-xs"
-                  >
-                    {concept.name}
-                  </Badge>
-                ))
-              ) : (
-                <span className="text-xs text-muted-foreground">
-                  No concepts linked
-                </span>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+                      {concept.name}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    No concepts linked
+                  </span>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
     </div>
   );
