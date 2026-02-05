@@ -602,7 +602,16 @@ export function GeneratedQuestionCard({
             </div>
           )}
           <Badge variant="outline" className="capitalize">
-            {formatQuestionType(question.question_type)}
+            {question.question_type === "match_the_following" ? (
+              <>
+                <span className="inline md:hidden">Match</span>
+                <span className="hidden md:inline">
+                  {formatQuestionType(question.question_type)}
+                </span>
+              </>
+            ) : (
+              formatQuestionType(question.question_type)
+            )}
           </Badge>
           <span>•</span>
           <QuestionMarks
