@@ -9,15 +9,26 @@ import {
   Underline,
   ListChecks,
   Columns,
+  Lightbulb,
+  Dumbbell,
 } from "lucide-react";
 
+// Custom extended type
+type ExtendedQuestionType =
+  | QuestionType
+  | "solved_examples"
+  | "exercise_questions";
+
 interface QuestionTypeSelectorProps {
-  questionCounts: Record<QuestionType, number>;
-  onCountChange: (type: QuestionType, count: number) => void;
+  questionCounts: Record<ExtendedQuestionType, number>;
+  onCountChange: (
+    type: ExtendedQuestionType | QuestionType,
+    count: number
+  ) => void;
 }
 
 const QUESTION_TYPES: Array<{
-  type: QuestionType;
+  type: ExtendedQuestionType;
   label: string;
   icon: React.ReactNode;
 }> = [
@@ -55,6 +66,16 @@ const QUESTION_TYPES: Array<{
     type: QUESTION_TYPE.MATCH_THE_FOLLOWING,
     label: "Match the Following",
     icon: <Columns className="h-4 w-4 text-primary" />,
+  },
+  {
+    type: "solved_examples",
+    label: "Solved Examples",
+    icon: <Lightbulb className="h-4 w-4 text-primary" />,
+  },
+  {
+    type: "exercise_questions",
+    label: "Exercise Questions",
+    icon: <Dumbbell className="h-4 w-4 text-primary" />,
   },
 ];
 

@@ -7,6 +7,12 @@ import { useState, useEffect } from "react";
 import { UpLeftArea } from "./up-left/UpLeftArea";
 import { UpRightArea } from "./up-right/UpRightArea";
 import type { QuestionType, HardnessLevel } from "@skolist/db";
+
+// Extend QuestionType locally to support API-only types
+type ExtendedQuestionType =
+  | QuestionType
+  | "solved_examples"
+  | "exercise_questions";
 import type { AutoDecideParams } from "./up-right/AutoDecideQuestion/AutoDecideQuestion";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { useConceptContext } from "../../../context/ConceptContext";
@@ -22,7 +28,7 @@ import {
 import { useToast } from "@skolist/ui";
 
 // Mapping from frontend QuestionType to API question type
-const QUESTION_TYPE_API_MAP: Record<QuestionType, string> = {
+const QUESTION_TYPE_API_MAP: Record<ExtendedQuestionType, string> = {
   mcq4: "mcq4",
   msq4: "msq4",
   short_answer: "short_answer",
@@ -30,10 +36,12 @@ const QUESTION_TYPE_API_MAP: Record<QuestionType, string> = {
   true_or_false: "true_false",
   fill_in_the_blanks: "fill_in_the_blank",
   match_the_following: "match_the_following",
+  solved_examples: "solved_examples",
+  exercise_questions: "exercise_questions",
 };
 
 // Default values for generation pane
-const DEFAULT_QUESTION_COUNTS: Record<QuestionType, number> = {
+const DEFAULT_QUESTION_COUNTS: Record<ExtendedQuestionType, number> = {
   mcq4: 2,
   msq4: 2,
   short_answer: 2,
@@ -41,6 +49,8 @@ const DEFAULT_QUESTION_COUNTS: Record<QuestionType, number> = {
   true_or_false: 2,
   fill_in_the_blanks: 2,
   match_the_following: 2,
+  solved_examples: 0,
+  exercise_questions: 0,
 };
 
 interface UpAreaProps {
@@ -72,7 +82,7 @@ export function UpArea({
   const { toast } = useToast();
 
   const [questionCounts, setQuestionCounts] = useState<
-    Record<QuestionType, number>
+    Record<ExtendedQuestionType, number>
   >(DEFAULT_QUESTION_COUNTS);
 
   const [totalQuestions, setTotalQuestions] = useState(14);
@@ -118,8 +128,14 @@ export function UpArea({
               savedStatus.fill_in_the_blanks_count ??
               DEFAULT_QUESTION_COUNTS.fill_in_the_blanks,
             match_the_following:
-              (savedStatus as any).match_the_following_count ??
+              savedStatus.match_the_following_count ??
               DEFAULT_QUESTION_COUNTS.match_the_following,
+            solved_examples:
+              savedStatus.solved_examples_count ??
+              DEFAULT_QUESTION_COUNTS.solved_examples,
+            exercise_questions:
+              savedStatus.exercise_questions_count ??
+              DEFAULT_QUESTION_COUNTS.exercise_questions,
           };
 
           setQuestionCounts(newCounts);
@@ -262,9 +278,12 @@ export function UpArea({
     setSelectedConcepts,
   ]);
 
-  const handleQuestionCountChange = (type: QuestionType, count: number) => {
+  const handleQuestionCountChange = (
+    type: ExtendedQuestionType | QuestionType,
+    count: number
+  ) => {
     setQuestionCounts((prev) => {
-      const newCounts = { ...prev, [type]: count };
+      const newCounts = { ...prev, [type as ExtendedQuestionType]: count };
       const newTotal = Object.entries(newCounts).reduce(
         (sum, [, val]) => sum + val,
         0
@@ -280,7 +299,9 @@ export function UpArea({
         newCounts.fill_in_the_blanks * 1 +
         newCounts.short_answer * 3 +
         newCounts.long_answer * 5 +
-        newCounts.match_the_following * 4;
+        newCounts.match_the_following * 4 +
+        newCounts.solved_examples * 5 + // Explicit marks logic for new types?
+        newCounts.exercise_questions * 3;
 
       const estimatedTime =
         newCounts.mcq4 * 1 +
@@ -289,7 +310,9 @@ export function UpArea({
         newCounts.fill_in_the_blanks * 1 +
         newCounts.short_answer * 5 +
         newCounts.long_answer * 15 +
-        newCounts.match_the_following * 5;
+        newCounts.match_the_following * 5 +
+        newCounts.solved_examples * 10 +
+        newCounts.exercise_questions * 5;
 
       // Only auto-update if they are close to old defaults or at low values
       if (totalMarks <= 30) setTotalMarks(estimatedMarks);
@@ -306,7 +329,7 @@ export function UpArea({
     setQuestionCounts((prev) => {
       const newCounts = { ...prev };
 
-      const priorityOrder: QuestionType[] = [
+      const priorityOrder: ExtendedQuestionType[] = [
         "mcq4",
         "msq4",
         "short_answer",
@@ -314,6 +337,8 @@ export function UpArea({
         "true_or_false",
         "fill_in_the_blanks",
         "match_the_following",
+        "solved_examples",
+        "exercise_questions",
       ];
 
       if (diff > 0) {
@@ -321,7 +346,9 @@ export function UpArea({
         let remainingDiff = diff;
         const activeTypes = priorityOrder.filter((t) => prev[t] > 0);
         const typesToIncrement =
-          activeTypes.length > 0 ? activeTypes : ["mcq4" as QuestionType];
+          activeTypes.length > 0
+            ? activeTypes
+            : ["mcq4" as ExtendedQuestionType];
 
         while (remainingDiff > 0) {
           for (const type of typesToIncrement) {
@@ -403,7 +430,7 @@ export function UpArea({
     const questionTypes = Object.entries(questionCounts)
       .filter(([, count]) => count > 0)
       .map(([type, count]) => ({
-        type: QUESTION_TYPE_API_MAP[type as QuestionType],
+        type: QUESTION_TYPE_API_MAP[type as ExtendedQuestionType],
         count,
       }));
 
@@ -503,6 +530,8 @@ export function UpArea({
           total_marks_count: totalMarks,
           total_time_count: totalTime,
           custom_instructions: customPrompt || null,
+          solved_examples_count: questionCounts.solved_examples,
+          exercise_questions_count: questionCounts.exercise_questions,
         });
 
         // Persist selected concepts for this pane

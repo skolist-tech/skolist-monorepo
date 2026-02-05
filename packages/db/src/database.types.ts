@@ -481,8 +481,10 @@ export type Database = {
           explanation: string | null
           hardness_level: Database["public"]["Enums"]["hardness_level_enum"]
           id: string
+          is_exercise_question: boolean
           is_in_draft: boolean
           is_page_break_below: boolean
+          is_solved_example: boolean
           marks: number
           match_the_following_columns: Json | null
           msq_option1_answer: boolean | null
@@ -507,8 +509,10 @@ export type Database = {
           explanation?: string | null
           hardness_level: Database["public"]["Enums"]["hardness_level_enum"]
           id?: string
+          is_exercise_question?: boolean
           is_in_draft?: boolean
           is_page_break_below?: boolean
+          is_solved_example?: boolean
           marks: number
           match_the_following_columns?: Json | null
           msq_option1_answer?: boolean | null
@@ -533,8 +537,10 @@ export type Database = {
           explanation?: string | null
           hardness_level?: Database["public"]["Enums"]["hardness_level_enum"]
           id?: string
+          is_exercise_question?: boolean
           is_in_draft?: boolean
           is_page_break_below?: boolean
+          is_solved_example?: boolean
           marks?: number
           match_the_following_columns?: Json | null
           msq_option1_answer?: boolean | null
@@ -839,6 +845,7 @@ export type Database = {
           difficulty_level_easy_count: number | null
           difficulty_level_hard_count: number | null
           difficulty_level_medium_count: number | null
+          exercise_questions_count: number
           fill_in_the_blanks_count: number | null
           id: string
           long_answer_count: number | null
@@ -847,6 +854,7 @@ export type Database = {
           msq_count: number | null
           school_class_id: string | null
           short_answer_count: number | null
+          solved_examples_count: number
           subject_id: string | null
           total_marks_count: number | null
           total_time_count: number | null
@@ -860,6 +868,7 @@ export type Database = {
           difficulty_level_easy_count?: number | null
           difficulty_level_hard_count?: number | null
           difficulty_level_medium_count?: number | null
+          exercise_questions_count?: number
           fill_in_the_blanks_count?: number | null
           id?: string
           long_answer_count?: number | null
@@ -868,6 +877,7 @@ export type Database = {
           msq_count?: number | null
           school_class_id?: string | null
           short_answer_count?: number | null
+          solved_examples_count?: number
           subject_id?: string | null
           total_marks_count?: number | null
           total_time_count?: number | null
@@ -881,6 +891,7 @@ export type Database = {
           difficulty_level_easy_count?: number | null
           difficulty_level_hard_count?: number | null
           difficulty_level_medium_count?: number | null
+          exercise_questions_count?: number
           fill_in_the_blanks_count?: number | null
           id?: string
           long_answer_count?: number | null
@@ -889,6 +900,7 @@ export type Database = {
           msq_count?: number | null
           school_class_id?: string | null
           short_answer_count?: number | null
+          solved_examples_count?: number
           subject_id?: string | null
           total_marks_count?: number | null
           total_time_count?: number | null

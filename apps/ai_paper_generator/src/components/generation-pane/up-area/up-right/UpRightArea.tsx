@@ -5,13 +5,23 @@ import { HardnessLevelSliders } from "./AutoDecideQuestion/HardnessLevelSliders"
 import { PromptBox } from "./AutoDecideQuestion/PromptBox";
 import { TotalInputs } from "./AutoDecideQuestion/TotalInputs";
 import type { QuestionType, HardnessLevel } from "@skolist/db";
+
+// Extend QuestionType locally to support API-only types
+type ExtendedQuestionType =
+  | QuestionType
+  | "solved_examples"
+  | "exercise_questions";
+
 import { difficultySplitInt } from "../../../../utils/difficultySplit";
 import { useToast } from "@skolist/ui";
 // import { Separator } from "@skolist/ui";
 
 interface UpRightAreaProps {
-  questionCounts: Record<QuestionType, number>;
-  onQuestionCountChange: (type: QuestionType, count: number) => void;
+  questionCounts: Record<ExtendedQuestionType, number>;
+  onQuestionCountChange: (
+    type: ExtendedQuestionType | QuestionType,
+    count: number
+  ) => void;
   onAutoDecide: (params: AutoDecideParams) => void;
   onGenerate: () => void;
   isGenerating: boolean;
@@ -47,7 +57,10 @@ export function UpRightArea({
 }: UpRightAreaProps) {
   const { toast } = useToast();
 
-  const handleQuestionCountChange = (type: QuestionType, count: number) => {
+  const handleQuestionCountChange = (
+    type: ExtendedQuestionType | QuestionType,
+    count: number
+  ) => {
     // Calculate new total
     // We can't rely just on totalQuestions prop because it might be out of sync or calculated differently
     // So we calculate from the counts prop which is the source of truth for the selector

@@ -13,7 +13,14 @@ import {
   TooltipTrigger,
   useToast,
 } from "@skolist/ui";
-import { ChevronUp, ChevronDown, Info, GripVertical } from "lucide-react";
+import {
+  ChevronUp,
+  ChevronDown,
+  Info,
+  GripVertical,
+  Lightbulb,
+  Dumbbell,
+} from "lucide-react";
 import type { GeneratedQuestionWithConcepts } from "../../../services/questionService";
 import { updateQuestion } from "../../../services/questionService";
 import { fastApiService } from "../../../services/fastApiService";
@@ -570,6 +577,30 @@ export function GeneratedQuestionCard({
       <div className={`mb-2 space-y-3 pr-16 ${onSelect ? "pl-6" : ""}`}>
         {/* Meta info (Type, Marks, Hardness) */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {question.is_solved_example && (
+            <>
+              <Badge
+                variant="secondary"
+                className="gap-1 bg-amber-100 text-amber-800 hover:bg-amber-100"
+              >
+                <Lightbulb className="h-3 w-3" />
+                Solved Example
+              </Badge>
+              <span>•</span>
+            </>
+          )}
+          {question.is_exercise_question && ( // Use is_exercise_question based on DB schema
+            <>
+              <Badge
+                variant="secondary"
+                className="gap-1 bg-blue-100 text-blue-800 hover:bg-blue-100"
+              >
+                <Dumbbell className="h-3 w-3" />
+                Exercise
+              </Badge>
+              <span>•</span>
+            </>
+          )}
           <Badge variant="outline" className="capitalize">
             {formatQuestionType(question.question_type)}
           </Badge>

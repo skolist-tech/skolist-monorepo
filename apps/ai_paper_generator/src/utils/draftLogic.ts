@@ -6,6 +6,12 @@ import type { QgenDraftSection } from "@skolist/db";
 export const getSectionNameForType = (type: string) =>
   `Section - ${formatQuestionType(type)}`;
 
+export const getSectionNameForQuestion = (q: GeneratedQuestionWithConcepts) => {
+  if (q.is_solved_example) return "Section - Solved Examples";
+  if (q.is_exercise_question) return "Section - Exercise Questions"; 
+  return getSectionNameForType(q.question_type);
+};
+
 export interface QuestionDraftUpdate {
   id: string;
   position_in_draft: number;
@@ -26,17 +32,18 @@ export const resolveSectionPlan = (
   const typeToSectionId = new Map<string, string>();
   const missingSectionNames = new Set<string>();
 
-  const uniqueTypes = Array.from(
-    new Set(questionsToMove.map((q) => q.question_type))
+  // We group by "Section Name" instead of just type now.
+  // Iterate through questions to identify unique intended sections.
+  const targetSectionNames = new Set(
+    questionsToMove.map((q) => getSectionNameForQuestion(q))
   );
 
-  uniqueTypes.forEach((type) => {
-    const targetName = getSectionNameForType(type);
+  targetSectionNames.forEach((targetName) => {
     const existing = existingSections.find(
       (s) => s.section_name === targetName
     );
     if (existing) {
-      typeToSectionId.set(type, existing.id);
+      typeToSectionId.set(targetName, existing.id);
     } else {
       missingSectionNames.add(targetName);
     }
@@ -71,14 +78,6 @@ export const calculatePositions = (
     .filter((q) => q.is_in_draft && !movingIds.has(q.id))
     .map((q) => ({ ...q })); // shallow copy
 
-  // Sort questions to move? Let's keep input order, or sort by type -> text?
-  // User didn't specify, input order is safest (user selection order)
-
-  // To handle updates efficiently, we can:
-  // 1. Group layoutQuestions by section
-  // 2. Insert moving questions into appropriate groups
-  // 3. Flatten and re-assign position_in_draft globally
-
   const sectionGroups = new Map<string, GeneratedQuestionWithConcepts[]>();
   sortedSections.forEach((s) => sectionGroups.set(s.id, []));
 
@@ -105,7 +104,7 @@ export const calculatePositions = (
 
   // Distribute new/moving questions
   questionsToMove.forEach((q) => {
-    const targetName = getSectionNameForType(q.question_type);
+    const targetName = getSectionNameForQuestion(q);
     const targetSection = sortedSections.find(
       (s) => s.section_name === targetName
     );

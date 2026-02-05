@@ -1,9 +1,9 @@
 import { Input, Label } from "@skolist/ui";
-import type { QuestionType } from "@skolist/db";
+// import type { QuestionType } from "@skolist/db";
 import { cn } from "@skolist/utils";
 
 interface QuestionTypeCardProps {
-  type: QuestionType;
+  type: string;
   label: string;
   count: number;
   onCountChange: (count: number) => void;
