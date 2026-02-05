@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { UpRightArea } from "./UpRightArea";
 import { fn } from "@storybook/test";
-import type { QuestionType, HardnessLevel } from "@skolist/db";
+import type { HardnessLevel } from "@skolist/db";
 
 const meta: Meta<typeof UpRightArea> = {
   title: "Generation Pane/Up Area/UpRightArea",
@@ -15,7 +15,7 @@ export default meta;
 type Story = StoryObj<typeof UpRightArea>;
 
 // Mock data
-const defaultQuestionCounts: Record<QuestionType, number> = {
+const defaultQuestionCounts = {
   mcq4: 2,
   msq4: 2,
   short_answer: 2,
@@ -23,6 +23,8 @@ const defaultQuestionCounts: Record<QuestionType, number> = {
   true_or_false: 2,
   fill_in_the_blanks: 2,
   match_the_following: 2,
+  solved_examples: 2,
+  exercise_questions: 2,
 };
 
 const defaultHardnessLevels: Record<HardnessLevel, number> = {
@@ -76,6 +78,8 @@ export const WithCustomValues: Story = {
       true_or_false: 2,
       fill_in_the_blanks: 2,
       match_the_following: 2,
+      solved_examples: 1,
+      exercise_questions: 1,
     },
     hardnessLevels: {
       easy: 10,
@@ -102,6 +106,8 @@ export const WithValidationState: Story = {
       true_or_false: 0,
       fill_in_the_blanks: 0,
       match_the_following: 0,
+      solved_examples: 0,
+      exercise_questions: 0,
     },
   },
 };

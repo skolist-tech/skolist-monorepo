@@ -14,7 +14,11 @@ const mockDirectRegenerate = async (): Promise<void> => {
 };
 
 // Mock regenerate with prompt handler that waits 5 seconds (to showcase the typing animation)
-const mockRegenerateWithPrompt = async (_questionId: string, _prompt: string, _files: File[]): Promise<void> => {
+const mockRegenerateWithPrompt = async (
+  _questionId: string,
+  _prompt: string,
+  _files: File[]
+): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 5000));
 };
 
@@ -59,6 +63,8 @@ const createMockQuestion = (
     { id: "concept-2", name: "Power Rule" },
   ],
   images: [],
+  is_exercise_question: false,
+  is_solved_example: false,
   ...overrides,
 });
 
@@ -235,8 +241,7 @@ export const HardQuestion: Story = {
     question: createMockQuestion({
       hardness_level: "hard",
       marks: 6,
-      question_text:
-        "Evaluate the integral $\\int_0^{\\pi} \\sin^2(x) \\, dx$",
+      question_text: "Evaluate the integral $\\int_0^{\\pi} \\sin^2(x) \\, dx$",
       option1: "$\\frac{\\pi}{2}$",
       option2: "$\\pi$",
       option3: "$2\\pi$",
@@ -317,7 +322,8 @@ export const WithImages: Story = {
           position: 1,
           created_at: new Date().toISOString(),
           svg_string: null,
-          file_path : "/images/question-550e8400-e29b-41d4-a716-446655440000-img-1.png",
+          file_path:
+            "/images/question-550e8400-e29b-41d4-a716-446655440000-img-1.png",
         },
       ],
     }),
@@ -337,7 +343,8 @@ export const WithMultipleImages: Story = {
           position: 1,
           created_at: new Date().toISOString(),
           svg_string: null,
-          file_path : "/images/question-550e8400-e29b-41d4-a716-446655440000-img-1.png",
+          file_path:
+            "/images/question-550e8400-e29b-41d4-a716-446655440000-img-1.png",
         },
         {
           id: "img-2",
@@ -346,7 +353,8 @@ export const WithMultipleImages: Story = {
           position: 2,
           created_at: new Date().toISOString(),
           svg_string: null,
-          file_path : "/images/question-550e8400-e29b-41d4-a716-446655440000-img-2.png",
+          file_path:
+            "/images/question-550e8400-e29b-41d4-a716-446655440000-img-2.png",
         },
       ],
     }),

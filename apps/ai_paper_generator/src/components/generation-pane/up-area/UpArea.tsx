@@ -3,7 +3,7 @@
  * Uses ConceptContext for state management
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { UpLeftArea } from "./up-left/UpLeftArea";
 import { UpRightArea } from "./up-right/UpRightArea";
 import type { QuestionType, HardnessLevel } from "@skolist/db";
@@ -13,7 +13,6 @@ type ExtendedQuestionType =
   | QuestionType
   | "solved_examples"
   | "exercise_questions";
-import type { AutoDecideParams } from "./up-right/AutoDecideQuestion/AutoDecideQuestion";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { useConceptContext } from "../../../context/ConceptContext";
 import { useQuestionsContext } from "../../../context/QuestionsContext";
@@ -39,6 +38,11 @@ const QUESTION_TYPE_API_MAP: Record<ExtendedQuestionType, string> = {
   solved_examples: "solved_examples",
   exercise_questions: "exercise_questions",
 };
+
+import {
+  SUBJECT_QUESTION_CONFIG,
+  DEFAULT_QUESTION_TYPES,
+} from "../../../config/question_types_config";
 
 // Default values for generation pane
 const DEFAULT_QUESTION_COUNTS: Record<ExtendedQuestionType, number> = {
@@ -322,61 +326,11 @@ export function UpArea({
     });
   };
 
-  const handleTotalQuestionsChange = (newTotal: number) => {
-    const diff = newTotal - totalQuestions;
-    setTotalQuestions(newTotal);
-
-    setQuestionCounts((prev) => {
-      const newCounts = { ...prev };
-
-      const priorityOrder: ExtendedQuestionType[] = [
-        "mcq4",
-        "msq4",
-        "short_answer",
-        "long_answer",
-        "true_or_false",
-        "fill_in_the_blanks",
-        "match_the_following",
-        "solved_examples",
-        "exercise_questions",
-      ];
-
-      if (diff > 0) {
-        // Distribute increase among active types first, then MCQ
-        let remainingDiff = diff;
-        const activeTypes = priorityOrder.filter((t) => prev[t] > 0);
-        const typesToIncrement =
-          activeTypes.length > 0
-            ? activeTypes
-            : ["mcq4" as ExtendedQuestionType];
-
-        while (remainingDiff > 0) {
-          for (const type of typesToIncrement) {
-            if (remainingDiff === 0) break;
-            newCounts[type] = (newCounts[type] || 0) + 1;
-            remainingDiff--;
-          }
-        }
-      } else if (diff < 0) {
-        // Cascade decrease
-        let remainingDiff = Math.abs(diff);
-        for (const type of priorityOrder) {
-          if (remainingDiff === 0) break;
-          const currentCount = newCounts[type];
-          const deduct = Math.min(currentCount, remainingDiff);
-          newCounts[type] = currentCount - deduct;
-          remainingDiff -= deduct;
-        }
-      }
-
-      return newCounts;
-    });
-  };
-
-  const handleAutoDecide = (params: AutoDecideParams) => {
-    console.log("Auto decide params:", params);
-    // TODO: Implement actual auto-decide logic or API call
-  };
+  // Get subject name for config
+  const subjectName = useMemo<string>(() => {
+    const subject = subjects.find((s) => s.id === selection.subjectId);
+    return subject?.name?.toLowerCase() ?? "";
+  }, [subjects, selection.subjectId]);
 
   const handleGenerateQuestions = async () => {
     // Validation
@@ -426,9 +380,16 @@ export function UpArea({
       return;
     }
 
-    // Build question_types array with only non-zero counts
+    // Determine allowed types for current subject
+    const allowedTypes =
+      SUBJECT_QUESTION_CONFIG[subjectName] || DEFAULT_QUESTION_TYPES;
+
+    // Build question_types array with only non-zero counts AND allowed types
     const questionTypes = Object.entries(questionCounts)
-      .filter(([, count]) => count > 0)
+      .filter(([type, count]) => {
+        // Must have count > 0 AND be in the allowed list for this subject
+        return count > 0 && allowedTypes.includes(type as ExtendedQuestionType);
+      })
       .map(([type, count]) => ({
         type: QUESTION_TYPE_API_MAP[type as ExtendedQuestionType],
         count,
@@ -437,7 +398,7 @@ export function UpArea({
     if (questionTypes.length === 0) {
       toast({
         title: "No Questions Configured",
-        description: "Please set a count for at least one question type.",
+        description: "Please set a count for at least one valid question type.",
         variant: "destructive",
       });
       return;
@@ -565,6 +526,72 @@ export function UpArea({
     }
   };
 
+  const handleTotalQuestionsChange = (newTotal: number) => {
+    const diff = newTotal - totalQuestions;
+    setTotalQuestions(newTotal);
+
+    setQuestionCounts((prev) => {
+      const newCounts = { ...prev };
+
+      // Determine allowed types for current subject
+      const allowedTypes =
+        SUBJECT_QUESTION_CONFIG[subjectName] || DEFAULT_QUESTION_TYPES;
+
+      // Filter priority order to only include allowed types AND respect config order
+      const filteredPriorityOrder: ExtendedQuestionType[] = allowedTypes.filter(
+        (t) =>
+          [
+            "mcq4",
+            "msq4",
+            "short_answer",
+            "long_answer",
+            "true_or_false",
+            "fill_in_the_blanks",
+            "match_the_following",
+            "solved_examples",
+            "exercise_questions",
+          ].includes(t)
+      );
+
+      if (diff > 0) {
+        // Distribute increase among active types first, then defaults if available
+        let remainingDiff = diff;
+        // Prioritize types that already have counts > 0
+        const activeTypes = filteredPriorityOrder.filter((t) => prev[t] > 0);
+
+        // If no active types, try to use the first allowed type (e.g. MCQ)
+        const typesToIncrement =
+          activeTypes.length > 0
+            ? activeTypes
+            : filteredPriorityOrder.length > 0
+              ? [filteredPriorityOrder[0] as ExtendedQuestionType]
+              : [];
+
+        if (typesToIncrement.length > 0) {
+          while (remainingDiff > 0) {
+            for (const type of typesToIncrement) {
+              if (remainingDiff === 0) break;
+              newCounts[type] = (newCounts[type] || 0) + 1;
+              remainingDiff--;
+            }
+          }
+        }
+      } else if (diff < 0) {
+        // Cascade decrease
+        let remainingDiff = Math.abs(diff);
+        for (const type of filteredPriorityOrder) {
+          if (remainingDiff === 0) break;
+          const currentCount = newCounts[type];
+          const deduct = Math.min(currentCount, remainingDiff);
+          newCounts[type] = currentCount - deduct;
+          remainingDiff -= deduct;
+        }
+      }
+
+      return newCounts;
+    });
+  };
+
   return (
     <div className="flex flex-col p-4 md:p-6">
       <div className="grid grid-cols-1 gap-4 rounded-xl border bg-card p-4 shadow-sm md:gap-6 md:p-6 lg:grid-cols-2">
@@ -578,7 +605,6 @@ export function UpArea({
           <UpRightArea
             questionCounts={questionCounts}
             onQuestionCountChange={handleQuestionCountChange}
-            onAutoDecide={handleAutoDecide}
             onGenerate={handleGenerateQuestions}
             isGenerating={isBusy}
             hardnessLevels={hardnessLevels}
@@ -591,6 +617,7 @@ export function UpArea({
             onTotalTimeChange={setTotalTime}
             customPrompt={customPrompt}
             onCustomPromptChange={setCustomPrompt}
+            subjectName={subjectName}
           />
         </div>
       </div>

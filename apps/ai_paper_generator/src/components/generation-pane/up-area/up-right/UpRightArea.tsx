@@ -1,5 +1,4 @@
 import { QuestionTypeSelector } from "./QuestionTypeSelector/QuestionTypeSelector";
-import type { AutoDecideParams } from "./AutoDecideQuestion/AutoDecideQuestion";
 import { AutoDecideButton } from "./AutoDecideQuestion/AutoDecideButton";
 import { HardnessLevelSliders } from "./AutoDecideQuestion/HardnessLevelSliders";
 import { PromptBox } from "./AutoDecideQuestion/PromptBox";
@@ -22,7 +21,6 @@ interface UpRightAreaProps {
     type: ExtendedQuestionType | QuestionType,
     count: number
   ) => void;
-  onAutoDecide: (params: AutoDecideParams) => void;
   onGenerate: () => void;
   isGenerating: boolean;
   hardnessLevels: Record<HardnessLevel, number>;
@@ -36,12 +34,12 @@ interface UpRightAreaProps {
   onTotalTimeChange: (value: number) => void;
   customPrompt: string;
   onCustomPromptChange: (value: string) => void;
+  subjectName: string;
 }
 
 export function UpRightArea({
   questionCounts,
   onQuestionCountChange,
-  onAutoDecide: _onAutoDecide,
   onGenerate,
   isGenerating,
   hardnessLevels,
@@ -54,6 +52,7 @@ export function UpRightArea({
   onTotalTimeChange,
   customPrompt,
   onCustomPromptChange,
+  subjectName,
 }: UpRightAreaProps) {
   const { toast } = useToast();
 
@@ -109,6 +108,7 @@ export function UpRightArea({
       <QuestionTypeSelector
         questionCounts={questionCounts}
         onCountChange={handleQuestionCountChange}
+        subjectName={subjectName}
       />
 
       {/* 1] Top three selectors, arranged horizontally */}

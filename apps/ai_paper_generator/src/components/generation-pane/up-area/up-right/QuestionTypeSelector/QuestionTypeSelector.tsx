@@ -19,12 +19,18 @@ type ExtendedQuestionType =
   | "solved_examples"
   | "exercise_questions";
 
+import {
+  SUBJECT_QUESTION_CONFIG,
+  DEFAULT_QUESTION_TYPES,
+} from "../../../../../config/question_types_config";
+
 interface QuestionTypeSelectorProps {
   questionCounts: Record<ExtendedQuestionType, number>;
   onCountChange: (
     type: ExtendedQuestionType | QuestionType,
     count: number
   ) => void;
+  subjectName: string;
 }
 
 const QUESTION_TYPES: Array<{
@@ -82,9 +88,20 @@ const QUESTION_TYPES: Array<{
 export function QuestionTypeSelector({
   questionCounts,
   onCountChange,
+  subjectName,
 }: QuestionTypeSelectorProps) {
-  const totalQuestions = Object.values(questionCounts).reduce(
-    (sum, count) => sum + count,
+  // Determine allowed types for current subject
+  const allowedTypes =
+    SUBJECT_QUESTION_CONFIG[subjectName] || DEFAULT_QUESTION_TYPES;
+
+  // Filter types to display and respect config order
+  const filteredQuestionTypes = allowedTypes
+    .map((type) => QUESTION_TYPES.find((qt) => qt.type === type))
+    .filter((qt): qt is (typeof QUESTION_TYPES)[number] => !!qt);
+
+  // Calculate total ONLY for visible types
+  const visibleTotalQuestions = filteredQuestionTypes.reduce(
+    (sum, qt) => sum + (questionCounts[qt.type] || 0),
     0
   );
 
@@ -92,15 +109,15 @@ export function QuestionTypeSelector({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Question Types</h3>
-        {totalQuestions > 0 && (
+        {visibleTotalQuestions > 0 && (
           <span className="text-xs text-muted-foreground">
-            Total: {totalQuestions} questions
+            Total: {visibleTotalQuestions} questions
           </span>
         )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
-        {QUESTION_TYPES.map(({ type, label, icon }) => (
+        {filteredQuestionTypes.map(({ type, label, icon }) => (
           <QuestionTypeCard
             key={type}
             type={type}
