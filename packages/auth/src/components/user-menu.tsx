@@ -61,11 +61,24 @@ export function UserMenu({
   if (!user) return null;
 
   // Get user initials for avatar fallback
-  const initials = user.email
-    ? user.email.split("@")[0]?.slice(0, 2).toUpperCase()
-    : user.phone
-      ? user.phone.slice(-2)
-      : "U";
+  const fullName = user.user_metadata?.name;
+  const nameInitials = fullName
+    ? fullName
+        .split(" ")
+        .filter((n: string) => n.length > 0)
+        .map((n: string) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "";
+
+  const initials =
+    nameInitials ||
+    (user.email
+      ? user.email.split("@")[0]?.slice(0, 2).toUpperCase()
+      : user.phone
+        ? user.phone.slice(-2)
+        : "U");
 
   const displayName =
     user.user_metadata?.full_name || user.email || user.phone || "User";
