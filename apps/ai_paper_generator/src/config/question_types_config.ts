@@ -9,14 +9,14 @@ export type ExtendedQuestionType =
 // Default fallback list of question types
 export const DEFAULT_QUESTION_TYPES: ExtendedQuestionType[] = [
   "mcq4",
-  "msq4",
+  "match_the_following",
+//   "msq4",
   "short_answer",
   "long_answer",
   "true_or_false",
   "fill_in_the_blanks",
-  "match_the_following",
-  "solved_examples",
-  "exercise_questions",
+//   "solved_examples",
+//   "exercise_questions",
 ];
 
 // Configuration mapping normalized subject names to allowed question types
