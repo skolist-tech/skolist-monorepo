@@ -2,13 +2,17 @@ import { formatQuestionType } from "./formatters";
 import type { GeneratedQuestionWithConcepts } from "../services/questionService";
 import type { QgenDraftSection } from "@skolist/db";
 
+import { APP_CONFIG } from "../config/app_config";
+
 // Helper to get section name
 export const getSectionNameForType = (type: string) =>
   `Section - ${formatQuestionType(type)}`;
 
 export const getSectionNameForQuestion = (q: GeneratedQuestionWithConcepts) => {
-  if (q.is_solved_example) return "Section - Solved Examples";
-  if (q.is_exercise_question) return "Section - Exercise Questions"; 
+  if (APP_CONFIG.MOVE_TO_DEDICATED_SECTIONS) {
+    if (q.is_solved_example) return "Section - Solved Examples";
+    if (q.is_exercise_question) return "Section - Exercise Questions";
+  }
   return getSectionNameForType(q.question_type);
 };
 
