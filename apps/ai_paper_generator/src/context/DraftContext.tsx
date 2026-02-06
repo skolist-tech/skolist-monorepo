@@ -129,7 +129,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
 
   const addSection = useCallback(
     async (name: string = "New Section") => {
-      console.log("Adding section...", { draftId: draft?.id });
+      // console.log("Adding section...", { draftId: draft?.id });
       if (!draft) {
         console.warn("Cannot add section: No draft found");
         return;
