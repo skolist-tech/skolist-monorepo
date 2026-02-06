@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
+import { Eye, EyeOff } from "lucide-react";
 import { Spinner } from "@skolist/ui";
 import type { EmailSignupFormData } from "../../../schemas";
 
@@ -15,6 +17,9 @@ export function EmailLoginForm({
   isLoading,
   onSubmit,
 }: EmailLoginFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
       {isSignUp && (
@@ -50,12 +55,21 @@ export function EmailLoginForm({
 
       <div className="login-form__group">
         <label className="login-form__label">Password</label>
-        <input
-          className="login-form__input"
-          placeholder="Enter password"
-          type="password"
-          {...form.register("password")}
-        />
+        <div className="login-form__password-wrapper">
+          <input
+            className="login-form__input login-form__input--password"
+            placeholder="Enter password"
+            type={showPassword ? "text" : "password"}
+            {...form.register("password")}
+          />
+          <button
+            type="button"
+            className="login-form__password-toggle"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff /> : <Eye />}
+          </button>
+        </div>
         {form.formState.errors.password && (
           <span className="mt-1 block text-xs text-red-500">
             {form.formState.errors.password.message}
@@ -66,12 +80,21 @@ export function EmailLoginForm({
       {isSignUp && (
         <div className="login-form__group">
           <label className="login-form__label">Confirm Password</label>
-          <input
-            className="login-form__input"
-            placeholder="Confirm password"
-            type="password"
-            {...form.register("confirmPassword")}
-          />
+          <div className="login-form__password-wrapper">
+            <input
+              className="login-form__input login-form__input--password"
+              placeholder="Confirm password"
+              type={showConfirmPassword ? "text" : "password"}
+              {...form.register("confirmPassword")}
+            />
+            <button
+              type="button"
+              className="login-form__password-toggle"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? <EyeOff /> : <Eye />}
+            </button>
+          </div>
           {form.formState.errors.confirmPassword && (
             <span className="mt-1 block text-xs text-red-500">
               {form.formState.errors.confirmPassword.message}
