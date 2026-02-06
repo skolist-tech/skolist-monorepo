@@ -393,7 +393,7 @@ export function GeneratedQuestionCard({
         type="file"
         ref={state.cameraInputRef}
         className="hidden"
-        accept="image/*"
+        // accept="image/*"
         onChange={state.handleCameraFileSelect}
       />
     </>
