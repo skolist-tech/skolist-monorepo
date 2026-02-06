@@ -19,7 +19,7 @@ const cleanupSubdomainAuth = () => {
   cookieNames.forEach((name) => {
     // Force delete by setting expiry to 1970
     document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-    console.log(`${name}=; Path=/;  Expires=Thu, 01 Jan 1970 00:00:01 GMT;`);
+    // console.log(`${name}=; Path=/;  Expires=Thu, 01 Jan 1970 00:00:01 GMT;`);
   });
 };
 
