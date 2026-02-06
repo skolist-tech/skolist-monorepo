@@ -62,7 +62,7 @@ export function LoginPage({
     signInWithOAuth,
     signInWithPhone,
     verifyOtp,
-    checkUserExists,
+    //TODO: checkUserExists, Temporarily shutted down, the endpoint will be implemented later perfectly
     signInWithEmail,
     signUpWithEmail,
   } = useAuth();
@@ -121,12 +121,12 @@ export function LoginPage({
 
     try {
       if (!isSignUp) {
-        const exists = await checkUserExists(fullPhone);
-        if (!exists) {
-          setError("No account found. Please Sign Up.");
-          setIsLoading(false);
-          return;
-        }
+        // const exists = await checkUserExists(fullPhone);
+        // if (!exists) {
+        //   setError("No account found. Please Sign Up.");
+        //   setIsLoading(false);
+        //   return;
+        // }
       }
 
       const appVerifier = setupRecaptcha();
