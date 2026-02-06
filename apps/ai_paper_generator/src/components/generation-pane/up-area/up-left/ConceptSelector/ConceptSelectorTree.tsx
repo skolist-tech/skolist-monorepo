@@ -51,6 +51,30 @@ export function ConceptSelectorTree() {
     }
   }, [searchQuery]);
 
+  // Get all node IDs currently visible in the filtered view
+  const visibleNodeIds = useMemo(() => {
+    return getAllNodeIds(displayNodes);
+  }, [displayNodes]);
+
+  // Custom check handler that preserves selections outside the current search view
+  const handleCheck = (newChecked: string[]) => {
+    if (!searchQuery.trim()) {
+      // Not in search mode - use normal behavior
+      setChecked(newChecked);
+    } else {
+      // In search mode - merge with existing selections outside the filtered view
+      // Keep selections that are NOT in the visible nodes (preserve hidden selections)
+      const hiddenSelections = selection.checked.filter(
+        (id) => !visibleNodeIds.includes(id)
+      );
+      // Combine hidden selections with the new checked items from the filtered view
+      const mergedChecked = Array.from(
+        new Set([...hiddenSelections, ...newChecked])
+      );
+      setChecked(mergedChecked);
+    }
+  };
+
   if (!selection.subjectId) {
     return (
       <div className="rounded-md border border-dashed border-muted-foreground/25 p-6 text-center text-sm text-muted-foreground">
@@ -143,7 +167,7 @@ export function ConceptSelectorTree() {
           nodes={displayNodes}
           checked={selection.checked}
           expanded={searchQuery ? searchExpanded : selection.expanded}
-          onCheck={setChecked}
+          onCheck={handleCheck}
           // The typings for React Checkbox Tree can sometimes be messy with generic Expand handlers
           // but we can trust the state setters here.
 
