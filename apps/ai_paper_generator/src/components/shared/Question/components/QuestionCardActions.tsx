@@ -491,48 +491,65 @@ export function QuestionCardActions({
     .filter((a) => a.mobile.visible && a.mobile.location === "menu")
     .sort((a, b) => a.mobile.order - b.mobile.order);
 
+  // Mobile bottom actions (undo/redo) - displayed at bottom center of card
+  const mobileBottomActions = [...CARD_ACTIONS_CONFIG]
+    .filter((a) => a.mobile.visible && a.mobile.location === "bottom")
+    .sort((a, b) => a.mobile.order - b.mobile.order);
+
   return (
-    <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md bg-background/80 p-1 backdrop-blur-sm">
-      {/* DESKTOP VIEW */}
-      <div className="hidden items-center md:flex">
-        {desktopActions.map((action) => (
-          <ActionButton key={action.id} actionId={action.id} mode="icon" />
-        ))}
+    <>
+      {/* Main Actions Container - Top Right */}
+      <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md bg-background/80 p-1 backdrop-blur-sm">
+        {/* DESKTOP VIEW */}
+        <div className="hidden items-center md:flex">
+          {desktopActions.map((action) => (
+            <ActionButton key={action.id} actionId={action.id} mode="icon" />
+          ))}
+        </div>
+
+        {/* MOBILE VIEW */}
+        <div className="flex items-center md:hidden">
+          {/* Mobile Card Actions */}
+          {mobileCardActions.map((action) => (
+            <ActionButton key={action.id} actionId={action.id} mode="icon" />
+          ))}
+
+          {/* Mobile Menu Actions */}
+          {mobileMenuActions.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-56 bg-background p-2"
+                align="end"
+                container={document.getElementById("layout-portal-root")}
+              >
+                <div className="flex flex-col gap-1">
+                  {mobileMenuActions.map((action) => (
+                    <ActionButton
+                      key={action.id}
+                      actionId={action.id}
+                      mode="menu"
+                    />
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
       </div>
 
-      {/* MOBILE VIEW */}
-      <div className="flex items-center md:hidden">
-        {/* Mobile Card Actions */}
-        {mobileCardActions.map((action) => (
-          <ActionButton key={action.id} actionId={action.id} mode="icon" />
-        ))}
-
-        {/* Mobile Menu Actions */}
-        {mobileMenuActions.length > 0 && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-56 bg-background p-2"
-              align="end"
-              container={document.getElementById("layout-portal-root")}
-            >
-              <div className="flex flex-col gap-1">
-                {mobileMenuActions.map((action) => (
-                  <ActionButton
-                    key={action.id}
-                    actionId={action.id}
-                    mode="menu"
-                  />
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-        )}
-      </div>
-    </div>
+      {/* Mobile Bottom Actions (Undo/Redo) - Bottom Center */}
+      {mobileBottomActions.length > 0 && (
+        <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-md bg-background/80 p-1 backdrop-blur-sm md:hidden">
+          {mobileBottomActions.map((action) => (
+            <ActionButton key={action.id} actionId={action.id} mode="icon" />
+          ))}
+        </div>
+      )}
+    </>
   );
 }

@@ -14,7 +14,7 @@ export interface ActionConfig {
   id: ActionId;
   label: string;
   mobile: {
-    location: "card" | "menu"; // 'card' = visible on card outside, 'menu' = inside 3-dots
+    location: "card" | "menu" | "bottom"; // 'card' = visible on card outside, 'menu' = inside 3-dots, 'bottom' = bottom center of card
     order: number;
     visible: boolean; // whether to show the button on mobile
   };
@@ -28,13 +28,13 @@ export const CARD_ACTIONS_CONFIG: ActionConfig[] = [
   {
     id: "undo",
     label: "Undo",
-    mobile: { location: "menu", order: 10, visible: true },
+    mobile: { location: "bottom", order: 10, visible: true },
     desktop: { order: 10, visible: true },
   },
   {
     id: "redo",
     label: "Redo",
-    mobile: { location: "menu", order: 20, visible: true },
+    mobile: { location: "bottom", order: 20, visible: true },
     desktop: { order: 20, visible: true },
   },
   {
