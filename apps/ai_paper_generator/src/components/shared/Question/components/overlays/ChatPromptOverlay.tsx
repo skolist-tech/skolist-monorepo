@@ -1,5 +1,5 @@
 import Lottie from "lottie-react";
-import chatAnimationData from "../../../../../public/Chat.json";
+import chatAnimationData from "../../../../../../public/Chat.json";
 
 export function ChatPromptOverlay() {
   return (
