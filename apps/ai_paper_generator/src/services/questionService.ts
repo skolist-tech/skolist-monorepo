@@ -33,6 +33,11 @@ export async function createQuestion(
     throw error;
   }
 
+  // Create initial version (v0) for undo/redo functionality
+  // Dynamic import to avoid circular dependencies
+  const { createInitialVersion } = await import("./versionService");
+  await createInitialVersion(data.id, data);
+
   return data;
 }
 

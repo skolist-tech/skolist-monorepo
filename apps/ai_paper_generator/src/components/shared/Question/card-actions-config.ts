@@ -28,14 +28,14 @@ export const CARD_ACTIONS_CONFIG: ActionConfig[] = [
   {
     id: "undo",
     label: "Undo",
-    mobile: { location: "menu", order: 10, visible: false },
-    desktop: { order: 10, visible: false },
+    mobile: { location: "menu", order: 10, visible: true },
+    desktop: { order: 10, visible: true },
   },
   {
     id: "redo",
     label: "Redo",
-    mobile: { location: "menu", order: 20, visible: false },
-    desktop: { order: 20, visible: false },
+    mobile: { location: "menu", order: 20, visible: true },
+    desktop: { order: 20, visible: true },
   },
   {
     id: "auto_correct",

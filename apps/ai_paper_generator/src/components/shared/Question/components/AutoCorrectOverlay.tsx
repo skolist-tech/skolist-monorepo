@@ -38,8 +38,7 @@ export function AutoCorrectOverlay({
         style={{
           animation: isReturning
             ? "blurFadeOut 0.8s ease-out forwards"
-            : "blurPulse 2s ease-in-out infinite",
-          animationDelay: isReturning ? "0s" : "0.8s",
+            : "blurPulse 2s ease-in-out 0.8s infinite",
         }}
       />
       <div
@@ -56,8 +55,7 @@ export function AutoCorrectOverlay({
           style={{
             animation: isReturning
               ? "none"
-              : "sparklePulse 1.5s ease-in-out infinite",
-            animationDelay: "0.8s",
+              : "sparklePulse 1.5s ease-in-out 0.8s infinite",
           }}
         >
           <Sparkles
