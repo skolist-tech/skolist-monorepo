@@ -38,8 +38,7 @@ export function CameraCaptureOverlay({
         style={{
           animation: isReturning
             ? "cameraBlurFadeOut 0.8s ease-out forwards"
-            : "cameraBlurPulse 2s ease-in-out infinite",
-          animationDelay: isReturning ? "0s" : "0.8s",
+            : "cameraBlurPulse 2s ease-in-out 0.8s infinite",
         }}
       />
       <div
@@ -56,8 +55,7 @@ export function CameraCaptureOverlay({
           style={{
             animation: isReturning
               ? "none"
-              : "cameraPulse 1.5s ease-in-out infinite",
-            animationDelay: "0.8s",
+              : "cameraPulse 1.5s ease-in-out 0.8s infinite",
           }}
         >
           <Camera

@@ -7,15 +7,18 @@ import {
   deleteQuestionImage,
   updateQuestionImageSvg,
 } from "../../../../services/questionService";
+import { createNewVersionOnUpdate } from "../../../../services/versionService";
 
 interface UseQuestionCardStateProps {
   question: GeneratedQuestionWithConcepts;
   onUpdate?: (updatedQuestion: GeneratedQuestionWithConcepts) => void;
+  onVersionCreated?: () => void;
 }
 
 export function useQuestionCardState({
   question,
   onUpdate,
+  onVersionCreated,
 }: UseQuestionCardStateProps) {
   const { toast } = useToast();
 
@@ -39,9 +42,9 @@ export function useQuestionCardState({
     setEditedQuestion((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (onUpdate) {
-      onUpdate({
+      const updatedQuestion = {
         ...editedQuestion,
         // Ensure critical metadata is fresh from props to prevent overwriting
         // with stale state (e.g. if question order changed while editing)
@@ -49,7 +52,19 @@ export function useQuestionCardState({
         qgen_draft_section_id: question.qgen_draft_section_id,
         is_page_break_below: question.is_page_break_below,
         is_in_draft: question.is_in_draft,
-      });
+      };
+
+      try {
+        // Create a new version before updating
+        await createNewVersionOnUpdate(question.id, updatedQuestion);
+        // Notify parent to refresh version state
+        onVersionCreated?.();
+      } catch (error) {
+        console.error("Failed to create version on save:", error);
+        // Continue with save even if versioning fails
+      }
+
+      onUpdate(updatedQuestion);
     }
     setIsEditing(false);
   };

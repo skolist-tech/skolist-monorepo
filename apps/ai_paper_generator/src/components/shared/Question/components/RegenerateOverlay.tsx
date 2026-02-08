@@ -37,8 +37,7 @@ export function RegenerateOverlay({
         style={{
           animation: isRegenerateReturning
             ? "regenBlurFadeOut 0.8s ease-out forwards"
-            : "regenBlurPulse 2s ease-in-out infinite",
-          animationDelay: isRegenerateReturning ? "0s" : "0.8s",
+            : "regenBlurPulse 2s ease-in-out 0.8s infinite",
         }}
       />
       <div
@@ -55,8 +54,7 @@ export function RegenerateOverlay({
           style={{
             animation: isRegenerateReturning
               ? "none"
-              : "regenSpin 1s linear infinite",
-            animationDelay: "0.8s",
+              : "regenSpin 1s linear 0.8s infinite",
           }}
         >
           <RefreshCw

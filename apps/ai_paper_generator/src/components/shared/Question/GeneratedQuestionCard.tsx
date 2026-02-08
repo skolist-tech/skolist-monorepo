@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { formatQuestionType } from "../../../utils/formatters";
 import {
   Button,
@@ -24,6 +24,12 @@ import {
 import type { GeneratedQuestionWithConcepts } from "../../../services/questionService";
 import { updateQuestion } from "../../../services/questionService";
 import { fastApiService } from "../../../services/fastApiService";
+import {
+  getVersionState,
+  undoQuestionVersion,
+  redoQuestionVersion,
+  createNewVersionOnUpdate,
+} from "../../../services/versionService";
 import type { HardnessLevel } from "@skolist/db";
 import { QuestionMarks } from "./QuestionMarks";
 import { QuestionTags } from "./QuestionTags";
@@ -107,8 +113,46 @@ export function GeneratedQuestionCard({
   const { toast } = useToast();
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // -- Version state for undo/redo --
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const [isUndoing, setIsUndoing] = useState(false);
+  const [isRedoing, setIsRedoing] = useState(false);
+
+  // Fetch version state on mount and when question changes
+  useEffect(() => {
+    const fetchVersionState = async () => {
+      try {
+        const state = await getVersionState(question.id);
+        setCanUndo(state.canUndo);
+        setCanRedo(state.canRedo);
+      } catch {
+        setCanUndo(false);
+        setCanRedo(false);
+      }
+    };
+    fetchVersionState();
+  }, [question.id, question.updated_at]); // Re-fetch when question updates
+
+  // -- Handlers (Logic bridging hooks and props) --
+
+  // Helper to refresh version state after any version-creating operation
+  const refreshVersionState = async () => {
+    try {
+      const newState = await getVersionState(question.id);
+      setCanUndo(newState.canUndo);
+      setCanRedo(newState.canRedo);
+    } catch {
+      // Ignore errors in version state refresh
+    }
+  };
+
   // -- Hooks --
-  const state = useQuestionCardState({ question, onUpdate });
+  const state = useQuestionCardState({
+    question,
+    onUpdate,
+    onVersionCreated: refreshVersionState,
+  });
   const anims = useQuestionAnimations({
     question,
     isAnimatingProp: isAnimating,
@@ -119,10 +163,14 @@ export function GeneratedQuestionCard({
 
   const handleMarksUpdate = async (newMarks: number) => {
     try {
+      // Create a new version before updating
+      await createNewVersionOnUpdate(question.id, { marks: newMarks });
       await updateQuestion(question.id, { marks: newMarks });
       if (onUpdate) {
         onUpdate({ ...question, marks: newMarks });
       }
+      // Refresh version state to update undo/redo buttons
+      await refreshVersionState();
       toast({
         title: "Marks Updated",
         description: `Marks updated to ${newMarks}.`,
@@ -141,10 +189,16 @@ export function GeneratedQuestionCard({
 
   const handleHardnessUpdate = async (newHardness: HardnessLevel) => {
     try {
+      // Create a new version before updating
+      await createNewVersionOnUpdate(question.id, {
+        hardness_level: newHardness,
+      });
       await updateQuestion(question.id, { hardness_level: newHardness });
       if (onUpdate) {
         onUpdate({ ...question, hardness_level: newHardness });
       }
+      // Refresh version state to update undo/redo buttons
+      await refreshVersionState();
       toast({
         title: "Difficulty Updated",
         description: `Difficulty updated to ${newHardness}.`,
@@ -197,6 +251,9 @@ export function GeneratedQuestionCard({
         await fastApiService.autoCorrectQuestion(question.id);
       }
 
+      // Refresh version state after backend creates new version
+      await refreshVersionState();
+
       // 6. Finish Animation
       anims.setIsReturning(true);
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -231,6 +288,9 @@ export function GeneratedQuestionCard({
       } else {
         await fastApiService.regenerateQuestion(question.id);
       }
+
+      // Refresh version state after backend creates new version
+      await refreshVersionState();
 
       // Trigger return animation
       anims.setIsRegenerateReturning(true);
@@ -274,6 +334,9 @@ export function GeneratedQuestionCard({
           // Give a brief moment for the question data to update via refetch
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
+
+        // Refresh version state after backend creates new version
+        await refreshVersionState();
       } catch (error) {
         console.error("Failed during regenerate with prompt", error);
       } finally {
@@ -346,6 +409,9 @@ export function GeneratedQuestionCard({
         );
       }
 
+      // Refresh version state after backend creates new version
+      await refreshVersionState();
+
       // Trigger return animation
       anims.setIsCameraReturning(true);
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -369,6 +435,63 @@ export function GeneratedQuestionCard({
   };
 
   const isMcqOrMsq = ["mcq4", "msq4"].includes(question.question_type);
+
+  // -- Undo/Redo Handlers --
+  const handleUndo = async () => {
+    try {
+      setIsUndoing(true);
+      const updated = await undoQuestionVersion(question.id);
+      if (updated && onUpdate) {
+        onUpdate({ ...question, ...updated });
+      }
+      // Refresh version state
+      const newState = await getVersionState(question.id);
+      setCanUndo(newState.canUndo);
+      setCanRedo(newState.canRedo);
+      toast({
+        title: "Undo Successful",
+        description: "Reverted to previous version.",
+        className: "bg-green-500 text-white border-green-600",
+      });
+    } catch (error) {
+      console.error("Undo failed:", error);
+      toast({
+        title: "Undo Failed",
+        description: "Could not revert to previous version.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUndoing(false);
+    }
+  };
+
+  const handleRedo = async () => {
+    try {
+      setIsRedoing(true);
+      const updated = await redoQuestionVersion(question.id);
+      if (updated && onUpdate) {
+        onUpdate({ ...question, ...updated });
+      }
+      // Refresh version state
+      const newState = await getVersionState(question.id);
+      setCanUndo(newState.canUndo);
+      setCanRedo(newState.canRedo);
+      toast({
+        title: "Redo Successful",
+        description: "Advanced to next version.",
+        className: "bg-green-500 text-white border-green-600",
+      });
+    } catch (error) {
+      console.error("Redo failed:", error);
+      toast({
+        title: "Redo Failed",
+        description: "Could not advance to next version.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRedoing(false);
+    }
+  };
 
   // -- Render --
 
@@ -512,6 +635,10 @@ export function GeneratedQuestionCard({
           isChatPromptAnimating={anims.isChatPromptAnimating}
           isCameraCapturing={anims.isCameraCapturing}
           slideDirection={anims.slideDirection}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          isUndoing={isUndoing}
+          isRedoing={isRedoing}
           onAutoCorrect={handleAutoCorrect}
           onAttachClick={() => state.fileInputRef.current?.click()}
           onRegenerateClick={handleDirectRegenerate}
@@ -521,6 +648,8 @@ export function GeneratedQuestionCard({
           onMoveToDraft={handleMoveToDraft}
           onRemoveFromDraftClick={handleRemoveFromDraft}
           onDeleteClick={() => state.setIsDeleteModalOpen(true)}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
           autoCorrectBtnRef={anims.autoCorrectBtnRef}
           regenerateBtnRef={anims.regenerateBtnRef}
           cameraBtnRef={anims.cameraBtnRef}

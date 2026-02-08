@@ -40,6 +40,12 @@ interface QuestionCardActionsProps {
   isCameraCapturing: boolean;
   slideDirection: "left" | "right" | null;
 
+  // Undo/Redo state
+  canUndo: boolean;
+  canRedo: boolean;
+  isUndoing: boolean;
+  isRedoing: boolean;
+
   // Handlers
   onAutoCorrect: () => void;
   onAttachClick: () => void;
@@ -50,6 +56,8 @@ interface QuestionCardActionsProps {
   onMoveToDraft: () => void;
   onRemoveFromDraftClick: () => void;
   onDeleteClick: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
 
   // Refs for animations
   autoCorrectBtnRef: React.RefObject<HTMLButtonElement>;
@@ -70,6 +78,11 @@ export function QuestionCardActions({
   isCameraCapturing,
   slideDirection,
 
+  canUndo,
+  canRedo,
+  isUndoing,
+  isRedoing,
+
   onAutoCorrect,
   onAttachClick,
   onRegenerateClick,
@@ -79,6 +92,8 @@ export function QuestionCardActions({
   onMoveToDraft,
   onRemoveFromDraftClick,
   onDeleteClick,
+  onUndo,
+  onRedo,
 
   autoCorrectBtnRef,
   regenerateBtnRef,
@@ -109,15 +124,22 @@ export function QuestionCardActions({
                   className={
                     mode === "menu"
                       ? btnClass
-                      : "h-8 w-8 text-muted-foreground hover:text-primary"
+                      : `h-8 w-8 ${canUndo ? "text-muted-foreground hover:text-primary" : "cursor-not-allowed text-muted-foreground/50"}`
                   }
-                  disabled
+                  disabled={!canUndo || isUndoing}
                   onClick={(e) => {
                     if (mode === "menu") e.stopPropagation();
+                    onUndo();
                   }}
                   type="button"
                 >
-                  <Undo2 className={iconSizeClass} />
+                  {isUndoing ? (
+                    <Loader2 className={`${iconSizeClass} animate-spin`} />
+                  ) : (
+                    <Undo2
+                      className={`${iconSizeClass} ${!canUndo ? "opacity-50" : ""}`}
+                    />
+                  )}
                   {mode === "menu" && <span>Undo</span>}
                 </Button>
               </TooltipTrigger>
@@ -140,15 +162,22 @@ export function QuestionCardActions({
                   className={
                     mode === "menu"
                       ? btnClass
-                      : "h-8 w-8 text-muted-foreground hover:text-primary"
+                      : `h-8 w-8 ${canRedo ? "text-muted-foreground hover:text-primary" : "cursor-not-allowed text-muted-foreground/50"}`
                   }
-                  disabled
+                  disabled={!canRedo || isRedoing}
                   onClick={(e) => {
                     if (mode === "menu") e.stopPropagation();
+                    onRedo();
                   }}
                   type="button"
                 >
-                  <Redo2 className={iconSizeClass} />
+                  {isRedoing ? (
+                    <Loader2 className={`${iconSizeClass} animate-spin`} />
+                  ) : (
+                    <Redo2
+                      className={`${iconSizeClass} ${!canRedo ? "opacity-50" : ""}`}
+                    />
+                  )}
                   {mode === "menu" && <span>Redo</span>}
                 </Button>
               </TooltipTrigger>

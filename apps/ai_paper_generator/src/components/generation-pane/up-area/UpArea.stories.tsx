@@ -208,10 +208,14 @@ function InteractiveUpArea() {
     moveQuestionToGeneration: async () => {},
     updateQuestionLocal: () => {},
     saveQuestion: async () => {},
+    saveQuestionWithVersion: async () => {},
     deleteQuestion: async () => {},
     addCustomQuestion: async () => {},
     refetchQuestions: async () => {},
     markAllQuestionsOld: () => {},
+    undoQuestion: async () => {},
+    redoQuestion: async () => {},
+    getQuestionVersionState: async () => ({ canUndo: false, canRedo: false }),
   };
 
   const handleHardnessLevelChange = (level: HardnessLevel, value: number) => {
@@ -311,10 +315,14 @@ const questionsContextDefault = {
   moveQuestionToGeneration: async () => {},
   updateQuestionLocal: () => {},
   saveQuestion: async () => {},
+  saveQuestionWithVersion: async () => {},
   deleteQuestion: async () => {},
   addCustomQuestion: async () => {},
   refetchQuestions: async () => {},
   markAllQuestionsOld: fn(),
+  undoQuestion: async () => {},
+  redoQuestion: async () => {},
+  getQuestionVersionState: async () => ({ canUndo: false, canRedo: false }),
 };
 
 const defaultProps = {

@@ -29,6 +29,13 @@ import {
 } from "../services/questionService";
 export type { GeneratedQuestionWithConcepts };
 import { getSupabaseClient } from "@skolist/auth";
+import {
+  createNewVersionOnUpdate,
+  undoQuestionVersion,
+  redoQuestionVersion,
+  getVersionState,
+  type VersionState,
+} from "../services/versionService";
 
 interface QuestionsContextValue {
   questions: (GeneratedQuestionWithConcepts & { is_old_local?: boolean })[];
@@ -39,10 +46,16 @@ interface QuestionsContextValue {
   moveQuestionToGeneration: (id: string) => Promise<void>;
   updateQuestionLocal: (question: GeneratedQuestionWithConcepts) => void;
   saveQuestion: (question: GeneratedQuestionWithConcepts) => Promise<void>;
+  saveQuestionWithVersion: (
+    question: GeneratedQuestionWithConcepts
+  ) => Promise<void>;
   deleteQuestion: (id: string) => Promise<void>;
   addCustomQuestion: (sectionId: string, type: QuestionType) => Promise<void>;
   refetchQuestions: () => Promise<void>;
   markAllQuestionsOld: () => void;
+  undoQuestion: (id: string) => Promise<void>;
+  redoQuestion: (id: string) => Promise<void>;
+  getQuestionVersionState: (id: string) => Promise<VersionState>;
 }
 
 export const QuestionsContext = createContext<
@@ -445,6 +458,83 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     setQuestions((prev) => prev.map((q) => ({ ...q, is_old_local: true })));
   }, []);
 
+  // Save question WITH version creation (for user edits from frontend)
+  const saveQuestionWithVersion = useCallback(
+    async (question: GeneratedQuestionWithConcepts) => {
+      try {
+        const {
+          id: _id,
+          created_at: _created_at,
+          updated_at: _updated_at,
+          concepts: _concepts,
+          images: _images,
+          is_old_local: _is_old_local,
+          ...updates
+        } = question as any;
+
+        // Create new version before updating
+        await createNewVersionOnUpdate(question.id, updates);
+
+        // Update the question
+        await updateQuestion(question.id, updates);
+
+        // Local update via realtime or optimistic
+        updateQuestionLocal(question);
+      } catch (err) {
+        console.error("Failed to save question with version:", err);
+        throw err;
+      }
+    },
+    [updateQuestionLocal]
+  );
+
+  // Undo: Go back to previous version
+  const undoQuestion = useCallback(async (id: string) => {
+    try {
+      const updatedQuestion = await undoQuestionVersion(id);
+      if (updatedQuestion) {
+        // Refetch to get fresh data with concepts/images
+        const fresh = await fetchQuestion(id);
+        if (fresh) {
+          setQuestions((prev) =>
+            prev.map((q) =>
+              q.id === id ? { ...fresh, is_old_local: q.is_old_local } : q
+            )
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Failed to undo question:", err);
+      throw err;
+    }
+  }, []);
+
+  // Redo: Go forward to next version
+  const redoQuestion = useCallback(async (id: string) => {
+    try {
+      const updatedQuestion = await redoQuestionVersion(id);
+      if (updatedQuestion) {
+        // Refetch to get fresh data with concepts/images
+        const fresh = await fetchQuestion(id);
+        if (fresh) {
+          setQuestions((prev) =>
+            prev.map((q) =>
+              q.id === id ? { ...fresh, is_old_local: q.is_old_local } : q
+            )
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Failed to redo question:", err);
+      throw err;
+    }
+  }, []);
+
+  // Get version state for a question (canUndo, canRedo)
+  const getQuestionVersionState = useCallback(async (id: string) => {
+    return getVersionState(id);
+  }, []);
+
   const value: QuestionsContextValue = {
     questions,
     isLoading,
@@ -454,10 +544,14 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     moveQuestionToGeneration,
     updateQuestionLocal,
     saveQuestion,
+    saveQuestionWithVersion,
     deleteQuestion: handleDeleteQuestion,
     addCustomQuestion,
     refetchQuestions: loadQuestions,
     markAllQuestionsOld,
+    undoQuestion,
+    redoQuestion,
+    getQuestionVersionState,
   };
 
   return (
