@@ -52,7 +52,7 @@ export const ActionReviewModal = ({
                 question={originalData}
                 onMoveToDraft={() => {}}
                 onDelete={async () => {}}
-                onRegenerate={() => {}}
+                onRegenerate={async () => {}}
                 onAutoCorrect={async () => {}}
                 onUpdate={() => {}}
                 isReadOnly={true}
@@ -76,7 +76,7 @@ export const ActionReviewModal = ({
                 question={newData}
                 onMoveToDraft={() => {}}
                 onDelete={async () => {}}
-                onRegenerate={() => {}}
+                onRegenerate={async () => {}}
                 onAutoCorrect={async () => {}}
                 onUpdate={() => {}}
                 // We allow interaction here if user wants to see dropdowns etc,

@@ -420,7 +420,10 @@ export type Database = {
           gen_question_id: string | null
           hardness_level: Database["public"]["Enums"]["hardness_level_enum"]
           id: string
+          is_active: boolean
+          is_deleted: boolean
           marks: number
+          match_the_following_columns: Json | null
           msq_option1_answer: boolean | null
           msq_option2_answer: boolean | null
           msq_option3_answer: boolean | null
@@ -431,6 +434,7 @@ export type Database = {
           option4: string | null
           question_text: string | null
           question_type: Database["public"]["Enums"]["question_type_enum"]
+          version_index: number
         }
         Insert: {
           answer_text: string
@@ -440,7 +444,10 @@ export type Database = {
           gen_question_id?: string | null
           hardness_level: Database["public"]["Enums"]["hardness_level_enum"]
           id?: string
+          is_active?: boolean
+          is_deleted?: boolean
           marks: number
+          match_the_following_columns?: Json | null
           msq_option1_answer?: boolean | null
           msq_option2_answer?: boolean | null
           msq_option3_answer?: boolean | null
@@ -451,6 +458,7 @@ export type Database = {
           option4?: string | null
           question_text?: string | null
           question_type: Database["public"]["Enums"]["question_type_enum"]
+          version_index?: number
         }
         Update: {
           answer_text?: string
@@ -460,7 +468,10 @@ export type Database = {
           gen_question_id?: string | null
           hardness_level?: Database["public"]["Enums"]["hardness_level_enum"]
           id?: string
+          is_active?: boolean
+          is_deleted?: boolean
           marks?: number
+          match_the_following_columns?: Json | null
           msq_option1_answer?: boolean | null
           msq_option2_answer?: boolean | null
           msq_option3_answer?: boolean | null
@@ -471,6 +482,7 @@ export type Database = {
           option4?: string | null
           question_text?: string | null
           question_type?: Database["public"]["Enums"]["question_type_enum"]
+          version_index?: number
         }
         Relationships: [
           {
@@ -493,6 +505,7 @@ export type Database = {
           id: string
           is_exercise_question: boolean
           is_in_draft: boolean
+          is_new: boolean
           is_page_break_below: boolean
           is_solved_example: boolean
           marks: number
@@ -521,6 +534,7 @@ export type Database = {
           id?: string
           is_exercise_question?: boolean
           is_in_draft?: boolean
+          is_new?: boolean
           is_page_break_below?: boolean
           is_solved_example?: boolean
           marks: number
@@ -549,6 +563,7 @@ export type Database = {
           id?: string
           is_exercise_question?: boolean
           is_in_draft?: boolean
+          is_new?: boolean
           is_page_break_below?: boolean
           is_solved_example?: boolean
           marks?: number
@@ -1060,6 +1075,7 @@ export type Database = {
           credits: number
           email: string | null
           id: string
+          is_test_user: boolean
           last_active_at: string
           name: string | null
           org_id: string | null
@@ -1077,6 +1093,7 @@ export type Database = {
           credits?: number
           email?: string | null
           id: string
+          is_test_user?: boolean
           last_active_at?: string
           name?: string | null
           org_id?: string | null
@@ -1094,6 +1111,7 @@ export type Database = {
           credits?: number
           email?: string | null
           id?: string
+          is_test_user?: boolean
           last_active_at?: string
           name?: string | null
           org_id?: string | null

@@ -65,6 +65,7 @@ const createMockQuestion = (
   images: [],
   is_exercise_question: false,
   is_solved_example: false,
+  is_new: false,
   ...overrides,
 });
 
