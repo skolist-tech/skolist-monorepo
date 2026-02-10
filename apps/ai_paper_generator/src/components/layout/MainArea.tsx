@@ -22,7 +22,10 @@ export function MainArea() {
           description="Select an activity from the sidebar to start working, or create a new one to begin generating question papers."
           action={
             <Button onClick={() => createActivity()}>
-              <b><big>+</big></b>Create New Activity
+              <b>
+                <big>+</big>
+              </b>
+              Create New Activity
             </Button>
           }
         />

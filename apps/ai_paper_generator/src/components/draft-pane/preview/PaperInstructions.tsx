@@ -1,6 +1,5 @@
 import type { QgenDraftInstructionAndQgenDraft } from "@skolist/db";
 
-
 export const PaperInstructions = ({
   instructions,
 }: {

@@ -47,8 +47,8 @@ export function BuiltWithRigorSection() {
             </h2>
             <div className="max-w-sm border-l-2 border-blue-100 py-4 pl-6">
               <p className="text-lg font-medium italic leading-relaxed text-slate-500">
-                "Skolist is the only platform identifying weak areas with
-                end-to-end implementation."
+                &quot;Skolist is the only platform identifying weak areas with
+                end-to-end implementation.&quot;
               </p>
             </div>
           </div>

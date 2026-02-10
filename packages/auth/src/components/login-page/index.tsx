@@ -167,11 +167,13 @@ export function LoginPage({
       setConfirmationResult(firebaseResult.value);
       setPhoneNumber(fullPhone);
       setOtpSent(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(
-        err.message || "An unexpected error occurred. Please try again."
-      );
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred. Please try again.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -214,9 +216,10 @@ export function LoginPage({
       } else {
         onSuccess?.();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Invalid OTP");
+      const errorMessage = err instanceof Error ? err.message : "Invalid OTP";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

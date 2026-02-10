@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "@skolist/auth";
 import type { GeneratedQuestionWithConcepts } from "./questionService";
+import * as Sentry from "@sentry/react";
 
 const API_URL = import.meta.env.VITE_FASTAPI_URL;
 
@@ -68,6 +69,7 @@ export const bankService = {
 
       return (await response.json()) as ListQuestionsResponse;
     } catch (error) {
+      Sentry.captureException(error);
       console.error("Error listing bank questions:", error);
       throw error;
     }
@@ -108,6 +110,7 @@ export const bankService = {
 
       return (await response.json()) as CompareResponse;
     } catch (error) {
+      Sentry.captureException(error);
       console.error("Error previewing auto-correct:", error);
       throw error;
     }
@@ -148,6 +151,7 @@ export const bankService = {
 
       return (await response.json()) as CompareResponse;
     } catch (error) {
+      Sentry.captureException(error);
       console.error("Error previewing regenerate:", error);
       throw error;
     }
@@ -185,6 +189,7 @@ export const bankService = {
 
       return await response.json();
     } catch (error) {
+      Sentry.captureException(error);
       console.error("Error updating bank question:", error);
       throw error;
     }
@@ -207,6 +212,7 @@ export const bankService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
+      Sentry.captureException(error);
       console.error("Error fetching subjects:", error);
       return [];
     }
@@ -232,6 +238,7 @@ export const bankService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
+      Sentry.captureException(error);
       console.error("Error fetching chapters:", error);
       return [];
     }
@@ -263,6 +270,7 @@ export const bankService = {
       if (!response.ok) throw new Error("Failed to remove image flag");
       return await response.json();
     } catch (error) {
+      Sentry.captureException(error);
       console.error("Error removing image needed flag:", error);
       throw error;
     }
@@ -291,6 +299,7 @@ export const bankService = {
       if (!response.ok) throw new Error("Failed to remove incomplete flag");
       return await response.json();
     } catch (error) {
+      Sentry.captureException(error);
       console.error("Error removing incomplete flag:", error);
       throw error;
     }

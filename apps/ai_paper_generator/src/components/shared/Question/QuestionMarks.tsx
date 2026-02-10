@@ -87,7 +87,7 @@ export function QuestionMarks({
           className="h-6 w-14 px-2 text-xs font-bold"
           disabled={isSaving}
         />
-        <span className="text-xs pl-2">marks</span>
+        <span className="pl-2 text-xs">marks</span>
       </div>
     );
   }

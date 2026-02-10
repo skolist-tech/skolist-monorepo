@@ -4,7 +4,7 @@ export function VisionPage() {
   return (
     <div className="flex flex-col bg-blue-100/50">
       {/* Why We Built Skolist */}
-      <section className="container max-w-4xl py-16 bg">
+      <section className="bg container max-w-4xl py-16">
         <h1 className="mb-8 text-4xl font-bold md:text-5xl">
           Why We Built Skolist
         </h1>
@@ -147,7 +147,7 @@ export function VisionPage() {
         <div className="flex justify-center">
           <a
             href="/contact"
-            className="rounded-lg bg-blue-900 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-800 text-center"
+            className="rounded-lg bg-blue-900 px-8 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-800"
           >
             Click to Build a Free Personalized Pilot
           </a>

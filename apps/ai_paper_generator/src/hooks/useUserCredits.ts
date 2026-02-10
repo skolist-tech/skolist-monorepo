@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getSupabaseClient, getCurrentUserId} from "@skolist/auth";
+import { getSupabaseClient, getCurrentUserId } from "@skolist/auth";
 
 export function useUserCredits() {
   const [credits, setCredits] = useState<number | null>(null);

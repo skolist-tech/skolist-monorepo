@@ -10,6 +10,7 @@ Please read this once before starting work — it will save you (and everyone el
 This is a **frontend monorepo** that contains multiple web apps and shared code.
 
 You will mostly work inside:
+
 - an **app** (a website)
 - or a **shared package** (UI, auth, utilities)
 
@@ -164,7 +165,6 @@ git pull origin stage
 pnpm install
 ```
 
-
 ---
 
 ### 2️⃣ Create your own branch
@@ -182,11 +182,13 @@ git checkout -b bugs/<short-name>
 ```
 
 For Infra / Ops work:
+
 ```bash
 git checkout -b chore/<short-name>
 ```
 
 Examples:
+
 - `feature/add-login-ui`
 - `bugs/fix-navbar-overflow`
 - `chore/setup-ci`
@@ -218,10 +220,12 @@ git push -u origin feature/<short-name>
 After pushing, GitHub will show **"Compare & pull request"**.
 
 Make sure:
+
 - **Base branch** → `stage`
 - **Compare branch** → your branch
 
 Explain:
+
 - what you changed
 - why you changed it
 
@@ -258,6 +262,7 @@ Fixes #123
 ### Final note ❤️
 
 This setup exists to:
+
 - protect production
 - help you learn clean workflows
 - make reviews fast and fair

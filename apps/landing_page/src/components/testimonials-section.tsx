@@ -157,7 +157,7 @@ export function TestimonialsSection() {
                       <p
                         className={`mb-6 text-sm font-medium italic leading-relaxed text-slate-600 md:mb-8 md:text-base ${isActive ? "opacity-100" : "opacity-80"}`}
                       >
-                        "{t.quote}"
+                        &quot;{t.quote}&quot;
                       </p>
 
                       <div className="mt-auto">

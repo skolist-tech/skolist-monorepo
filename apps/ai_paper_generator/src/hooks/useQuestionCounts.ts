@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import type { QuestionType } from "@skolist/db";
 import {
-  ExtendedQuestionType,
   SUBJECT_QUESTION_CONFIG,
   DEFAULT_QUESTION_COUNTS,
 } from "../config/question_types_config";
+import type { ExtendedQuestionType } from "../config/question_types_config";
 
 export function useQuestionCounts(
   subjectName: string,

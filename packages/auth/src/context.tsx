@@ -177,31 +177,34 @@ export function AuthProvider({
     [supabase]
   );
 
-  const checkUserExists = useCallback(async (phone: string) => {
-    try {
-      // Use the apiUrl from props
-      const response = await fetch(
-        `${apiUrl}/api/v1/security/check_phone_number`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ phone }),
-        }
-      );
+  const checkUserExists = useCallback(
+    async (phone: string) => {
+      try {
+        // Use the apiUrl from props
+        const response = await fetch(
+          `${apiUrl}/api/v1/security/check_phone_number`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ phone }),
+          }
+        );
 
-      if (!response.ok) {
+        if (!response.ok) {
+          return false;
+        }
+
+        const data = await response.json();
+        return data.exists;
+      } catch (error) {
+        console.error("Error checking user existence:", error);
         return false;
       }
-
-      const data = await response.json();
-      return data.exists;
-    } catch (error) {
-      console.error("Error checking user existence:", error);
-      return false;
-    }
-  }, []);
+    },
+    [apiUrl]
+  );
 
   const value: AuthContextValue = {
     user,

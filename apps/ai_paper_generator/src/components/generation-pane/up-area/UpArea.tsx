@@ -34,10 +34,8 @@ const QUESTION_TYPE_API_MAP: Record<ExtendedQuestionType, string> = {
   exercise_questions: "exercise_questions",
 };
 
-import {
-  SUBJECT_QUESTION_CONFIG,
-  ExtendedQuestionType,
-} from "../../../config/question_types_config";
+import { SUBJECT_QUESTION_CONFIG } from "../../../config/question_types_config";
+import type { ExtendedQuestionType } from "../../../config/question_types_config";
 import { useQuestionCounts } from "../../../hooks/useQuestionCounts";
 
 interface UpAreaProps {

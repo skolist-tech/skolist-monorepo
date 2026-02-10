@@ -9,17 +9,23 @@ import {
   SelectValue,
 } from "@skolist/ui";
 
-import { Loader2, Search, ChevronLeft, ChevronRight, ImagePlus, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ImagePlus,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/react";
+import { useCallback } from "react";
 
 import { GeneratedQuestionCard } from "../components/shared/Question/GeneratedQuestionCard";
 import { ActionReviewModal } from "../components/bank/ActionReviewModal";
-import {
-  bankService,
-  BankFilter,
-  BankQuestionResponse,
-} from "../services/bankService";
-import { GeneratedQuestionWithConcepts } from "../services/questionService";
+import { bankService } from "../services/bankService";
+import type { BankFilter, BankQuestionResponse } from "../services/bankService";
+import type { GeneratedQuestionWithConcepts } from "../services/questionService";
 
 // Basic options - In a real app these might come from a metadata API
 const HARDNESS_LEVELS = ["Easy", "Medium", "Hard"];
@@ -38,7 +44,9 @@ export const BankManagementPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
-  const [chapters, setChapters] = useState<{ id: string; name: string; subject_id: string }[]>([]);
+  const [chapters, setChapters] = useState<
+    { id: string; name: string; subject_id: string }[]
+  >([]);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,7 +62,7 @@ export const BankManagementPage = () => {
   const [reviewLoading, setReviewLoading] = useState(false);
 
   // Fetch Data
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     setLoading(true);
     try {
       const res = await bankService.listQuestions(page, pageSize, {
@@ -65,29 +73,32 @@ export const BankManagementPage = () => {
       setTotal(res.total);
     } catch (error) {
       // Error handled by service or toaster
+      Sentry.captureException(error);
       toast.error("Failed to fetch questions");
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, page, pageSize, searchQuery]);
 
   const fetchSubjects = async () => {
     try {
       const data = await bankService.fetchSubjects();
       setSubjects(data);
     } catch (e) {
+      Sentry.captureException(e);
       console.error("Failed to fetch subjects");
     }
   };
 
-  const fetchChapters = async (subjectId?: string) => {
+  const fetchChapters = useCallback(async (subjectId?: string) => {
     try {
       const data = await bankService.fetchChapters(subjectId);
       setChapters(data);
     } catch (e) {
+      Sentry.captureException(e);
       console.error("Failed to fetch chapters");
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSubjects();
@@ -98,13 +109,13 @@ export const BankManagementPage = () => {
     fetchChapters(filters.subject_id);
     // Reset chapter filter when subject changes
     if (filters.chapter_id) {
-      setFilters(prev => ({ ...prev, chapter_id: undefined }));
+      setFilters((prev) => ({ ...prev, chapter_id: undefined }));
     }
-  }, [filters.subject_id]);
+  }, [filters.subject_id, filters.chapter_id, fetchChapters]);
 
   useEffect(() => {
     fetchQuestions();
-  }, [page, filters]); // searchQuery is triggered manually or debounce (manual for now)
+  }, [page, filters, fetchQuestions]); // searchQuery is triggered manually or debounce (manual for now)
 
   // Handlers
   const handleSearch = () => {
@@ -134,6 +145,7 @@ export const BankManagementPage = () => {
       setReviewModalOpen(true);
       toast.dismiss(toastId);
     } catch (error) {
+      Sentry.captureException(error);
       toast.error("Auto-correct failed", { id: toastId });
     } finally {
       setReviewLoading(false);
@@ -152,6 +164,7 @@ export const BankManagementPage = () => {
       setReviewModalOpen(true);
       toast.dismiss(toastId);
     } catch (error) {
+      Sentry.captureException(error);
       toast.error("Regenerate failed", { id: toastId });
     }
   };
@@ -166,35 +179,45 @@ export const BankManagementPage = () => {
       setReviewModalOpen(false);
       fetchQuestions(); // Refresh list
     } catch (error) {
+      Sentry.captureException(error);
       toast.error("Failed to update question");
     } finally {
       setReviewLoading(false);
     }
-  
   };
 
   const handleResolveImage = async (id: string) => {
     try {
-        await bankService.removeImageNeeded(id);
-        toast.success("Image flag resolved");
-        // Update local state to remove flag without full refresh
-        setQuestions(prev => prev.map(q => 
-            q.id === id ? { ...q, raw_data: { ...q.raw_data, is_image_needed: false } } : q
-        ));
-    } catch(e) {
-        toast.error("Failed to resolve image flag");
+      await bankService.removeImageNeeded(id);
+      toast.success("Image flag resolved");
+      // Update local state to remove flag without full refresh
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === id
+            ? { ...q, raw_data: { ...q.raw_data, is_image_needed: false } }
+            : q
+        )
+      );
+    } catch (e) {
+      Sentry.captureException(e);
+      toast.error("Failed to resolve image flag");
     }
   };
 
   const handleResolveIncomplete = async (id: string) => {
     try {
-        await bankService.removeIncomplete(id);
-        toast.success("Question marked as complete");
-        setQuestions(prev => prev.map(q => 
-            q.id === id ? { ...q, raw_data: { ...q.raw_data, is_incomplete: false } } : q
-        ));
-    } catch(e) {
-        toast.error("Failed to resolve incomplete flag");
+      await bankService.removeIncomplete(id);
+      toast.success("Question marked as complete");
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === id
+            ? { ...q, raw_data: { ...q.raw_data, is_incomplete: false } }
+            : q
+        )
+      );
+    } catch (e) {
+      Sentry.captureException(e);
+      toast.error("Failed to resolve incomplete flag");
     }
   };
 
@@ -243,7 +266,11 @@ export const BankManagementPage = () => {
               disabled={!filters.subject_id}
             >
               <SelectTrigger>
-                <SelectValue placeholder={filters.subject_id ? "All Chapters" : "Select Subject First"} />
+                <SelectValue
+                  placeholder={
+                    filters.subject_id ? "All Chapters" : "Select Subject First"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Chapters</SelectItem>
@@ -428,23 +455,37 @@ export const BankManagementPage = () => {
                   {Math.min(page * pageSize, total)} of {total} results
                 </div>
                 {questions.map((item) => (
-                  <div key={item.id} className="group relative flex flex-col gap-2">
+                  <div
+                    key={item.id}
+                    className="group relative flex flex-col gap-2"
+                  >
                     {/* Resolution Toolbar */}
-                    {(item.raw_data.is_image_needed || item.raw_data.is_incomplete) && (
-                        <div className="flex gap-2 justify-end">
-                            {item.raw_data.is_image_needed && (
-                                <Button size="sm" variant="outline" className="h-8 gap-1 text-orange-600 border-orange-200 hover:bg-orange-50" onClick={() => handleResolveImage(item.id)}>
-                                    <ImagePlus className="h-3.5 w-3.5" />
-                                    Resolve Image
-                                </Button>
-                            )}
-                            {item.raw_data.is_incomplete && (
-                                <Button size="sm" variant="outline" className="h-8 gap-1 text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleResolveIncomplete(item.id)}>
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    Mark Complete
-                                </Button>
-                            )}
-                        </div>
+                    {(item.raw_data.is_image_needed ||
+                      item.raw_data.is_incomplete) && (
+                      <div className="flex justify-end gap-2">
+                        {item.raw_data.is_image_needed && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 gap-1 border-orange-200 text-orange-600 hover:bg-orange-50"
+                            onClick={() => handleResolveImage(item.id)}
+                          >
+                            <ImagePlus className="h-3.5 w-3.5" />
+                            Resolve Image
+                          </Button>
+                        )}
+                        {item.raw_data.is_incomplete && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 gap-1 border-red-200 text-red-600 hover:bg-red-50"
+                            onClick={() => handleResolveIncomplete(item.id)}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Mark Complete
+                          </Button>
+                        )}
+                      </div>
                     )}
                     <GeneratedQuestionCard
                       question={item.question as GeneratedQuestionWithConcepts}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import { Eye, EyeOff } from "lucide-react";
 import { Spinner } from "@skolist/ui";
 import type { EmailSignupFormData } from "../../../schemas";

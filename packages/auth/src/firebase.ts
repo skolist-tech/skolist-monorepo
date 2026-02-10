@@ -31,22 +31,25 @@ export const getFirebaseAuth = () => {
   // Try to use environment variables if not initialized manually
   // This block is for legacy support of non-refactored apps
   try {
-    if (typeof import.meta !== "undefined" && (import.meta as any).env) {
+    const metaWithEnv = import.meta as unknown as {
+      env: Record<string, string | undefined>;
+    };
+    if (typeof import.meta !== "undefined" && metaWithEnv.env) {
       const config = {
-        apiKey: (import.meta as any).env.VITE_FIREBASE_API_KEY,
-        authDomain: (import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN,
-        projectId: (import.meta as any).env.VITE_FIREBASE_PROJECT_ID,
-        storageBucket: (import.meta as any).env.VITE_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: (import.meta as any).env
-          .VITE_FIREBASE_MESSAGING_SENDER_ID,
-        appId: (import.meta as any).env.VITE_FIREBASE_APP_ID,
+        apiKey: metaWithEnv.env.VITE_FIREBASE_API_KEY as string,
+        authDomain: metaWithEnv.env.VITE_FIREBASE_AUTH_DOMAIN as string,
+        projectId: metaWithEnv.env.VITE_FIREBASE_PROJECT_ID as string,
+        storageBucket: metaWithEnv.env.VITE_FIREBASE_STORAGE_BUCKET as string,
+        messagingSenderId: metaWithEnv.env
+          .VITE_FIREBASE_MESSAGING_SENDER_ID as string,
+        appId: metaWithEnv.env.VITE_FIREBASE_APP_ID as string,
       };
       // Only initialize if config keys allow (simple check)
       if (config.apiKey) {
         return initializeFirebase(config);
       }
     }
-  } catch (e) {
+  } catch {
     // Ignore error if import.meta is accessed where not allowed or fields missing
   }
 
