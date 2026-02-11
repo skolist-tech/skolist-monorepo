@@ -13,7 +13,13 @@
     "clean": "turbo clean && rm -rf node_modules",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml,html}\"",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,css,md,yml,yaml,html}": [
+      "prettier --write"
+    ]
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^3.2.4",
@@ -33,6 +39,8 @@
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.14.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^16.2.7",
     "postcss": "^8.4.49",
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
