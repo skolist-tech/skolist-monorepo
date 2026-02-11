@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@skolist/ui";
 import { GeneratedQuestionCard } from "../shared/Question/GeneratedQuestionCard";
-import { GeneratedQuestionWithConcepts } from "../../services/questionService";
+import type { GeneratedQuestionWithConcepts } from "../../services/questionService";
 
 interface ActionReviewModalProps {
   isOpen: boolean;

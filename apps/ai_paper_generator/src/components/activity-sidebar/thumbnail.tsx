@@ -4,7 +4,7 @@ import {
   Dna,
   Atom,
   FlaskConical,
-//   Calculator,
+  //   Calculator,
   BookOpen,
   Library,
   Globe,
@@ -14,7 +14,7 @@ import {
   Palette,
   Brush,
   Microscope,
-//   Beaker,
+  //   Beaker,
   Brain,
 } from "lucide-react";
 

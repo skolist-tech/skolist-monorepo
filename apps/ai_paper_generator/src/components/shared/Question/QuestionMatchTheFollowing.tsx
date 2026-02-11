@@ -1,4 +1,4 @@
-import { GeneratedQuestionWithConcepts } from "../../../services/questionService";
+import type { GeneratedQuestionWithConcepts } from "../../../services/questionService";
 import { LatexRenderer } from "../LatexRenderer";
 
 interface QuestionMatchTheFollowingProps {

@@ -11,8 +11,8 @@ import { Camera, Check, X, Loader2 } from "lucide-react";
 import ReactCrop, {
   centerCrop,
   makeAspectCrop,
-  Crop as CropType,
-  PixelCrop,
+  type Crop as CropType,
+  type PixelCrop,
 } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
