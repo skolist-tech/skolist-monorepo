@@ -113,13 +113,13 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           if (payload.eventType === "INSERT") {
             // Append new questions, mark as not old (new during generation)
             setQuestions((prev) => [
-              ...prev,
               {
                 ...(payload.new as GeneratedQuestion),
                 concepts: [],
                 images: [],
                 is_old_local: false,
               },
+              ...prev,
             ]);
           } else if (payload.eventType === "UPDATE") {
             setQuestions((prev) =>

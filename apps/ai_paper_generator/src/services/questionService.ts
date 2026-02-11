@@ -88,7 +88,7 @@ export async function fetchQuestions(
     `
     )
     .eq("activity_id", activityId)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .returns<QuestionWithConceptsResponse[]>();
 
   if (error) {
