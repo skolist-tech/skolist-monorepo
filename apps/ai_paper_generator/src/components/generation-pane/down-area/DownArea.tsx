@@ -68,11 +68,8 @@ export function DownArea({
     handleBulkDeleteConfirm,
   } = useQuestionSelection({ visibleQuestions });
 
-  // Split visible questions based on is_old_local attribute
-  // New questions (is_old_local: false) appear above loading card
-  // Old questions (is_old_local: true/undefined) appear below loading card
-  const newQuestions = visibleQuestions.filter((q) => q.is_old_local === false);
-  const oldQuestions = visibleQuestions.filter((q) => q.is_old_local !== false);
+  // Questions are already sorted by created_at descending from the query
+  // The divider will be inserted based on is_new attribute in GeneratedQuestionsList
 
   if (isLoading && questions.length === 0) {
     return (
@@ -219,8 +216,7 @@ export function DownArea({
 
         {/* Scrollable Content */}
         <GeneratedQuestionsList
-          newQuestions={newQuestions}
-          oldQuestions={oldQuestions}
+          questions={visibleQuestions}
           isGenerating={isGenerating}
           selectedIds={selectedIds}
           animatingIds={animatingIds}

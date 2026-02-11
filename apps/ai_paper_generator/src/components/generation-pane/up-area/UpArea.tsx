@@ -351,6 +351,9 @@ export function UpArea({
     }
 
     try {
+      // Mark all existing questions as old before generating new ones
+      await markAllQuestionsOld();
+
       // Save selected concepts to the current activity context
       // This ensures that even if generation fails, the association is recorded
       await upsertActivityConcepts(currentActivity.id, conceptIds);
@@ -454,9 +457,6 @@ export function UpArea({
         variant: "destructive",
       });
     } finally {
-      // Mark all questions as old when generation ends
-      markAllQuestionsOld();
-
       if (onGenerateEnd) {
         onGenerateEnd();
       } else {

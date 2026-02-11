@@ -25,6 +25,7 @@ import {
   bulkUpdateQuestions,
   createQuestion,
   deleteQuestion,
+  markActivityQuestionsAsOld,
   type GeneratedQuestionWithConcepts,
 } from "../services/questionService";
 export type { GeneratedQuestionWithConcepts };
@@ -38,7 +39,7 @@ import {
 } from "../services/versionService";
 
 interface QuestionsContextValue {
-  questions: (GeneratedQuestionWithConcepts & { is_old_local?: boolean })[];
+  questions: GeneratedQuestionWithConcepts[];
   isLoading: boolean;
   error: string | null;
   moveQuestionToDraft: (id: string) => Promise<void>;
@@ -52,7 +53,7 @@ interface QuestionsContextValue {
   deleteQuestion: (id: string) => Promise<void>;
   addCustomQuestion: (sectionId: string, type: QuestionType) => Promise<void>;
   refetchQuestions: () => Promise<void>;
-  markAllQuestionsOld: () => void;
+  markAllQuestionsOld: () => Promise<void>;
   undoQuestion: (id: string) => Promise<void>;
   redoQuestion: (id: string) => Promise<void>;
   getQuestionVersionState: (id: string) => Promise<VersionState>;
@@ -64,9 +65,9 @@ export const QuestionsContext = createContext<
 
 export function QuestionsProvider({ children }: { children: ReactNode }) {
   const { currentActivity } = useActivityContext();
-  const [questions, setQuestions] = useState<
-    (GeneratedQuestionWithConcepts & { is_old_local?: boolean })[]
-  >([]);
+  const [questions, setQuestions] = useState<GeneratedQuestionWithConcepts[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,8 +81,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
       const data = await fetchQuestions(currentActivity.id);
-      // Mark all loaded questions as old
-      setQuestions(data.map((q) => ({ ...q, is_old_local: true })));
+      setQuestions(data);
     } catch (err) {
       console.error("Failed to load questions:", err);
       setError("Failed to load questions");
@@ -111,16 +111,19 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            // Append new questions, mark as not old (new during generation)
-            setQuestions((prev) => [
-              {
+            // Add new question and sort by created_at DESC to maintain order
+            setQuestions((prev) => {
+              const newQuestion = {
                 ...(payload.new as GeneratedQuestion),
                 concepts: [],
                 images: [],
-                is_old_local: false,
-              },
-              ...prev,
-            ]);
+              };
+              return [...prev, newQuestion].sort(
+                (a, b) =>
+                  new Date(b.created_at).getTime() -
+                  new Date(a.created_at).getTime()
+              );
+            });
           } else if (payload.eventType === "UPDATE") {
             setQuestions((prev) =>
               prev.map((q) =>
@@ -129,7 +132,6 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
                       ...(payload.new as GeneratedQuestion),
                       concepts: q.concepts,
                       images: q.images,
-                      is_old_local: q.is_old_local, // Preserve the is_old_local flag
                     }
                   : q
               )
@@ -279,9 +281,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
             if (updatedQuestion) {
               setQuestions((prev) =>
                 prev.map((q) =>
-                  q.id === updatedQuestion.id
-                    ? { ...updatedQuestion, is_old_local: q.is_old_local } // Preserve is_old_local
-                    : q
+                  q.id === updatedQuestion.id ? updatedQuestion : q
                 )
               );
             }
@@ -396,9 +396,8 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           updated_at: _updated_at,
           concepts: _concepts,
           images: _images,
-          is_old_local: _is_old_local, // Exclude local UI state
           ...updates
-        } = question as any; // Exclude system fields, join fields, and local UI state from update payload.
+        } = question as any; // Exclude system fields and join fields from update payload.
         // But `updates` in updateQuestion takes TablesUpdate<"gen_questions">.
         await updateQuestion(question.id, updates);
 
@@ -453,10 +452,17 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Mark all questions as old (called when generation completes)
-  const markAllQuestionsOld = useCallback(() => {
-    setQuestions((prev) => prev.map((q) => ({ ...q, is_old_local: true })));
-  }, []);
+  // Mark all questions as old (called when generation starts)
+  const markAllQuestionsOld = useCallback(async () => {
+    if (!currentActivity?.id) return;
+    try {
+      await markActivityQuestionsAsOld(currentActivity.id);
+      // Update local state to reflect the change
+      setQuestions((prev) => prev.map((q) => ({ ...q, is_new: false })));
+    } catch (err) {
+      console.error("Failed to mark questions as old:", err);
+    }
+  }, [currentActivity?.id]);
 
   // Save question WITH version creation (for user edits from frontend)
   const saveQuestionWithVersion = useCallback(
@@ -468,7 +474,6 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           updated_at: _updated_at,
           concepts: _concepts,
           images: _images,
-          is_old_local: _is_old_local,
           ...updates
         } = question as any;
 
@@ -496,11 +501,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
         // Refetch to get fresh data with concepts/images
         const fresh = await fetchQuestion(id);
         if (fresh) {
-          setQuestions((prev) =>
-            prev.map((q) =>
-              q.id === id ? { ...fresh, is_old_local: q.is_old_local } : q
-            )
-          );
+          setQuestions((prev) => prev.map((q) => (q.id === id ? fresh : q)));
         }
       }
     } catch (err) {
@@ -517,11 +518,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
         // Refetch to get fresh data with concepts/images
         const fresh = await fetchQuestion(id);
         if (fresh) {
-          setQuestions((prev) =>
-            prev.map((q) =>
-              q.id === id ? { ...fresh, is_old_local: q.is_old_local } : q
-            )
-          );
+          setQuestions((prev) => prev.map((q) => (q.id === id ? fresh : q)));
         }
       }
     } catch (err) {

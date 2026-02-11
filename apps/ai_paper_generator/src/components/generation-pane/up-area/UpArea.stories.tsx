@@ -212,7 +212,7 @@ function InteractiveUpArea() {
     deleteQuestion: async () => {},
     addCustomQuestion: async () => {},
     refetchQuestions: async () => {},
-    markAllQuestionsOld: () => {},
+    markAllQuestionsOld: async () => {},
     undoQuestion: async () => {},
     redoQuestion: async () => {},
     getQuestionVersionState: async () => ({ canUndo: false, canRedo: false }),

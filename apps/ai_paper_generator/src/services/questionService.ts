@@ -248,6 +248,26 @@ export async function bulkUpdateQuestions(
 }
 
 /**
+ * Mark all questions in an activity as not new (is_new = false)
+ * Called when generation starts to distinguish old from newly generated questions
+ */
+export async function markActivityQuestionsAsOld(
+  activityId: string
+): Promise<void> {
+  const client = getSupabaseClient();
+
+  const { error } = await client
+    .from("gen_questions")
+    .update({ is_new: false })
+    .eq("activity_id", activityId);
+
+  if (error) {
+    console.error("Failed to mark questions as old:", error);
+    throw error;
+  }
+}
+
+/**
  * Delete a question
  */
 export async function deleteQuestion(questionId: string): Promise<void> {

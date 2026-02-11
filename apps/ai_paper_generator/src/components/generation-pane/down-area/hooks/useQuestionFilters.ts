@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import type { GeneratedQuestionWithConcepts } from "../../../../services/questionService";
 
 interface UseQuestionFiltersProps {
-  questions: (GeneratedQuestionWithConcepts & { is_old_local?: boolean })[];
+  questions: GeneratedQuestionWithConcepts[];
 }
 
 export function useQuestionFilters({ questions }: UseQuestionFiltersProps) {
