@@ -64,15 +64,16 @@ export function QuestionCardBottomBar({
         {question.is_new && !question.is_in_draft && (
           <Badge
             variant="secondary"
-            className="border-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
-            style={{
-              background:
-                "linear-gradient(90deg, #6366f1, #a78bfa, #818cf8, #6366f1)",
-              backgroundSize: "200% auto",
-              animation: "shimmer 2s linear infinite",
-            }}
+            className="relative overflow-hidden border border-blue-300 bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-600 shadow-[0_2px_8px_rgba(59,130,246,0.25)]"
           >
-            ✨ New
+            <span
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-200/60 to-transparent"
+              style={{
+                animation: "shimmer 2s ease-in-out infinite",
+              }}
+            />
+            <style>{`@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }`}</style>
+            <span className="relative">New</span>
           </Badge>
         )}
         <Popover>
