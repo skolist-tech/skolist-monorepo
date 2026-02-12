@@ -4,9 +4,11 @@ import { LatexHtmlRenderer } from "../../shared/LatexRenderer";
 export const AnswerItem = ({
   question,
   index,
+  showExplanation = true,
 }: {
   question: QuestionItemData;
   index: number;
+  showExplanation?: boolean;
 }) => {
   return (
     <div
@@ -24,7 +26,7 @@ export const AnswerItem = ({
               style={{ fontFamily: '"Times New Roman", Times, serif' }}
             />
           </div>
-          {question.explanation && (
+          {showExplanation && question.explanation && (
             <div
               className="text-sm"
               style={{ marginTop: "var(--answer-explanation-margin-top)" }}

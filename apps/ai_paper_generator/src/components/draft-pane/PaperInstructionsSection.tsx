@@ -17,6 +17,8 @@ export function PaperInstructionsSection({
     addInstruction,
     showInstructions,
     setShowInstructions,
+    showExplanation,
+    setShowExplanation,
   } = useDraftContext();
   const [newInstructionText, setNewInstructionText] = useState("");
   const [isAddingInstruction, setIsAddingInstruction] = useState(false);
@@ -94,6 +96,17 @@ export function PaperInstructionsSection({
             No instructions added yet.
           </div>
         )}
+      </div>
+
+      <div className="flex items-center justify-between border-t pt-2">
+        <Label className="text-xs font-semibold uppercase text-muted-foreground">
+          Show Explanation on Answer Key
+        </Label>
+        <Switch
+          checked={showExplanation}
+          onCheckedChange={setShowExplanation}
+          title={showExplanation ? "Hide Explanations" : "Show Explanations"}
+        />
       </div>
     </div>
   );

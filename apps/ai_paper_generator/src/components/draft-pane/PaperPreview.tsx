@@ -26,7 +26,8 @@ import {
 import { PaperToolbar } from "./PaperToolbar";
 
 export function PaperPreview() {
-  const { draft, sections, instructions, showInstructions } = useDraftContext();
+  const { draft, sections, instructions, showInstructions, showExplanation } =
+    useDraftContext();
   const { questions } = useQuestionsContext();
   const { toast } = useToast();
 
@@ -274,6 +275,7 @@ export function PaperPreview() {
                               <AnswerItem
                                 question={item.data}
                                 index={item.data.displayIndex}
+                                showExplanation={showExplanation}
                               />
                             )}
                           </div>
@@ -347,7 +349,11 @@ export function PaperPreview() {
               />
             )}
             {item.type === "answer" && (
-              <AnswerItem question={item.data} index={item.data.displayIndex} />
+              <AnswerItem
+                question={item.data}
+                index={item.data.displayIndex}
+                showExplanation={showExplanation}
+              />
             )}
           </div>
         ))}
