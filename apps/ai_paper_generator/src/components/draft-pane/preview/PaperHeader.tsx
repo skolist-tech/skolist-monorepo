@@ -25,7 +25,7 @@ export const PaperHeader = ({
   titleSuffix?: string;
 }) => {
   const [logoSignedUrl, setLogoSignedUrl] = useState<string | null>(null);
-  const { logoVersion } = useDraftContext();
+  const { logoVersion, showLogo } = useDraftContext();
 
   useEffect(() => {
     let isMounted = true;
@@ -55,7 +55,7 @@ export const PaperHeader = ({
       className="text-center"
       style={{ marginBottom: "var(--header-margin-bottom)" }}
     >
-      {logoSignedUrl && (
+      {showLogo && logoSignedUrl && (
         <div
           className="flex justify-center"
           style={{ marginBottom: "var(--header-logo-margin-bottom)" }}

@@ -809,6 +809,9 @@ export type Database = {
           created_at: string;
           id: string;
           institute_name: string | null;
+          is_show_explanation_answer_key: boolean;
+          is_show_instruction: boolean;
+          is_show_logo: boolean;
           logo_url: string | null;
           max_position: number | null;
           maximum_marks: number | null;
@@ -825,6 +828,9 @@ export type Database = {
           created_at?: string;
           id?: string;
           institute_name?: string | null;
+          is_show_explanation_answer_key?: boolean;
+          is_show_instruction?: boolean;
+          is_show_logo?: boolean;
           logo_url?: string | null;
           max_position?: number | null;
           maximum_marks?: number | null;
@@ -841,6 +847,9 @@ export type Database = {
           created_at?: string;
           id?: string;
           institute_name?: string | null;
+          is_show_explanation_answer_key?: boolean;
+          is_show_instruction?: boolean;
+          is_show_logo?: boolean;
           logo_url?: string | null;
           max_position?: number | null;
           maximum_marks?: number | null;

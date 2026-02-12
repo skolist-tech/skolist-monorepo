@@ -66,11 +66,13 @@ interface DraftContextValue {
   logoVersion: number;
   refreshLogo: () => void;
 
-  // Paper preview settings
+  // Paper preview settings (from database)
+  showLogo: boolean;
+  setShowLogo: (show: boolean) => Promise<void>;
   showInstructions: boolean;
-  setShowInstructions: (show: boolean) => void;
+  setShowInstructions: (show: boolean) => Promise<void>;
   showExplanation: boolean;
-  setShowExplanation: (show: boolean) => void;
+  setShowExplanation: (show: boolean) => Promise<void>;
 }
 
 const DraftContext = createContext<DraftContextValue | undefined>(undefined);
@@ -85,8 +87,11 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [logoVersion, setLogoVersion] = useState(0);
-  const [showInstructions, setShowInstructions] = useState(true);
-  const [showExplanation, setShowExplanation] = useState(true);
+
+  // Derived from draft (persisted to database)
+  const showLogo = draft?.is_show_logo ?? true;
+  const showInstructions = draft?.is_show_instruction ?? true;
+  const showExplanation = draft?.is_show_explanation_answer_key ?? true;
 
   // Initialize Draft and Sections
   const initDraft = useCallback(async () => {
@@ -120,6 +125,50 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   const refreshLogo = useCallback(() => {
     setLogoVersion((v) => v + 1);
   }, []);
+
+  // Paper preview setting setters (persist to database)
+  const setShowLogo = useCallback(
+    async (show: boolean) => {
+      if (!draft) return;
+      try {
+        const updated = await updateDraft(draft.id, { is_show_logo: show });
+        setDraft(updated);
+      } catch (err) {
+        console.error("Failed to update show logo:", err);
+      }
+    },
+    [draft]
+  );
+
+  const setShowInstructions = useCallback(
+    async (show: boolean) => {
+      if (!draft) return;
+      try {
+        const updated = await updateDraft(draft.id, {
+          is_show_instruction: show,
+        });
+        setDraft(updated);
+      } catch (err) {
+        console.error("Failed to update show instructions:", err);
+      }
+    },
+    [draft]
+  );
+
+  const setShowExplanation = useCallback(
+    async (show: boolean) => {
+      if (!draft) return;
+      try {
+        const updated = await updateDraft(draft.id, {
+          is_show_explanation_answer_key: show,
+        });
+        setDraft(updated);
+      } catch (err) {
+        console.error("Failed to update show explanation:", err);
+      }
+    },
+    [draft]
+  );
 
   const updateDraftSettings = useCallback(
     async (updates: UpdateQgenDraft) => {
@@ -384,6 +433,8 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       addInstruction,
       editInstruction,
       removeInstruction,
+      showLogo,
+      setShowLogo,
       showInstructions,
       setShowInstructions,
       showExplanation,
@@ -406,6 +457,8 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       addInstruction,
       editInstruction,
       removeInstruction,
+      showLogo,
+      setShowLogo,
       showInstructions,
       setShowInstructions,
       showExplanation,

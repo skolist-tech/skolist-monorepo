@@ -15,7 +15,7 @@ export function PaperLogoSection({
   draft,
   updateDraftSettings,
 }: PaperLogoSectionProps) {
-  const { refreshLogo, logoVersion } = useDraftContext();
+  const { refreshLogo, logoVersion, showLogo, setShowLogo } = useDraftContext();
   const [isLogoSectionOpen, setIsLogoSectionOpen] = useState(!!draft.logo_url);
   const [logoSignedUrl, setLogoSignedUrl] = useState<string | null>(null);
   const [isDeleteLogoModalOpen, setIsDeleteLogoModalOpen] = useState(false);
@@ -67,29 +67,11 @@ export function PaperLogoSection({
         </Label>
         <div className="flex h-5 items-center">
           <Switch
-            checked={!!draft.logo_url || isLogoSectionOpen}
-            onCheckedChange={async (checked) => {
-              setIsLogoSectionOpen(checked);
-              if (!checked) {
-                updateDraftSettings({ logo_url: null });
-              } else {
-                // Restore path ONLY if file exists
-                if (draft.activity_id) {
-                  try {
-                    const { hasLogo } =
-                      await import("../../services/draftService");
-                    const exists = await hasLogo(draft.activity_id);
-
-                    if (exists) {
-                      updateDraftSettings({
-                        logo_url: `${draft.activity_id}/logo.png`,
-                      });
-                      refreshLogo();
-                    }
-                  } catch (err) {
-                    console.error("Failed to check logo existence", err);
-                  }
-                }
+            checked={showLogo}
+            onCheckedChange={(checked) => {
+              setShowLogo(checked);
+              if (checked && !isLogoSectionOpen) {
+                setIsLogoSectionOpen(true);
               }
             }}
           />
