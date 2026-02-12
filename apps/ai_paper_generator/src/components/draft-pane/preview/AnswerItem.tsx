@@ -9,8 +9,11 @@ export const AnswerItem = ({
   index: number;
 }) => {
   return (
-    <div className="mb-4 break-inside-avoid">
-      <div className="flex gap-2">
+    <div
+      className="break-inside-avoid"
+      style={{ marginBottom: "var(--answer-margin-bottom)" }}
+    >
+      <div className="flex" style={{ gap: "var(--question-flex-gap)" }}>
         <span className="font-semibold">{index + 1}.</span>
         <div className="flex-1">
           <div className="flex gap-2">
@@ -22,7 +25,10 @@ export const AnswerItem = ({
             />
           </div>
           {question.explanation && (
-            <div className="mt-2 text-sm">
+            <div
+              className="text-sm"
+              style={{ marginTop: "var(--answer-explanation-margin-top)" }}
+            >
               <span className="font-bold underline">Explanation:</span>
               <LatexHtmlRenderer
                 content={question.explanation}

@@ -56,6 +56,7 @@ interface UsePaperItemsProps {
   questions: GeneratedQuestionWithConcepts[];
   instructions: QgenDraftInstructionAndQgenDraft[];
   previewMode: "paper" | "answer";
+  showInstructions?: boolean;
 }
 
 export function usePaperItems({
@@ -64,6 +65,7 @@ export function usePaperItems({
   questions,
   instructions,
   previewMode,
+  showInstructions = true,
 }: UsePaperItemsProps) {
   const items: PaperItem[] = useMemo(() => {
     if (!draft) return [];
@@ -77,8 +79,12 @@ export function usePaperItems({
       data: draft,
     });
 
-    // Instructions - Only for Paper mode
-    if (previewMode === "paper" && instructions.length > 0) {
+    // Instructions - Only for Paper mode and when showInstructions is true
+    if (
+      previewMode === "paper" &&
+      showInstructions &&
+      instructions.length > 0
+    ) {
       result.push({
         id: "instructions",
         type: "instructions",
@@ -129,7 +135,7 @@ export function usePaperItems({
     });
 
     return result;
-  }, [draft, sections, questions, instructions, previewMode]);
+  }, [draft, sections, questions, instructions, previewMode, showInstructions]);
 
   return items;
 }

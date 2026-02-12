@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { Button, Label, Textarea } from "@skolist/ui";
+import { Button, Label, Switch, Textarea } from "@skolist/ui";
 import { useDraftContext } from "../../context/DraftContext";
 import { InstructionItem } from "./structure/InstructionItem";
 import type { QgenDraft } from "@skolist/db";
@@ -12,7 +12,12 @@ interface PaperInstructionsSectionProps {
 export function PaperInstructionsSection({
   draft,
 }: PaperInstructionsSectionProps) {
-  const { instructions, addInstruction } = useDraftContext();
+  const {
+    instructions,
+    addInstruction,
+    showInstructions,
+    setShowInstructions,
+  } = useDraftContext();
   const [newInstructionText, setNewInstructionText] = useState("");
   const [isAddingInstruction, setIsAddingInstruction] = useState(false);
 
@@ -33,15 +38,22 @@ export function PaperInstructionsSection({
         <Label className="text-xs font-semibold uppercase text-muted-foreground">
           General Instructions
         </Label>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 gap-1 text-xs"
-          onClick={() => setIsAddingInstruction(true)}
-        >
-          <Plus className="h-3 w-3" />
-          Add
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 gap-1 text-xs"
+            onClick={() => setIsAddingInstruction(true)}
+          >
+            <Plus className="h-3 w-3" />
+            Add
+          </Button>
+          <Switch
+            checked={showInstructions}
+            onCheckedChange={setShowInstructions}
+            title={showInstructions ? "Hide on Paper" : "Show on Paper"}
+          />
+        </div>
       </div>
 
       {isAddingInstruction && (

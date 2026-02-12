@@ -1,19 +1,102 @@
 import { useCallback, useLayoutEffect, useState, type RefObject } from "react";
 import type { PaperItem } from "./usePaperItems";
 
-// Constants (sync with PaperPreview or pass as config later if needed)
-const A4_WIDTH_MM = 210;
-const MARGIN_MM = 20;
+// ============================================================================
+// PAGE LAYOUT CONSTANTS
+// These values work with CSS variables defined in index.css
+// To change page margins/spacing, edit :root { --paper-margin-*-mm } in DevTools
+// ============================================================================
 
-// 1mm approx 3.78px at 96 DPI.
-// Assuming 794px width (standard for A4 at 96 DPI) for the preview.
+const A4_WIDTH_MM = 210;
+const A4_HEIGHT_MM = 297;
+
+// Helper to read CSS variable values at runtime
+function getCssVariable(name: string, fallback: number): number {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  return value ? parseFloat(value) : fallback;
+}
+
+// Default values (used for SSR and initial render)
+const DEFAULT_MARGIN_TOP_MM = 20;
+const DEFAULT_MARGIN_RIGHT_MM = 20;
+const DEFAULT_MARGIN_BOTTOM_MM = 20;
+const DEFAULT_MARGIN_LEFT_MM = 20;
+const DEFAULT_FOOTER_HEIGHT_PX = 30;
+
+// Fixed A4 dimensions at 96 DPI
 export const PAGE_WIDTH_PX = 794;
 export const PAGE_HEIGHT_PX = 1123;
-export const PADDING_PX = (PAGE_WIDTH_PX * MARGIN_MM) / A4_WIDTH_MM; // approx 75px
-export const CONTENT_WIDTH_PX = PAGE_WIDTH_PX - PADDING_PX * 2;
-export const FOOTER_HEIGHT_PX = 30; // Reserve space for page footer
+
+// Helper to convert mm to px for A4
+function mmToPxHorizontal(mm: number): number {
+  return (PAGE_WIDTH_PX * mm) / A4_WIDTH_MM;
+}
+
+function mmToPxVertical(mm: number): number {
+  return (PAGE_HEIGHT_PX * mm) / A4_HEIGHT_MM;
+}
+
+// Dynamic getters that read from CSS variables
+export function getMarginTopPx(): number {
+  const mm = getCssVariable("--paper-margin-top-mm", DEFAULT_MARGIN_TOP_MM);
+  return mmToPxVertical(mm);
+}
+
+export function getMarginRightPx(): number {
+  const mm = getCssVariable("--paper-margin-right-mm", DEFAULT_MARGIN_RIGHT_MM);
+  return mmToPxHorizontal(mm);
+}
+
+export function getMarginBottomPx(): number {
+  const mm = getCssVariable(
+    "--paper-margin-bottom-mm",
+    DEFAULT_MARGIN_BOTTOM_MM
+  );
+  return mmToPxVertical(mm);
+}
+
+export function getMarginLeftPx(): number {
+  const mm = getCssVariable("--paper-margin-left-mm", DEFAULT_MARGIN_LEFT_MM);
+  return mmToPxHorizontal(mm);
+}
+
+// Legacy function for backward compatibility (uses average of horizontal margins)
+export function getPaddingPx(): number {
+  return (getMarginLeftPx() + getMarginRightPx()) / 2;
+}
+
+export function getFooterHeightPx(): number {
+  const cssValue = getCssVariable(
+    "--paper-footer-height",
+    DEFAULT_FOOTER_HEIGHT_PX
+  );
+  return cssValue;
+}
+
+export function getContentWidthPx(): number {
+  return PAGE_WIDTH_PX - getMarginLeftPx() - getMarginRightPx();
+}
+
+export function getContentHeightPx(): number {
+  return (
+    PAGE_HEIGHT_PX -
+    getMarginTopPx() -
+    getMarginBottomPx() -
+    getFooterHeightPx()
+  );
+}
+
+// Static exports for components that need initial values
+const defaultPaddingHorizontal = mmToPxHorizontal(DEFAULT_MARGIN_LEFT_MM);
+const defaultPaddingVertical = mmToPxVertical(DEFAULT_MARGIN_TOP_MM);
+export const PADDING_PX = defaultPaddingHorizontal; // Legacy
+export const CONTENT_WIDTH_PX = PAGE_WIDTH_PX - defaultPaddingHorizontal * 2;
+export const FOOTER_HEIGHT_PX = DEFAULT_FOOTER_HEIGHT_PX;
 export const CONTENT_HEIGHT_PX =
-  PAGE_HEIGHT_PX - PADDING_PX * 2 - FOOTER_HEIGHT_PX;
+  PAGE_HEIGHT_PX - defaultPaddingVertical * 2 - FOOTER_HEIGHT_PX;
 
 export interface PageData {
   pageNumber: number;
@@ -29,6 +112,9 @@ export function usePaperPagination(
   // Measure Function
   const calculatePages = useCallback(() => {
     if (!measureRef.current) return;
+
+    // Read dynamic values from CSS variables
+    const contentHeightPx = getContentHeightPx();
 
     const container = measureRef.current;
     const itemNodes = container.querySelectorAll("[data-item-id]");
@@ -46,7 +132,7 @@ export function usePaperPagination(
 
       // Check overflow
       if (
-        currentHeight + height > CONTENT_HEIGHT_PX &&
+        currentHeight + height > contentHeightPx &&
         currentPageItems.length > 0
       ) {
         // Push old page

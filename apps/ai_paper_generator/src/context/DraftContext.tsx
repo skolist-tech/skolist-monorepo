@@ -65,6 +65,10 @@ interface DraftContextValue {
   removeInstruction: (id: string) => Promise<void>;
   logoVersion: number;
   refreshLogo: () => void;
+
+  // Paper preview settings
+  showInstructions: boolean;
+  setShowInstructions: (show: boolean) => void;
 }
 
 const DraftContext = createContext<DraftContextValue | undefined>(undefined);
@@ -79,6 +83,7 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [logoVersion, setLogoVersion] = useState(0);
+  const [showInstructions, setShowInstructions] = useState(true);
 
   // Initialize Draft and Sections
   const initDraft = useCallback(async () => {
@@ -376,6 +381,8 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       addInstruction,
       editInstruction,
       removeInstruction,
+      showInstructions,
+      setShowInstructions,
     }),
     [
       draft,
@@ -394,6 +401,8 @@ export function DraftProvider({ children }: { children: ReactNode }) {
       addInstruction,
       editInstruction,
       removeInstruction,
+      showInstructions,
+      setShowInstructions,
     ]
   );
 

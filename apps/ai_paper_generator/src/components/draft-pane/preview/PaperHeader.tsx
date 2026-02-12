@@ -51,13 +51,20 @@ export const PaperHeader = ({
   }, [draft.logo_url, logoVersion]);
 
   return (
-    <div className="mb-6 text-center">
+    <div
+      className="text-center"
+      style={{ marginBottom: "var(--header-margin-bottom)" }}
+    >
       {logoSignedUrl && (
-        <div className="mb-2 flex justify-center">
+        <div
+          className="flex justify-center"
+          style={{ marginBottom: "var(--header-logo-margin-bottom)" }}
+        >
           <img
             src={logoSignedUrl}
             alt="Logo"
-            className="h-16 w-auto object-contain"
+            className="w-auto object-contain"
+            style={{ height: "var(--header-logo-height)" }}
             onError={(e) => {
               // Hide the image if it fails to load
               e.currentTarget.style.display = "none";
@@ -70,18 +77,34 @@ export const PaperHeader = ({
       <h1 className="text-2xl font-bold uppercase tracking-wide text-black">
         {draft.institute_name || "Institute Name"}
       </h1>
-      <h2 className="mt-1 text-xl font-bold text-black">
+      <h2
+        className="text-xl font-bold text-black"
+        style={{ marginTop: "var(--header-title-margin-top)" }}
+      >
         {draft.paper_title || "Examination Paper"} {titleSuffix}
       </h2>
-      <div className="mt-4 border-y-2 border-black py-2">
+      <div
+        className="border-y-2 border-black"
+        style={{
+          marginTop: "var(--header-meta-margin-top)",
+          paddingTop: "var(--header-meta-padding-y)",
+          paddingBottom: "var(--header-meta-padding-y)",
+        }}
+      >
         <div className="flex justify-between px-2 text-sm font-bold text-black">
-          <div className="flex flex-col items-start gap-1">
+          <div
+            className="flex flex-col items-start"
+            style={{ gap: "var(--header-meta-gap)" }}
+          >
             <span>Subject: {draft.subject_name || "..................."}</span>
             <span>
               Class: {draft.school_class_name || "..................."}
             </span>
           </div>
-          <div className="flex flex-col items-end gap-1">
+          <div
+            className="flex flex-col items-end"
+            style={{ gap: "var(--header-meta-gap)" }}
+          >
             <span>Max. Marks: {draft.maximum_marks || "..."}</span>
             <span>Duration: {formatTime(draft.paper_duration)}</span>
           </div>

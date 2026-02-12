@@ -15,8 +15,11 @@ export const QuestionItem = ({
     .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
 
   return (
-    <div className="mb-4 break-inside-avoid">
-      <div className="flex gap-2">
+    <div
+      className="break-inside-avoid"
+      style={{ marginBottom: "var(--question-margin-bottom)" }}
+    >
+      <div className="flex" style={{ gap: "var(--question-flex-gap)" }}>
         <span className="font-semibold">{index + 1}.</span>
         <div className="flex-1">
           <LatexHtmlRenderer
@@ -26,7 +29,14 @@ export const QuestionItem = ({
           />
           {/* Render Question Images */}
           {validImages.length > 0 && (
-            <div className="my-2 flex flex-wrap gap-2">
+            <div
+              className="flex flex-wrap"
+              style={{
+                marginTop: "var(--question-images-margin-y)",
+                marginBottom: "var(--question-images-margin-y)",
+                gap: "var(--question-images-gap)",
+              }}
+            >
               {validImages.map((image) => {
                 if (image.svg_string) {
                   return (
@@ -54,7 +64,14 @@ export const QuestionItem = ({
             </div>
           )}
           {question.question_type === "match_the_following" && (
-            <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-2">
+            <div
+              className="grid grid-cols-2"
+              style={{
+                marginTop: "var(--match-margin-top)",
+                columnGap: "var(--match-gap-x)",
+                rowGap: "var(--match-gap-y)",
+              }}
+            >
               {/* Headers */}
               {Object.keys(
                 (question.match_the_following_columns as Record<
@@ -102,7 +119,14 @@ export const QuestionItem = ({
           )}
           {/* Render Options if MCQ/MSQ */}
           {(["mcq4", "msq4"] as string[]).includes(question.question_type) && (
-            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+            <div
+              className="grid grid-cols-2"
+              style={{
+                marginTop: "var(--options-margin-top)",
+                columnGap: "var(--options-gap-x)",
+                rowGap: "var(--options-gap-y)",
+              }}
+            >
               {[
                 question.option1,
                 question.option2,

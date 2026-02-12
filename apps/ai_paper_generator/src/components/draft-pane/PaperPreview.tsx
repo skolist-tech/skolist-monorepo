@@ -16,14 +16,17 @@ import {
   usePaperPagination,
   PAGE_WIDTH_PX,
   PAGE_HEIGHT_PX,
-  PADDING_PX,
-  CONTENT_HEIGHT_PX,
-  CONTENT_WIDTH_PX,
+  getMarginTopPx,
+  getMarginRightPx,
+  getMarginBottomPx,
+  getMarginLeftPx,
+  getContentHeightPx,
+  getContentWidthPx,
 } from "./hooks/usePaperPagination";
 import { PaperToolbar } from "./PaperToolbar";
 
 export function PaperPreview() {
-  const { draft, sections, instructions } = useDraftContext();
+  const { draft, sections, instructions, showInstructions } = useDraftContext();
   const { questions } = useQuestionsContext();
   const { toast } = useToast();
 
@@ -47,6 +50,7 @@ export function PaperPreview() {
     questions,
     instructions,
     previewMode,
+    showInstructions,
   });
 
   const { pages } = usePaperPagination(items, measureRef);
@@ -207,84 +211,95 @@ export function PaperPreview() {
                 ref={printRef}
                 className="print-container"
               >
-                {pages.map((page, pageIndex) => (
-                  <div
-                    key={page.pageNumber}
-                    className="print-page bg-white shadow-xl"
-                    style={{
-                      width: `${PAGE_WIDTH_PX}px`,
-                      height: `${PAGE_HEIGHT_PX}px`,
-                      padding: `${PADDING_PX}px`,
-                      marginBottom: pageIndex < pages.length - 1 ? "32px" : "0",
-                      boxSizing: "border-box",
-                      position: "relative",
-                      fontFamily: '"Times New Roman", Times, serif',
-                    }}
-                  >
-                    {/* Content area */}
+                {pages.map((page, pageIndex) => {
+                  const marginTop = getMarginTopPx();
+                  const marginRight = getMarginRightPx();
+                  const marginBottom = getMarginBottomPx();
+                  const marginLeft = getMarginLeftPx();
+                  const contentHeightPx = getContentHeightPx();
+                  return (
                     <div
+                      key={page.pageNumber}
+                      className="print-page bg-white shadow-xl"
                       style={{
-                        height: `${CONTENT_HEIGHT_PX}px`,
-                        overflow: "hidden",
+                        width: `${PAGE_WIDTH_PX}px`,
+                        height: `${PAGE_HEIGHT_PX}px`,
+                        paddingTop: `${marginTop}px`,
+                        paddingRight: `${marginRight}px`,
+                        paddingBottom: `${marginBottom}px`,
+                        paddingLeft: `${marginLeft}px`,
+                        marginBottom:
+                          pageIndex < pages.length - 1 ? "32px" : "0",
+                        boxSizing: "border-box",
+                        position: "relative",
+                        fontFamily: '"Times New Roman", Times, serif',
                       }}
                     >
-                      {page.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="w-full overflow-hidden p-0.5"
-                        >
-                          {item.type === "header" && (
-                            <PaperHeader
-                              draft={item.data}
-                              titleSuffix={
-                                previewMode === "answer" ? "- Answer Key" : ""
-                              }
-                            />
-                          )}
-                          {item.type === "instructions" && (
-                            <PaperInstructions instructions={item.data} />
-                          )}
-                          {item.type === "section" && (
-                            <SectionHeader
-                              section={item.data}
-                              totalMarks={item.totalMarks}
-                            />
-                          )}
-                          {item.type === "question" && (
-                            <QuestionItem
-                              question={item.data}
-                              index={item.data.displayIndex}
-                            />
-                          )}
-                          {item.type === "answer" && (
-                            <AnswerItem
-                              question={item.data}
-                              index={item.data.displayIndex}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                      {/* Content area */}
+                      <div
+                        style={{
+                          height: `${contentHeightPx}px`,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {page.items.map((item) => (
+                          <div
+                            key={item.id}
+                            className="w-full overflow-hidden p-0.5"
+                          >
+                            {item.type === "header" && (
+                              <PaperHeader
+                                draft={item.data}
+                                titleSuffix={
+                                  previewMode === "answer" ? "- Answer Key" : ""
+                                }
+                              />
+                            )}
+                            {item.type === "instructions" && (
+                              <PaperInstructions instructions={item.data} />
+                            )}
+                            {item.type === "section" && (
+                              <SectionHeader
+                                section={item.data}
+                                totalMarks={item.totalMarks}
+                              />
+                            )}
+                            {item.type === "question" && (
+                              <QuestionItem
+                                question={item.data}
+                                index={item.data.displayIndex}
+                              />
+                            )}
+                            {item.type === "answer" && (
+                              <AnswerItem
+                                question={item.data}
+                                index={item.data.displayIndex}
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
 
-                    {/* Page Footer */}
-                    <div
-                      className="page-footer text-right text-xs text-gray-400"
-                      style={{
-                        position: "absolute",
-                        bottom: `${PADDING_PX}px`,
-                        right: `${PADDING_PX}px`,
-                        left: `${PADDING_PX}px`,
-                      }}
-                    >
-                      <div className="mt-4 border-t-2 border-black py-2">
-                        <span className="font-bold">#PTO</span>
-                        <span className="ml-4">
-                          Page {page.pageNumber} of {pages.length}
-                        </span>
+                      {/* Page Footer */}
+                      <div
+                        className="page-footer text-right text-xs text-gray-400"
+                        style={{
+                          position: "absolute",
+                          bottom: `${marginBottom}px`,
+                          right: `${marginRight}px`,
+                          left: `${marginLeft}px`,
+                        }}
+                      >
+                        <div className="mt-4 border-t-2 border-black py-2">
+                          <span className="font-bold">#PTO</span>
+                          <span className="ml-4">
+                            Page {page.pageNumber} of {pages.length}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -300,7 +315,7 @@ export function PaperPreview() {
           position: "fixed",
           left: 0,
           top: 0,
-          width: `${CONTENT_WIDTH_PX}px`,
+          width: `${getContentWidthPx()}px`,
           opacity: 0,
           pointerEvents: "none",
           zIndex: -1,
