@@ -38,4 +38,15 @@ export const SUBJECT_QUESTION_CONFIG: Record<
     solved_examples: 2,
     exercise_questions: 2,
   },
+
+  "maths - rbse": {
+    mcq4: 4,
+    match_the_following: 2,
+    true_or_false: 2,
+    fill_in_the_blanks: 2,
+    short_answer: 2,
+    long_answer: 2,
+    solved_examples: 2,
+    exercise_questions: 2,
+  },
 };
