@@ -9,6 +9,7 @@ export { CameraCaptureButton } from "./CameraCaptureButton";
 export { EditButton } from "./EditButton";
 export { MoveButton } from "./MoveButton";
 export { DeleteButton } from "./DeleteButton";
+export { MobileBottomActions } from "./MobileBottomActions";
 
 // Types
 export type { ActionButtonProps } from "./types";

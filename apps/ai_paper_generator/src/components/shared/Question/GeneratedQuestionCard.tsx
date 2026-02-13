@@ -19,6 +19,7 @@ import { useQuestionHandlers } from "./hooks/useQuestionHandlers";
 // Components
 import { QuestionCardEditForm } from "./components/QuestionCardEditForm";
 import { QuestionCardActions } from "./components/QuestionCardActions";
+import { MobileBottomActions } from "./components/actions";
 import { QuestionCardContent } from "./components/QuestionCardContent";
 import { QuestionCardBottomBar } from "./components/QuestionCardBottomBar";
 import { QuestionCardDialogs } from "./components/QuestionCardDialogs";
@@ -297,6 +298,18 @@ export function GeneratedQuestionCard({
         onMarksUpdate={handlers.handleMarksUpdate}
         onHardnessUpdate={handlers.handleHardnessUpdate}
       />
+
+      {/* --- Mobile Bottom Actions (Undo/Redo) - In document flow --- */}
+      {!isReadOnly && (
+        <MobileBottomActions
+          canUndo={versioning.canUndo}
+          canRedo={versioning.canRedo}
+          isUndoing={versioning.isUndoing}
+          isRedoing={versioning.isRedoing}
+          onUndo={versioning.handleUndo}
+          onRedo={versioning.handleRedo}
+        />
+      )}
 
       {/* --- Reorder Buttons --- */}
       {showReorder && (

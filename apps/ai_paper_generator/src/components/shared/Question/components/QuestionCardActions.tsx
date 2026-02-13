@@ -198,11 +198,6 @@ export function QuestionCardActions({
     .filter((a) => a.mobile.visible && a.mobile.location === "menu")
     .sort((a, b) => a.mobile.order - b.mobile.order);
 
-  // Mobile bottom actions (undo/redo) - displayed at bottom center of card
-  const mobileBottomActions = [...CARD_ACTIONS_CONFIG]
-    .filter((a) => a.mobile.visible && a.mobile.location === "bottom")
-    .sort((a, b) => a.mobile.order - b.mobile.order);
-
   return (
     <>
       {/* Main Actions Container - Top Right */}
@@ -248,15 +243,6 @@ export function QuestionCardActions({
           )}
         </div>
       </div>
-
-      {/* Mobile Bottom Actions (Undo/Redo) - Bottom Center */}
-      {mobileBottomActions.length > 0 && (
-        <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-md bg-background/80 p-1 backdrop-blur-sm md:hidden">
-          {mobileBottomActions.map((action) => (
-            <ActionButton key={action.id} actionId={action.id} mode="icon" />
-          ))}
-        </div>
-      )}
     </>
   );
 }
