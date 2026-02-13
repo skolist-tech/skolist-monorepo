@@ -71,11 +71,11 @@ export function GeneratedQuestionsList({
                 hasNewQuestions &&
                 hasOldQuestions && (
                   <div className="mb-4 flex items-center gap-3 py-2">
-                    <div className="h-px flex-1 bg-border" />
-                    <span className="text-xs text-muted-foreground">
-                      Previously generated
+                    <div className="h-0.5 flex-1 bg-black" />
+                    <span className="text-xs font-bold text-black">
+                      PREVIOUSLY GENERATED
                     </span>
-                    <div className="h-px flex-1 bg-border" />
+                    <div className="h-0.5 flex-1 bg-black" />
                   </div>
                 )
               )}
