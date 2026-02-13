@@ -19,7 +19,7 @@ export function useQuestionSelection({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const { toast } = useToast();
   const { handleSmartMoveToDraft } = useSmartDraftActions();
-  const { deleteQuestion } = useQuestionsContext();
+  const { deleteQuestions } = useQuestionsContext();
 
   const handleToggleSelect = (id: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -98,10 +98,8 @@ export function useQuestionSelection({
       // Wait for disintegrate animation to complete (1500ms as per the animation keyframes)
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Delete questions sequentially
-      for (const id of idsToDelete) {
-        await deleteQuestion(id);
-      }
+      // Delete all questions in a single query
+      await deleteQuestions(idsToDelete);
 
       // Show success toast
       toast({

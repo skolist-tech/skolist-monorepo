@@ -285,6 +285,25 @@ export async function deleteQuestion(questionId: string): Promise<void> {
 }
 
 /**
+ * Delete multiple questions in a single query
+ */
+export async function deleteQuestions(questionIds: string[]): Promise<void> {
+  if (questionIds.length === 0) return;
+
+  const client = getSupabaseClient();
+
+  const { error } = await client
+    .from("gen_questions")
+    .delete()
+    .in("id", questionIds);
+
+  if (error) {
+    console.error("Failed to delete questions:", error);
+    throw error;
+  }
+}
+
+/**
  * Bulk upsert questions (for reordering)
  */
 export async function upsertQuestions(

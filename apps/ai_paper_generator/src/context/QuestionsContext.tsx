@@ -25,6 +25,7 @@ import {
   bulkUpdateQuestions,
   createQuestion,
   deleteQuestion,
+  deleteQuestions,
   markActivityQuestionsAsOld,
   type GeneratedQuestionWithConcepts,
 } from "../services/questionService";
@@ -51,6 +52,7 @@ interface QuestionsContextValue {
     question: GeneratedQuestionWithConcepts
   ) => Promise<void>;
   deleteQuestion: (id: string) => Promise<void>;
+  deleteQuestions: (ids: string[]) => Promise<void>;
   addCustomQuestion: (sectionId: string, type: QuestionType) => Promise<void>;
   refetchQuestions: () => Promise<void>;
   markAllQuestionsOld: () => Promise<void>;
@@ -452,6 +454,19 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const handleDeleteQuestions = useCallback(async (ids: string[]) => {
+    if (ids.length === 0) return;
+    try {
+      await deleteQuestions(ids);
+      // Optimistically remove from local state
+      const idSet = new Set(ids);
+      setQuestions((prev) => prev.filter((q) => !idSet.has(q.id)));
+    } catch (err) {
+      console.error("Failed to delete questions:", err);
+      throw err;
+    }
+  }, []);
+
   // Mark all questions as old (called when generation starts)
   const markAllQuestionsOld = useCallback(async () => {
     if (!currentActivity?.id) return;
@@ -543,6 +558,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     saveQuestion,
     saveQuestionWithVersion,
     deleteQuestion: handleDeleteQuestion,
+    deleteQuestions: handleDeleteQuestions,
     addCustomQuestion,
     refetchQuestions: loadQuestions,
     markAllQuestionsOld,
