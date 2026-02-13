@@ -3,6 +3,7 @@ import { useQuestionsContext } from "../context/QuestionsContext";
 import { useDraftContext } from "../context/DraftContext";
 import { resolveSectionPlan, calculatePositions } from "../utils/draftLogic";
 import { moveQuestionsToDraftBatch } from "../services/questionService";
+import { SECTION_ORDER } from "../config/app_config";
 
 export function useSmartDraftActions() {
   const { questions, updateQuestionLocal } = useQuestionsContext();
@@ -26,8 +27,19 @@ export function useSmartDraftActions() {
         );
         const currentSections = [...sections];
 
-        // Create missing sections
-        for (const name of sectionsToCreate) {
+        // Sort sections by predefined order before creating
+        const sortedSectionsToCreate = [...sectionsToCreate].sort((a, b) => {
+          const indexA = SECTION_ORDER.indexOf(a);
+          const indexB = SECTION_ORDER.indexOf(b);
+          // Unknown section types go to the end
+          return (
+            (indexA === -1 ? Infinity : indexA) -
+            (indexB === -1 ? Infinity : indexB)
+          );
+        });
+
+        // Create missing sections in order
+        for (const name of sortedSectionsToCreate) {
           const newSection = await addSection(name);
           if (newSection) {
             currentSections.push(newSection);
