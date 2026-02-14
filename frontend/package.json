@@ -14,7 +14,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml,html}\"",
-    "prepare": "husky install"
+    "prepare": "cd .. && husky install .husky"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,md,yml,yaml,html}": [
