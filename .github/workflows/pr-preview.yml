@@ -33,7 +33,7 @@ jobs:
           service: "${{ env.SERVICE_PREFIX }}-${{ github.event.pull_request.number }}"
           region: ${{ secrets.GCP_REGION }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          source: "./"
+          source: "./backend"
           flags: |
             --allow-unauthenticated
             --set-secrets=SUPABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_URL_STAGE:latest
