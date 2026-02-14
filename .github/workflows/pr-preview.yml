@@ -33,7 +33,7 @@ jobs:
           service: "${{ env.SERVICE_PREFIX }}-${{ github.event.pull_request.number }}"
           region: ${{ secrets.GCP_REGION }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          source: "./"
+          source: "./backend"
           flags: |
             --allow-unauthenticated
             --set-secrets=SUPABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_URL_STAGE:latest
@@ -44,7 +44,7 @@ jobs:
             --set-secrets=TEST_USER_EMAIL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/TEST_USER_EMAIL_STAGE:latest
             --set-secrets=TEST_USER_PASSWORD=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/TEST_USER_PASSWORD_STAGE:latest
             --set-env-vars=LOGGING_LEVEL=DEBUG
-            --set-env-vars=DEPLOYMENT_ENV=STAGE
+            --set-env-vars=DEPLOYMENT_ENV=DEVELOPMENT
 
       - name: Post Preview Comment
         uses: marocchino/sticky-pull-request-comment@v2

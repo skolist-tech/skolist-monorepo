@@ -41,20 +41,20 @@ jobs:
           version: latest
 
       - name: Start local Supabase
-        working-directory: skolist-db
+        working-directory: skolist-db/skolist-db
         run: |
           supabase start
 
       - name: Get Supabase credentials
         id: supabase
-        working-directory: skolist-db
+        working-directory: skolist-db/skolist-db
         run: |
           echo "url=$(supabase status --output json | jq -r '.API_URL')" >> $GITHUB_OUTPUT
           echo "anon_key=$(supabase status --output json | jq -r '.ANON_KEY')" >> $GITHUB_OUTPUT
           echo "service_key=$(supabase status --output json | jq -r '.SERVICE_ROLE_KEY')" >> $GITHUB_OUTPUT
 
       - name: Seed test users
-        working-directory: skolist-db
+        working-directory: skolist-db/skolist-db
         run: |
           pip install -r requirements.txt
           python seed_users.py
@@ -63,18 +63,18 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase.outputs.service_key }}
 
       - name: Install backend dependencies
-        working-directory: backend
+        working-directory: backend/backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
       - name: Install Playwright browsers
-        working-directory: backend
+        working-directory: backend/backend
         run: |
           playwright install chromium --with-deps
 
       - name: Run integration tests
-        working-directory: backend
+        working-directory: backend/backend
         env:
           SUPABASE_URL: ${{ steps.supabase.outputs.url }}
           SUPABASE_ANON_KEY: ${{ steps.supabase.outputs.anon_key }}
@@ -86,6 +86,6 @@ jobs:
 
       - name: Stop Supabase
         if: always()
-        working-directory: skolist-db
+        working-directory: skolist-db/skolist-db
         run: |
           supabase stop
