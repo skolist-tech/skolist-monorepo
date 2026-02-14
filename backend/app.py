@@ -62,10 +62,11 @@ def create_app() -> FastAPI:
             },
         )
     elif DEPLOYMENT_ENV == "STAGE":
+        # Stage mode: allow Vercel previews and skolist.com
+        stage_origin_pattern = r"https://.*\.skolist\.com" r"|https://.*\.vercel\.app"
         app.add_middleware(
             CORSMiddleware,
-            # Vercel Preview mode
-            allow_origin_regex=(r"https://.*\.skolist\.com|https://.*\.vercel\.app"),
+            allow_origin_regex=stage_origin_pattern,
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
@@ -78,9 +79,13 @@ def create_app() -> FastAPI:
             },
         )
     else:
+        # Development mode: allow localhost, Vercel previews, and skolist.com
+        dev_origin_pattern = (
+            r"http://(localhost|127\.0\.0\.1)(:\d+)?" r"|https://.*\.vercel\.app" r"|https://.*\.skolist\.com"
+        )
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],  # Local mode
+            allow_origin_regex=dev_origin_pattern,
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
@@ -89,7 +94,7 @@ def create_app() -> FastAPI:
             "CORS configured",
             extra={
                 "deployment_env": DEPLOYMENT_ENV,
-                "allow_origins": "*",
+                "allow_origin_pattern": "localhost, vercel.app, skolist.com",
             },
         )
 
