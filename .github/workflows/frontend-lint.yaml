@@ -3,10 +3,12 @@ name: Frontend Lint (pnpm lint)
 on:
   push:
     branches:
-      - "**"
+      - main
+    paths:
+      - 'frontend/**'
   pull_request:
-    branches:
-      - "**"
+    paths:
+      - 'frontend/**'
 
 jobs:
   lint:

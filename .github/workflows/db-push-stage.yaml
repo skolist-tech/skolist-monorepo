@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - stage
+    paths:
+      - 'skolist-db/**'
   workflow_dispatch:
 
 jobs:
