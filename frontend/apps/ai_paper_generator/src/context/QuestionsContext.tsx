@@ -1,0 +1,585 @@
+/**
+ * Questions Context
+ * Manages generated questions state and real-time validation
+ */
+
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
+} from "react";
+import { useActivityContext } from "./ActivityContext";
+
+import type {
+  QuestionType,
+  GeneratedImage,
+  GeneratedQuestion,
+} from "@skolist/db";
+import {
+  fetchQuestions,
+  fetchQuestion,
+  updateQuestion,
+  bulkUpdateQuestions,
+  createQuestion,
+  deleteQuestion,
+  deleteQuestions,
+  markActivityQuestionsAsOld,
+  type GeneratedQuestionWithConcepts,
+} from "../services/questionService";
+export type { GeneratedQuestionWithConcepts };
+import { getSupabaseClient } from "@skolist/auth";
+import {
+  createNewVersionOnUpdate,
+  undoQuestionVersion,
+  redoQuestionVersion,
+  getVersionState,
+  type VersionState,
+} from "../services/versionService";
+
+interface QuestionsContextValue {
+  questions: GeneratedQuestionWithConcepts[];
+  isLoading: boolean;
+  error: string | null;
+  moveQuestionToDraft: (id: string) => Promise<void>;
+  moveQuestionsToDraft: (ids: string[]) => Promise<void>;
+  moveQuestionToGeneration: (id: string) => Promise<void>;
+  updateQuestionLocal: (question: GeneratedQuestionWithConcepts) => void;
+  saveQuestion: (question: GeneratedQuestionWithConcepts) => Promise<void>;
+  saveQuestionWithVersion: (
+    question: GeneratedQuestionWithConcepts
+  ) => Promise<void>;
+  deleteQuestion: (id: string) => Promise<void>;
+  deleteQuestions: (ids: string[]) => Promise<void>;
+  addCustomQuestion: (sectionId: string, type: QuestionType) => Promise<void>;
+  refetchQuestions: () => Promise<void>;
+  markAllQuestionsOld: () => Promise<void>;
+  undoQuestion: (id: string) => Promise<void>;
+  redoQuestion: (id: string) => Promise<void>;
+  getQuestionVersionState: (id: string) => Promise<VersionState>;
+}
+
+export const QuestionsContext = createContext<
+  QuestionsContextValue | undefined
+>(undefined);
+
+export function QuestionsProvider({ children }: { children: ReactNode }) {
+  const { currentActivity } = useActivityContext();
+  const [questions, setQuestions] = useState<GeneratedQuestionWithConcepts[]>(
+    []
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadQuestions = useCallback(async () => {
+    if (!currentActivity?.id) {
+      setQuestions([]);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await fetchQuestions(currentActivity.id);
+      setQuestions(data);
+    } catch (err) {
+      console.error("Failed to load questions:", err);
+      setError("Failed to load questions");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentActivity?.id]);
+
+  useEffect(() => {
+    loadQuestions();
+  }, [loadQuestions]);
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!currentActivity?.id) return;
+
+    const client = getSupabaseClient();
+    const channel = client
+      .channel(`questions-${currentActivity.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "gen_questions",
+          filter: `activity_id=eq.${currentActivity.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            // Add new question and sort by created_at DESC to maintain order
+            setQuestions((prev) => {
+              const newQuestion = {
+                ...(payload.new as GeneratedQuestion),
+                concepts: [],
+                images: [],
+              };
+              return [...prev, newQuestion].sort(
+                (a, b) =>
+                  new Date(b.created_at).getTime() -
+                  new Date(a.created_at).getTime()
+              );
+            });
+          } else if (payload.eventType === "UPDATE") {
+            setQuestions((prev) =>
+              prev.map((q) =>
+                q.id === payload.new.id
+                  ? {
+                      ...(payload.new as GeneratedQuestion),
+                      concepts: q.concepts,
+                      images: q.images,
+                    }
+                  : q
+              )
+            );
+          } else if (payload.eventType === "DELETE") {
+            setQuestions((prev) => prev.filter((q) => q.id !== payload.old.id));
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "gen_images",
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            const newImage = payload.new as GeneratedImage;
+            if (!newImage.gen_question_id) return;
+            // Only add if it has svg_string or img_url
+            if (!newImage.svg_string && !newImage.img_url) return;
+
+            setQuestions((prev) =>
+              prev.map((q) =>
+                q.id === newImage.gen_question_id
+                  ? {
+                      ...q,
+                      images: [...q.images, newImage].sort(
+                        (a, b) => (a.position ?? 0) - (b.position ?? 0)
+                      ),
+                    }
+                  : q
+              )
+            );
+          } else if (payload.eventType === "UPDATE") {
+            const updatedImage = payload.new as GeneratedImage;
+            const oldImage = payload.old as GeneratedImage;
+
+            setQuestions((prev) =>
+              prev.map((q) => {
+                // If this question had the old image, remove it
+                if (
+                  oldImage.gen_question_id &&
+                  q.id === oldImage.gen_question_id
+                ) {
+                  const filteredImages = q.images.filter(
+                    (img) => img.id !== updatedImage.id
+                  );
+                  // If the image moved to a different question, just remove it
+                  if (
+                    updatedImage.gen_question_id !== oldImage.gen_question_id
+                  ) {
+                    return { ...q, images: filteredImages };
+                  }
+                }
+
+                // If this question should have the updated image
+                if (
+                  updatedImage.gen_question_id &&
+                  q.id === updatedImage.gen_question_id
+                ) {
+                  // Check if image already exists in this question
+                  const existingIndex = q.images.findIndex(
+                    (img) => img.id === updatedImage.id
+                  );
+
+                  // Only include if it has svg_string or img_url
+                  if (!updatedImage.svg_string && !updatedImage.img_url) {
+                    // Remove if it no longer has valid content
+                    return {
+                      ...q,
+                      images: q.images.filter(
+                        (img) => img.id !== updatedImage.id
+                      ),
+                    };
+                  }
+
+                  let newImages: GeneratedImage[];
+                  if (existingIndex >= 0) {
+                    // Update existing image
+                    newImages = q.images.map((img) =>
+                      img.id === updatedImage.id ? updatedImage : img
+                    );
+                  } else {
+                    // Add new image (moved from another question)
+                    newImages = [...q.images, updatedImage];
+                  }
+
+                  return {
+                    ...q,
+                    images: newImages.sort(
+                      (a, b) => (a.position ?? 0) - (b.position ?? 0)
+                    ),
+                  };
+                }
+
+                return q;
+              })
+            );
+          } else if (payload.eventType === "DELETE") {
+            const deletedImage = payload.old as GeneratedImage;
+            // NOTE: Supabase DELETE events only include primary key by default,
+            // not foreign keys like gen_question_id. This subscription won't catch deletions.
+            // Context updates happen via onUpdate callback instead.
+            if (!deletedImage.gen_question_id) return;
+
+            setQuestions((prev) =>
+              prev.map((q) =>
+                q.id === deletedImage.gen_question_id
+                  ? {
+                      ...q,
+                      images: q.images.filter(
+                        (img) => img.id !== deletedImage.id
+                      ),
+                    }
+                  : q
+              )
+            );
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "gen_questions_concepts_maps",
+        },
+        async (payload) => {
+          let questionId: string | undefined;
+
+          if (payload.eventType === "INSERT") {
+            questionId = (payload.new as any).gen_question_id;
+          } else if (payload.eventType === "DELETE") {
+            questionId = (payload.old as any).gen_question_id;
+          } else if (payload.eventType === "UPDATE") {
+            // For update, we might need to update both old and new questions if it moved,
+            // but usually concept maps are inserted/deleted.
+            // If relationship changes, it's safer to refresh.
+            questionId = (payload.new as any).gen_question_id;
+          }
+
+          if (questionId) {
+            // Fetch the fresh question with updated concepts
+            const updatedQuestion = await fetchQuestion(questionId);
+            if (updatedQuestion) {
+              setQuestions((prev) =>
+                prev.map((q) =>
+                  q.id === updatedQuestion.id ? updatedQuestion : q
+                )
+              );
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      client.removeChannel(channel);
+    };
+  }, [currentActivity?.id]);
+
+  const moveQuestionToDraft = useCallback(
+    async (id: string) => {
+      if (!currentActivity?.id) return;
+
+      try {
+        // Only set is_in_draft = true
+        await updateQuestion(id, {
+          is_in_draft: true,
+        });
+
+        // Optimistic update
+        setQuestions((prev) =>
+          prev.map((q) =>
+            q.id === id
+              ? {
+                  ...q,
+                  is_in_draft: true,
+                }
+              : q
+          )
+        );
+      } catch (err) {
+        console.error("Failed to move to draft:", err);
+        throw err;
+      }
+    },
+    [currentActivity?.id]
+  );
+
+  const moveQuestionsToDraft = useCallback(
+    async (ids: string[]) => {
+      if (!currentActivity?.id || ids.length === 0) return;
+
+      try {
+        // Single query to update all questions
+        await bulkUpdateQuestions(ids, { is_in_draft: true });
+
+        // Optimistic update
+        const idSet = new Set(ids);
+        setQuestions((prev) =>
+          prev.map((q) => (idSet.has(q.id) ? { ...q, is_in_draft: true } : q))
+        );
+      } catch (err) {
+        console.error("Failed to bulk move to draft:", err);
+        throw err;
+      }
+    },
+    [currentActivity?.id]
+  );
+
+  const moveQuestionToGeneration = useCallback(async (id: string) => {
+    try {
+      // Optimistic Update
+      setQuestions((prev) =>
+        prev.map((q) => {
+          if (q.id === id) {
+            return {
+              ...q,
+              is_in_draft: false,
+              position_in_draft: null,
+              qgen_draft_section_id: null,
+            } as unknown as GeneratedQuestionWithConcepts;
+          }
+          return q;
+        })
+      );
+
+      // Only update is_in_draft = false
+      await updateQuestion(id, {
+        is_in_draft: false,
+      });
+    } catch (err) {
+      console.error("Failed to move to generation:", err);
+      throw err;
+    }
+  }, []);
+
+  // Helper to optimistically update or fix local state if needed
+  const updateQuestionLocal = useCallback(
+    (question: GeneratedQuestionWithConcepts) => {
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === question.id ? question : q))
+      );
+    },
+    []
+  );
+
+  const saveQuestion = useCallback(
+    async (question: GeneratedQuestionWithConcepts) => {
+      try {
+        // Strip out any UI-only fields if they exist, though GeneratedQuestion should be pure DB type.
+        // We pass the whole object as updates.
+        // Identify changed fields if we wanted to be efficient, but for now sending the whole row (minus non-updatable fields if any issue, but TablesUpdate allows most)
+        // Actually TablesUpdate might complain if we pass `id` or `created_at` depending on schema, but usually they are ignored or allowed in Supabase update if matching.
+        // Best practice: exclude ID from the update payload itself, but use it for the query.
+        const {
+          id: _id,
+          created_at: _created_at,
+          updated_at: _updated_at,
+          concepts: _concepts,
+          images: _images,
+          ...updates
+        } = question as any; // Exclude system fields and join fields from update payload.
+        // But `updates` in updateQuestion takes TablesUpdate<"gen_questions">.
+        await updateQuestion(question.id, updates);
+
+        // Local update will happen via Realtime subscription usually, but we can optimistically update too.
+        updateQuestionLocal(question);
+      } catch (err) {
+        console.error("Failed to save question:", err);
+        throw err;
+      }
+    },
+    [updateQuestionLocal]
+  );
+
+  const addCustomQuestion = useCallback(
+    async (sectionId: string, type: QuestionType) => {
+      if (!currentActivity?.id) return;
+
+      try {
+        await createQuestion({
+          activity_id: currentActivity.id,
+          question_text: "New Question",
+          answer_text: "New Answer",
+          question_type: type,
+          marks: 1,
+          hardness_level: "medium",
+          is_in_draft: true,
+          qgen_draft_section_id: sectionId,
+          // Set defaults for specific types if needed
+          option1: ["mcq4", "msq4"].includes(type) ? "" : null,
+          option2: ["mcq4", "msq4"].includes(type) ? "" : null,
+          option3: ["mcq4", "msq4"].includes(type) ? "" : null,
+          option4: ["mcq4", "msq4"].includes(type) ? "" : null,
+        });
+        // State update will handle by Realtime subscription
+      } catch (err) {
+        console.error("Failed to add custom question:", err);
+        throw err;
+      }
+    },
+    [currentActivity?.id]
+  );
+
+  const handleDeleteQuestion = useCallback(async (id: string) => {
+    try {
+      await deleteQuestion(id);
+      // State update will happen via Realtime subscription (DELETE event)
+      // But we can also optimistically remove it to be snappy
+      setQuestions((prev) => prev.filter((q) => q.id !== id));
+    } catch (err) {
+      console.error("Failed to delete question:", err);
+      throw err;
+    }
+  }, []);
+
+  const handleDeleteQuestions = useCallback(async (ids: string[]) => {
+    if (ids.length === 0) return;
+    try {
+      await deleteQuestions(ids);
+      // Optimistically remove from local state
+      const idSet = new Set(ids);
+      setQuestions((prev) => prev.filter((q) => !idSet.has(q.id)));
+    } catch (err) {
+      console.error("Failed to delete questions:", err);
+      throw err;
+    }
+  }, []);
+
+  // Mark all questions as old (called when generation starts)
+  const markAllQuestionsOld = useCallback(async () => {
+    if (!currentActivity?.id) return;
+    try {
+      await markActivityQuestionsAsOld(currentActivity.id);
+      // Update local state to reflect the change
+      setQuestions((prev) => prev.map((q) => ({ ...q, is_new: false })));
+    } catch (err) {
+      console.error("Failed to mark questions as old:", err);
+    }
+  }, [currentActivity?.id]);
+
+  // Save question WITH version creation (for user edits from frontend)
+  const saveQuestionWithVersion = useCallback(
+    async (question: GeneratedQuestionWithConcepts) => {
+      try {
+        const {
+          id: _id,
+          created_at: _created_at,
+          updated_at: _updated_at,
+          concepts: _concepts,
+          images: _images,
+          ...updates
+        } = question as any;
+
+        // Create new version before updating
+        await createNewVersionOnUpdate(question.id, updates);
+
+        // Update the question
+        await updateQuestion(question.id, updates);
+
+        // Local update via realtime or optimistic
+        updateQuestionLocal(question);
+      } catch (err) {
+        console.error("Failed to save question with version:", err);
+        throw err;
+      }
+    },
+    [updateQuestionLocal]
+  );
+
+  // Undo: Go back to previous version
+  const undoQuestion = useCallback(async (id: string) => {
+    try {
+      const updatedQuestion = await undoQuestionVersion(id);
+      if (updatedQuestion) {
+        // Refetch to get fresh data with concepts/images
+        const fresh = await fetchQuestion(id);
+        if (fresh) {
+          setQuestions((prev) => prev.map((q) => (q.id === id ? fresh : q)));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to undo question:", err);
+      throw err;
+    }
+  }, []);
+
+  // Redo: Go forward to next version
+  const redoQuestion = useCallback(async (id: string) => {
+    try {
+      const updatedQuestion = await redoQuestionVersion(id);
+      if (updatedQuestion) {
+        // Refetch to get fresh data with concepts/images
+        const fresh = await fetchQuestion(id);
+        if (fresh) {
+          setQuestions((prev) => prev.map((q) => (q.id === id ? fresh : q)));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to redo question:", err);
+      throw err;
+    }
+  }, []);
+
+  // Get version state for a question (canUndo, canRedo)
+  const getQuestionVersionState = useCallback(async (id: string) => {
+    return getVersionState(id);
+  }, []);
+
+  const value: QuestionsContextValue = {
+    questions,
+    isLoading,
+    error,
+    moveQuestionToDraft,
+    moveQuestionsToDraft,
+    moveQuestionToGeneration,
+    updateQuestionLocal,
+    saveQuestion,
+    saveQuestionWithVersion,
+    deleteQuestion: handleDeleteQuestion,
+    deleteQuestions: handleDeleteQuestions,
+    addCustomQuestion,
+    refetchQuestions: loadQuestions,
+    markAllQuestionsOld,
+    undoQuestion,
+    redoQuestion,
+    getQuestionVersionState,
+  };
+
+  return (
+    <QuestionsContext.Provider value={value}>
+      {children}
+    </QuestionsContext.Provider>
+  );
+}
+
+export function useQuestionsContext() {
+  const context = useContext(QuestionsContext);
+  if (context === undefined) {
+    throw new Error(
+      "useQuestionsContext must be used within a QuestionsProvider"
+    );
+  }
+  return context;
+}

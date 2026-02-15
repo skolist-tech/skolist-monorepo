@@ -1,0 +1,53 @@
+{
+  "name": "@skolist/ai-paper-generator",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Skolist AI Paper Generator - qgen.skolist.com",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3001",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@sentry/react": "^10.38.0",
+    "@skolist/auth": "workspace:*",
+    "@skolist/db": "workspace:*",
+    "@skolist/ui": "workspace:*",
+    "@skolist/utils": "workspace:*",
+    "@tanstack/react-query": "^5.90.20",
+    "@types/katex": "^0.16.8",
+    "@vercel/analytics": "^1.4.0",
+    "fabric": "^7.1.0",
+    "html-to-image": "^1.11.13",
+    "katex": "^0.16.27",
+    "lottie-react": "^2.4.1",
+    "lucide-react": "^0.469.0",
+    "react": "^18.3.1",
+    "react-checkbox-tree": "^1.8.0",
+    "react-dom": "^18.3.1",
+    "react-easy-crop": "^5.5.6",
+    "react-image-crop": "^11.0.10",
+    "react-router-dom": "^6.28.1",
+    "react-to-print": "^3.2.0",
+    "sonner": "^2.0.7",
+    "supabase": "^2.70.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}

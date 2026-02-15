@@ -1,0 +1,52 @@
+import type { QuestionType } from "@skolist/db";
+
+// Extended question type including frontend-only types
+export type ExtendedQuestionType =
+  | QuestionType
+  | "solved_examples"
+  | "exercise_questions";
+
+// Default counts for all question types
+export const DEFAULT_QUESTION_COUNTS: Partial<
+  Record<ExtendedQuestionType, number>
+> = {
+  mcq4: 2,
+  match_the_following: 2,
+  // msq4: 0,
+  short_answer: 2,
+  long_answer: 2,
+  true_or_false: 2,
+  fill_in_the_blanks: 2,
+  // solved_examples: 2,
+  // exercise_questions: 2,
+};
+
+// Configuration mapping normalized subject names to specific question counts
+// Keys in the inner object determine both the ALLOWED types and their DEFAULT counts
+export const SUBJECT_QUESTION_CONFIG: Record<
+  string,
+  Partial<Record<ExtendedQuestionType, number>>
+> = {
+  // Example configuration
+  "maths - corodova": {
+    mcq4: 4,
+    match_the_following: 2,
+    true_or_false: 2,
+    fill_in_the_blanks: 2,
+    short_answer: 2,
+    long_answer: 2,
+    solved_examples: 2,
+    exercise_questions: 2,
+  },
+
+  "maths - rbse": {
+    mcq4: 4,
+    match_the_following: 2,
+    true_or_false: 2,
+    fill_in_the_blanks: 2,
+    short_answer: 2,
+    long_answer: 2,
+    solved_examples: 2,
+    exercise_questions: 2,
+  },
+};

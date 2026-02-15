@@ -1,0 +1,83 @@
+.concept-tree-container {
+  height: 500px; /* Adjust height as needed */
+  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+.concept-tree-container .react-checkbox-tree {
+  font-size: 0.875rem;
+}
+
+.concept-tree-container .rct-node {
+  padding: 2px 0;
+}
+
+.concept-tree-container .rct-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px; /* Fix height for consistent centering */
+}
+
+.concept-tree-container .rct-title {
+  padding-left: 2px;
+}
+
+.concept-tree-container .rct-collapse,
+.concept-tree-container .rct-checkbox {
+  padding: 0 4px;
+  cursor: pointer;
+}
+
+.concept-tree-container .rct-node-icon {
+  padding: 0 2px;
+}
+
+.concept-tree-container ol {
+  padding-left: 20px;
+  position: relative;
+}
+
+/* Vertical connector line from parent to children */
+.concept-tree-container ol ol {
+  margin-left: 8px;
+  border-left: 1px solid hsl(var(--border));
+}
+
+.concept-tree-container .rct-node-parent > .rct-text > .rct-node-icon svg {
+  color: hsl(var(--primary));
+}
+
+/* Level 1 - Chapters: green */
+.concept-tree-container .react-checkbox-tree > ol > li > .rct-text .rct-title {
+  color: #16a34a !important;
+  font-weight: 600;
+}
+
+/* Level 2 - Topics: dark yellow/amber */
+.concept-tree-container
+  .react-checkbox-tree
+  > ol
+  > li
+  > ol
+  > li
+  > .rct-text
+  .rct-title {
+  color: #b45309 !important;
+  font-weight: 500;
+}
+
+/* Level 3 - Concepts: orange */
+.concept-tree-container
+  .react-checkbox-tree
+  > ol
+  > li
+  > ol
+  > li
+  > ol
+  > li
+  > .rct-text
+  .rct-title {
+  color: #2e0057 !important;
+  font-weight: 500;
+}

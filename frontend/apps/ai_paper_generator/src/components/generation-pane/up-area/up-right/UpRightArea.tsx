@@ -1,0 +1,162 @@
+import { QuestionTypeSelector } from "./QuestionTypeSelector/QuestionTypeSelector";
+import { AutoDecideButton } from "./AutoDecideQuestion/AutoDecideButton";
+import { HardnessLevelSliders } from "./AutoDecideQuestion/HardnessLevelSliders";
+import { PromptBox } from "./AutoDecideQuestion/PromptBox";
+import { TotalInputs } from "./AutoDecideQuestion/TotalInputs";
+import type { QuestionType, HardnessLevel } from "@skolist/db";
+
+// Extend QuestionType locally to support API-only types
+type ExtendedQuestionType =
+  | QuestionType
+  | "solved_examples"
+  | "exercise_questions";
+
+import { difficultySplitInt } from "../../../../utils/difficultySplit";
+import { useToast } from "@skolist/ui";
+// import { Separator } from "@skolist/ui";
+
+interface UpRightAreaProps {
+  questionCounts: Record<ExtendedQuestionType, number>;
+  onQuestionCountChange: (
+    type: ExtendedQuestionType | QuestionType,
+    count: number
+  ) => void;
+  onGenerate: () => void;
+  isGenerating: boolean;
+  hardnessLevels: Record<HardnessLevel, number>;
+  onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
+  totalQuestions: number;
+  onTotalQuestionsChange: (value: number) => void;
+  // Lifted state for persistence
+  totalMarks: number;
+  onTotalMarksChange: (value: number) => void;
+  totalTime: number;
+  onTotalTimeChange: (value: number) => void;
+  customPrompt: string;
+  onCustomPromptChange: (value: string) => void;
+  subjectName: string;
+}
+
+export function UpRightArea({
+  questionCounts,
+  onQuestionCountChange,
+  onGenerate,
+  isGenerating,
+  hardnessLevels,
+  onHardnessLevelChange,
+  totalQuestions,
+  onTotalQuestionsChange,
+  totalMarks,
+  onTotalMarksChange,
+  totalTime,
+  onTotalTimeChange,
+  customPrompt,
+  onCustomPromptChange,
+  subjectName,
+}: UpRightAreaProps) {
+  const { toast } = useToast();
+
+  const handleQuestionCountChange = (
+    type: ExtendedQuestionType | QuestionType,
+    count: number
+  ) => {
+    // Calculate new total
+    // We can't rely just on totalQuestions prop because it might be out of sync or calculated differently
+    // So we calculate from the counts prop which is the source of truth for the selector
+    const currentTotal = Object.values(questionCounts).reduce(
+      (a, b) => a + b,
+      0
+    );
+    const currentTypeCount = questionCounts[type] || 0;
+    // Calculate the difference this change makes
+    const diff = count - currentTypeCount;
+    const newTotal = currentTotal + diff;
+
+    if (newTotal > 50) {
+      toast({
+        title: "Total questions limit reached",
+        description: "Total questions can't be more than 50",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    onQuestionCountChange(type, count);
+  };
+
+  const handleAutoDecide = () => {
+    const split = difficultySplitInt(totalQuestions, totalMarks, totalTime);
+
+    // Batch updates? The parent `onHardnessLevelChange` takes one at a time.
+    // We should probably update them in sequence or check if we can update all at once.
+    // Looking at props: onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
+    // We execute them sequentially.
+    onHardnessLevelChange("easy", split.easy);
+    onHardnessLevelChange("medium", split.medium);
+    onHardnessLevelChange("hard", split.hard);
+  };
+
+  const isAutoDecideValid =
+    totalQuestions > 0 &&
+    totalMarks > 0 &&
+    totalTime > 0 &&
+    hardnessLevels.easy + hardnessLevels.medium + hardnessLevels.hard === 100;
+
+  return (
+    <div className="h-full w-full max-w-5xl space-y-4 overflow-y-auto p-1 md:space-y-6">
+      {/* 7] Question Types Selector */}
+      <QuestionTypeSelector
+        questionCounts={questionCounts}
+        onCountChange={handleQuestionCountChange}
+        subjectName={subjectName}
+      />
+
+      {/* 1] Top three selectors, arranged horizontally */}
+      <TotalInputs
+        totalQuestions={totalQuestions}
+        totalMarks={totalMarks}
+        totalTime={totalTime}
+        onTotalQuestionsChange={onTotalQuestionsChange}
+        onTotalMarksChange={onTotalMarksChange}
+        onTotalTimeChange={onTotalTimeChange}
+      />
+
+      {/* <Separator /> */}
+
+      {/* 2, 3, 4, 5, 6] Difficulty Section (Header, Auto Button, Slider, %, Counts) */}
+      <div className="pt-4">
+        <HardnessLevelSliders
+          levels={hardnessLevels}
+          onLevelChange={onHardnessLevelChange}
+          totalQuestions={totalQuestions}
+          headerElement={
+            <div className="flex items-center gap-4">
+              <div className="mr-2 flex flex-col text-sm font-semibold leading-tight">
+                <span>Paper</span>
+                <span>Difficulty</span>
+              </div>
+              <AutoDecideButton
+                onClick={handleAutoDecide}
+                disabled={!isAutoDecideValid}
+                className="h-7 px-3 text-xs"
+              />
+            </div>
+          }
+        />
+      </div>
+
+      {/* <Separator /> */}
+
+      {/* <Separator /> */}
+
+      {/* 8] Prompt Box and Generate Button */}
+      <PromptBox
+        value={customPrompt}
+        onChange={onCustomPromptChange}
+        onGenerate={onGenerate}
+        isGenerating={isGenerating}
+        disabled={false} // Can add logic here if needed, e.g. check if total questions > 0 from counts
+      />
+    </div>
+  );
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@skolist/config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared configuration for Skolist frontend apps",
+  "exports": {
+    "./tailwind": "./tailwind.config.ts",
+    "./postcss": "./postcss.config.js",
+    "./tsconfig/base": "./tsconfig/base.json",
+    "./tsconfig/react": "./tsconfig/react.json",
+    "./tsconfig/library": "./tsconfig/library.json"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7"
+  }
+}

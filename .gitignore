@@ -1,0 +1,8 @@
+# Environment Secrets
+.env
+
+# Cache
+.turbo
+
+# Ndode modules
+node_modules

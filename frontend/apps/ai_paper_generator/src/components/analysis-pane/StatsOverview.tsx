@@ -1,0 +1,94 @@
+import { useState, useEffect } from "react";
+import { type GeneratedQuestionWithConcepts } from "../../context/QuestionsContext";
+import { useActivityContext } from "../../context/ActivityContext";
+import { getSupabaseClient } from "@skolist/auth";
+import { DifficultyCard } from "./DifficultyCard";
+import { SyllabusCard } from "./SyllabusCard";
+import { QualityCard } from "./QualityCard";
+import { AccuracyCard } from "./AccuracyCard";
+
+interface StatsOverviewProps {
+  questions: GeneratedQuestionWithConcepts[];
+}
+
+export function StatsOverview({ questions }: StatsOverviewProps) {
+  const { currentActivity } = useActivityContext();
+  const [totalActivityConcepts, setTotalActivityConcepts] = useState<number>(0);
+
+  // 1. Difficulty Calculation
+  // 1. Difficulty Calculation (Marks Weighted from Draft)
+  const easyMarks = questions
+    .filter((q) => q.is_in_draft && q.hardness_level === "easy")
+    .reduce((sum, q) => sum + (q.marks || 0), 0);
+
+  const mediumMarks = questions
+    .filter((q) => q.is_in_draft && q.hardness_level === "medium")
+    .reduce((sum, q) => sum + (q.marks || 0), 0);
+
+  const hardMarks = questions
+    .filter((q) => q.is_in_draft && q.hardness_level === "hard")
+    .reduce((sum, q) => sum + (q.marks || 0), 0);
+
+  // 2. Syllabus Coverage Calculation
+  useEffect(() => {
+    async function fetchTotalConcepts() {
+      if (!currentActivity?.id) return;
+
+      const client = getSupabaseClient();
+      const { count, error } = await client
+        .from("concepts_activities_maps")
+        .select("*", { count: "exact", head: true })
+        .eq("activity_id", currentActivity.id);
+
+      if (!error && count !== null) {
+        setTotalActivityConcepts(count);
+      } else {
+        console.error("Failed to fetch activity concepts count:", error);
+      }
+    }
+
+    fetchTotalConcepts();
+  }, [currentActivity?.id]);
+
+  const uniqueDraftConcepts = new Set(
+    questions
+      .filter((q) => q.is_in_draft)
+      .flatMap((q) => q.concepts?.map((c) => c.id) || [])
+  );
+
+  // 3. Summary Stats
+  const accuracy = 100; // TODO: Replace with actual accuracy calculation
+
+  // Check if draft is empty (no questions in draft)
+  const draftQuestionsCount = questions.filter((q) => q.is_in_draft).length;
+  const isLocked = draftQuestionsCount === 0;
+
+  // Calculate quality percentile based on draft question count
+  const qualityPercentile = (() => {
+    if (draftQuestionsCount >= 20) return 1;
+    if (draftQuestionsCount >= 10) return 3;
+    if (draftQuestionsCount >= 5) return 5;
+    if (draftQuestionsCount >= 1) return 10;
+    return 1; // Default for locked state (won't be shown anyway)
+  })();
+
+  return (
+    // class are changed via commenting out old for mobile view workaround
+    // <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <DifficultyCard
+        easyMarks={easyMarks}
+        mediumMarks={mediumMarks}
+        hardMarks={hardMarks}
+        isLocked={isLocked}
+      />
+      <SyllabusCard
+        draftConceptCount={uniqueDraftConcepts.size}
+        totalActivityConcepts={totalActivityConcepts}
+        isLocked={isLocked}
+      />
+      <QualityCard percentile={qualityPercentile} isLocked={isLocked} />
+      <AccuracyCard accuracy={accuracy} isLocked={isLocked} />
+    </div>
+  );
+}

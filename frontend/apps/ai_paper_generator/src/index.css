@@ -1,0 +1,86 @@
+@import "@skolist/ui/globals.css";
+
+/* AI Paper Generator specific styles */
+
+/* ========================================
+   PAPER LAYOUT CONFIG - Tweak these in DevTools!
+   Elements → Styles → :root section
+   ======================================== */
+:root {
+  /* PAGE MARGINS (in mm, sync JS values in usePaperPagination.ts) */
+  --paper-margin-top-mm: 5; /* Top margin in mm */
+  --paper-margin-right-mm: 20; /* Right margin in mm */
+  --paper-margin-bottom-mm: 20; /* Bottom margin in mm */
+  --paper-margin-left-mm: 20; /* Left margin in mm */
+  --paper-footer-height: 30px; /* Footer reserved height */
+
+  /* HEADER SPACING */
+  --header-margin-bottom: 1 rem; /* Space below entire header (default: 24px) */
+  --header-logo-height: 4rem; /* Logo max height (default: 64px) */
+  --header-logo-margin-bottom: 0.5rem; /* Space below logo (default: 8px) */
+  --header-title-margin-top: 0.25rem; /* Space above paper title (default: 4px) */
+  --header-meta-margin-top: 1rem; /* Space above subject/marks row (default: 16px) */
+  --header-meta-padding-y: 0.5rem; /* Vertical padding in meta section (default: 8px) */
+  --header-meta-gap: 0.25rem; /* Gap between subject/class lines (default: 4px) */
+
+  /* INSTRUCTIONS SPACING */
+  --instructions-margin-bottom: 0.5rem; /* Space below instructions block (default: 8px) */
+  --instructions-padding-bottom: 0rem; /* Padding inside instructions (default: 16px) */
+  --instructions-title-margin-bottom: 0.25rem; /* Space below "General Instructions" (default: 4px) */
+  --instructions-list-padding-left: 1.25rem; /* Left padding for numbered list (default: 20px) */
+  --instructions-item-gap: 0.25rem; /* Gap between instruction items (default: 4px) */
+
+  /* SECTION HEADER SPACING */
+  --section-margin-top: 0.5rem; /* Space above section header (default: 24px) */
+  --section-margin-bottom: 0.5rem; /* Space below section header (default: 16px) */
+
+  /* QUESTION/ANSWER SPACING */
+  --question-margin-bottom: 0rem; /* Space below each question (default: 16px) */
+  --question-flex-gap: 0.5rem; /* Gap between Q number and text (default: 8px) */
+  --question-images-margin-y: 0.5rem; /* Vertical margin on image block (default: 8px) */
+  --question-images-gap: 0.5rem; /* Gap between images (default: 8px) */
+
+  /* MCQ OPTIONS SPACING */
+  --options-margin-top: 0.5rem; /* Space above options grid (default: 8px) */
+  --options-gap-x: 1rem; /* Horizontal gap between columns (default: 16px) */
+  --options-gap-y: 0.5rem; /* Vertical gap between rows (default: 8px) */
+
+  /* MATCH THE FOLLOWING SPACING */
+  --match-margin-top: 1rem; /* Space above match grid (default: 16px) */
+  --match-gap-x: 2rem; /* Horizontal gap (default: 32px) */
+  --match-gap-y: 0.5rem; /* Vertical gap (default: 8px) */
+
+  /* ANSWER ITEM SPACING */
+  --answer-margin-bottom: 1rem; /* Space below each answer (default: 16px) */
+  --answer-explanation-margin-top: 0.5rem; /* Space above explanation (default: 8px) */
+}
+
+/* Helper to make number input spin buttons always visible */
+.always-show-spin-button::-webkit-inner-spin-button,
+.always-show-spin-button::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #paper-preview-content,
+  #paper-preview-content * {
+    visibility: visible;
+  }
+  #paper-preview-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    box-shadow: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 0;
+  }
+}

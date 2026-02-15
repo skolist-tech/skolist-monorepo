@@ -1,0 +1,49 @@
+import type { QuestionItemData } from "../types";
+import { LatexHtmlRenderer } from "../../shared/LatexRenderer";
+
+export const AnswerItem = ({
+  question,
+  index,
+  showExplanation = true,
+}: {
+  question: QuestionItemData;
+  index: number;
+  showExplanation?: boolean;
+}) => {
+  return (
+    <div
+      className="break-inside-avoid"
+      style={{ marginBottom: "var(--answer-margin-bottom)" }}
+    >
+      <div className="flex" style={{ gap: "var(--question-flex-gap)" }}>
+        <span className="font-semibold">{index + 1}.</span>
+        <div className="flex-1">
+          <div className="flex gap-2">
+            <span className="text-sm font-bold">Ans:</span>
+            <LatexHtmlRenderer
+              content={question.answer_text || "N/A"}
+              className="prose prose-sm max-w-none text-gray-800"
+              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+            />
+          </div>
+          {showExplanation && question.explanation && (
+            <div
+              className="text-sm"
+              style={{ marginTop: "var(--answer-explanation-margin-top)" }}
+            >
+              <span className="font-bold underline">Explanation:</span>
+              <LatexHtmlRenderer
+                content={question.explanation}
+                className="prose prose-sm mt-1 max-w-none text-gray-800"
+                style={{ fontFamily: '"Times New Roman", Times, serif' }}
+              />
+            </div>
+          )}
+        </div>
+        <span className="ml-2 whitespace-nowrap text-sm font-semibold text-gray-500">
+          [{question.marks}]
+        </span>
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.base.json",
+  //   "include": ["apps", "packages", "storybook", "src"],
+  "include": ["apps"],
+  "exclude": ["node_modules", "dist"]
+}

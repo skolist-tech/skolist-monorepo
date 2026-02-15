@@ -1,0 +1,14 @@
+{
+  "extends": "../../packages/config/tsconfig/react.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../../packages/ui" },
+    { "path": "../../packages/auth" },
+    { "path": "../../packages/utils" }
+  ]
+}
