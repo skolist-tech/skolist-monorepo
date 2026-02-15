@@ -1,0 +1,50 @@
+name: "Cloud Run Deploy (Main)"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+
+env:
+  SERVICE_NAME: "backend-main"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auth to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ secrets.GCP_REGION }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          source: "./backend"
+          flags: |
+            --allow-unauthenticated
+            --set-secrets=SUPABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_URL_MAIN:latest
+            --set-secrets=SUPABASE_SERVICE_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_SERVICE_KEY_MAIN:latest
+            --set-secrets=SUPABASE_ANON_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_ANON_KEY_MAIN:latest
+            --set-secrets=GEMINI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/GEMINI_API_KEY_MAIN:latest
+            --set-secrets=OPENAI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/OPENAI_API_KEY_MAIN:latest
+            --set-env-vars=LOGGING_LEVEL=INFO
+            --set-env-vars=DEPLOYMENT_ENV=PRODUCTION
+
+      - name: Output Deployment URL
+        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
