@@ -2,7 +2,11 @@ name: Unit Tests (pytest)
 
 on:
   push:
+    paths:
+      - 'backend/**'
   pull_request:
+    paths:
+      - 'backend/**'
 
 permissions:
   contents: read

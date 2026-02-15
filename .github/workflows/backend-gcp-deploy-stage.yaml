@@ -43,10 +43,12 @@ jobs:
             --set-secrets=SUPABASE_ANON_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_ANON_KEY_STAGE:latest
             --set-secrets=GEMINI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/GEMINI_API_KEY_STAGE:latest
             --set-secrets=OPENAI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/OPENAI_API_KEY_STAGE:latest
-            --set-secrets=TEST_USER_EMAIL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/TEST_USER_EMAIL_STAGE:latest
-            --set-secrets=TEST_USER_PASSWORD=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/TEST_USER_PASSWORD_STAGE:latest
+            --set-secrets=SMS_HOOK_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_SMS_HOOK_SECRET:latest
+            --set-env-vars=FIREBASE_CREDENTIALS=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/FIREBASE_CREDENTIALS:latest
             --set-env-vars=LOGGING_LEVEL=DEBUG
             --set-env-vars=DEPLOYMENT_ENV=STAGING
+            --set-env-vars=PING=TRUE
+            --set-env-vars=LOG_IMAGES=FALSE
 
       - name: Output Deployment URL
         run: echo "Deployed to ${{ steps.deploy.outputs.url }}"

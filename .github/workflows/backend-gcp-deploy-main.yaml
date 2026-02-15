@@ -38,13 +38,17 @@ jobs:
           source: "./backend"
           flags: |
             --allow-unauthenticated
-            --set-secrets=SUPABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_URL_MAIN:latest
-            --set-secrets=SUPABASE_SERVICE_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_SERVICE_KEY_MAIN:latest
-            --set-secrets=SUPABASE_ANON_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_ANON_KEY_MAIN:latest
-            --set-secrets=GEMINI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/GEMINI_API_KEY_MAIN:latest
-            --set-secrets=OPENAI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/OPENAI_API_KEY_MAIN:latest
+            --set-secrets=SUPABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_URL:latest
+            --set-secrets=SUPABASE_SERVICE_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_SERVICE_KEY:latest
+            --set-secrets=SUPABASE_ANON_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_ANON_KEY:latest
+            --set-secrets=GEMINI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/GEMINI_API_KEY:latest
+            --set-secrets=OPENAI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/OPENAI_API_KEY:latest
+            --set-secrets=SMS_HOOK_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_SMS_HOOK_SECRET:latest
+            --set-env-vars=FIREBASE_CREDENTIALS=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/FIREBASE_CREDENTIALS:latest
             --set-env-vars=LOGGING_LEVEL=INFO
             --set-env-vars=DEPLOYMENT_ENV=PRODUCTION
+            --set-env-vars=PING=TRUE
+            --set-env-vars=LOG_IMAGES=FALSE
 
       - name: Output Deployment URL
         run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
