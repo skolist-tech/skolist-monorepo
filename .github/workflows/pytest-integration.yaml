@@ -2,7 +2,15 @@ name: Integration Tests (pytest)
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'skolist-db/**'
   pull_request:
+    paths:
+      - 'backend/**'
+      - 'skolist-db/**'
 
 permissions:
   contents: read

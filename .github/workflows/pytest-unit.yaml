@@ -2,6 +2,8 @@ name: Unit Tests (pytest)
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'backend/**'
   pull_request:
