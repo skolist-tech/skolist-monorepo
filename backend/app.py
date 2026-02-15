@@ -44,8 +44,7 @@ def create_app() -> FastAPI:
     """
     app = FastAPI(title="My FastAPI Application", lifespan=lifespan)
 
-    app.include_router(v1_router)
-
+    # Add CORS middleware BEFORE including routes
     if DEPLOYMENT_ENV == "PRODUCTION":
         app.add_middleware(
             CORSMiddleware,
@@ -97,6 +96,9 @@ def create_app() -> FastAPI:
                 "allow_origin_pattern": "localhost, vercel.app, skolist.com",
             },
         )
+
+    # Include routes AFTER CORS middleware
+    app.include_router(v1_router)
 
     @app.get("/")
     async def read_root():
