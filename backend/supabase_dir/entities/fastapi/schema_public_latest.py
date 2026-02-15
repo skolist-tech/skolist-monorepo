@@ -247,9 +247,7 @@ class GenQuestionsBaseSchema(CustomModel):
     answer_text: str = Field(description="Answer for the Generated question. Not For MCQs and MSQs")
     correct_mcq_option: int | None = Field(default=None, description="can be 1 or 2 or 3 or 4")
     created_at: datetime.datetime
-    explanation: str | None = Field(
-        default=None, description="explanation for the question and answer"
-    )
+    explanation: str | None = Field(default=None, description="explanation for the question and answer")
     hardness_level: PublicHardnessLevelEnumEnum
     is_exercise_question: bool
     is_in_draft: bool
@@ -260,18 +258,10 @@ class GenQuestionsBaseSchema(CustomModel):
     is_solved_example: bool
     marks: int
     match_the_following_columns: dict | list[dict] | list[Any] | Json | None = Field(default=None)
-    msq_option1_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
-    msq_option2_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
-    msq_option3_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
-    msq_option4_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
+    msq_option1_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
+    msq_option2_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
+    msq_option3_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
+    msq_option4_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
     option1: str | None = Field(default=None, description="For MCQ or MSQs")
     option2: str | None = Field(default=None, description="For MCQs or MSQs")
     option3: str | None = Field(default=None, description="For MCQs or MSQs")
@@ -281,8 +271,7 @@ class GenQuestionsBaseSchema(CustomModel):
         description="Position of the question in the section in the draft, if this question belongs to a draft",
     )
     qgen_draft_section_id: UUID4 | None = Field(
-        default=None,
-        description="The id of the section to which this question belongs to if, this is in draft",
+        default=None, description="The id of the section to which this question belongs to if, this is in draft"
     )
     question_text: str | None = Field(default=None, description="Actual Question")
     question_type: PublicQuestionTypeEnumEnum
@@ -321,9 +310,7 @@ class OrgsBaseSchema(CustomModel):
 
     # Columns
     address: str | None = Field(default=None)
-    board_id: UUID4 | None = Field(
-        default=None, description="To which board the organisation belongs to"
-    )
+    board_id: UUID4 | None = Field(default=None, description="To which board the organisation belongs to")
     created_at: datetime.datetime
     email: str
     header_line: str | None = Field(default=None)
@@ -383,36 +370,28 @@ class QgenDraftsBaseSchema(CustomModel):
     activity_id: UUID4
     created_at: datetime.datetime
     institute_name: str | None = Field(
-        default=None,
-        description="Institute / School Name to be shown on the top of the generated pdf of the paper",
+        default=None, description="Institute / School Name to be shown on the top of the generated pdf of the paper"
     )
     is_show_explanation_answer_key: bool
     is_show_instruction: bool
     is_show_logo: bool
     logo_url: str | None = Field(
-        default=None,
-        description="URL of the logo to be shown on the generated question paper pdf",
+        default=None, description="URL of the logo to be shown on the generated question paper pdf"
     )
     max_position: int | None = Field(default=None)
     maximum_marks: int | None = Field(
-        default=None,
-        description="Maximum / Total Marks to be shown on the generated paper PDF",
+        default=None, description="Maximum / Total Marks to be shown on the generated paper PDF"
     )
     paper_datetime: datetime.datetime | None = Field(
-        default=None,
-        description="The Date and time of examination to be shown on the generated PDF",
+        default=None, description="The Date and time of examination to be shown on the generated PDF"
     )
     paper_duration: datetime.time | None = Field(
-        default=None,
-        description="Duration of the paper to be shown on the generated PDF",
+        default=None, description="Duration of the paper to be shown on the generated PDF"
     )
     paper_subtitle: str | None = Field(
-        default=None,
-        description="Subtitle of the paper to be shown in the generated pdf",
+        default=None, description="Subtitle of the paper to be shown in the generated pdf"
     )
-    paper_title: str | None = Field(
-        default=None, description="Title of the Paper to be shown in the generated PDF"
-    )
+    paper_title: str | None = Field(default=None, description="Title of the Paper to be shown in the generated PDF")
     school_class_name: str | None = Field(default=None)
     subject_name: str | None = Field(default=None)
     updated_at: datetime.datetime
@@ -498,9 +477,7 @@ class UsersBaseSchema(CustomModel):
     id: UUID4
 
     # Columns
-    account_status: str = Field(
-        description="Is account active or disabled or inactive or deactivated etc."
-    )
+    account_status: str = Field(description="Is account active or disabled or inactive or deactivated etc.")
     avatar_url: str | None = Field(default=None)
     created_at: datetime.datetime
     credits: int
@@ -848,9 +825,7 @@ class GenQuestionsInsert(CustomModelInsert):
     # Optional fields
     correct_mcq_option: int | None = Field(default=None, description="can be 1 or 2 or 3 or 4")
     created_at: datetime.datetime | None = Field(default=None)
-    explanation: str | None = Field(
-        default=None, description="explanation for the question and answer"
-    )
+    explanation: str | None = Field(default=None, description="explanation for the question and answer")
     is_exercise_question: bool | None = Field(default=None)
     is_in_draft: bool | None = Field(default=None)
     is_new: bool | None = Field(default=None)
@@ -860,18 +835,10 @@ class GenQuestionsInsert(CustomModelInsert):
     )
     is_solved_example: bool | None = Field(default=None)
     match_the_following_columns: dict | list[dict] | list[Any] | Json | None = Field(default=None)
-    msq_option1_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
-    msq_option2_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
-    msq_option3_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
-    msq_option4_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
+    msq_option1_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
+    msq_option2_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
+    msq_option3_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
+    msq_option4_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
     option1: str | None = Field(default=None, description="For MCQ or MSQs")
     option2: str | None = Field(default=None, description="For MCQs or MSQs")
     option3: str | None = Field(default=None, description="For MCQs or MSQs")
@@ -881,8 +848,7 @@ class GenQuestionsInsert(CustomModelInsert):
         description="Position of the question in the section in the draft, if this question belongs to a draft",
     )
     qgen_draft_section_id: UUID4 | None = Field(
-        default=None,
-        description="The id of the section to which this question belongs to if, this is in draft",
+        default=None, description="The id of the section to which this question belongs to if, this is in draft"
     )
     question_text: str | None = Field(default=None, description="Actual Question")
     updated_at: datetime.datetime | None = Field(default=None)
@@ -943,9 +909,7 @@ class OrgsInsert(CustomModelInsert):
 
     # Optional fields
     address: str | None = Field(default=None)
-    board_id: UUID4 | None = Field(
-        default=None, description="To which board the organisation belongs to"
-    )
+    board_id: UUID4 | None = Field(default=None, description="To which board the organisation belongs to")
     created_at: datetime.datetime | None = Field(default=None)
     header_line: str | None = Field(default=None)
     logo_url: str | None = Field(default=None)
@@ -1005,8 +969,7 @@ class QgenDraftSectionsInsert(CustomModelInsert):
     # Optional fields
     created_at: datetime.datetime | None = Field(default=None)
     position_in_draft: int | None = Field(
-        default=None,
-        description="The position of the section in the draft of the paper to be generated as PDF",
+        default=None, description="The position of the section in the draft of the paper to be generated as PDF"
     )
     qgen_draft_id: UUID4 | None = Field(default=None)
     section_name: str | None = Field(default=None)
@@ -1042,36 +1005,28 @@ class QgenDraftsInsert(CustomModelInsert):
     # Optional fields
     created_at: datetime.datetime | None = Field(default=None)
     institute_name: str | None = Field(
-        default=None,
-        description="Institute / School Name to be shown on the top of the generated pdf of the paper",
+        default=None, description="Institute / School Name to be shown on the top of the generated pdf of the paper"
     )
     is_show_explanation_answer_key: bool | None = Field(default=None)
     is_show_instruction: bool | None = Field(default=None)
     is_show_logo: bool | None = Field(default=None)
     logo_url: str | None = Field(
-        default=None,
-        description="URL of the logo to be shown on the generated question paper pdf",
+        default=None, description="URL of the logo to be shown on the generated question paper pdf"
     )
     max_position: int | None = Field(default=None)
     maximum_marks: int | None = Field(
-        default=None,
-        description="Maximum / Total Marks to be shown on the generated paper PDF",
+        default=None, description="Maximum / Total Marks to be shown on the generated paper PDF"
     )
     paper_datetime: datetime.datetime | None = Field(
-        default=None,
-        description="The Date and time of examination to be shown on the generated PDF",
+        default=None, description="The Date and time of examination to be shown on the generated PDF"
     )
     paper_duration: datetime.time | None = Field(
-        default=None,
-        description="Duration of the paper to be shown on the generated PDF",
+        default=None, description="Duration of the paper to be shown on the generated PDF"
     )
     paper_subtitle: str | None = Field(
-        default=None,
-        description="Subtitle of the paper to be shown in the generated pdf",
+        default=None, description="Subtitle of the paper to be shown in the generated pdf"
     )
-    paper_title: str | None = Field(
-        default=None, description="Title of the Paper to be shown in the generated PDF"
-    )
+    paper_title: str | None = Field(default=None, description="Title of the Paper to be shown in the generated PDF")
     school_class_name: str | None = Field(default=None)
     subject_name: str | None = Field(default=None)
     updated_at: datetime.datetime | None = Field(default=None)
@@ -1220,17 +1175,14 @@ class UsersInsert(CustomModelInsert):
 
     # Optional fields
     account_status: str | None = Field(
-        default=None,
-        description="Is account active or disabled or inactive or deactivated etc.",
+        default=None, description="Is account active or disabled or inactive or deactivated etc."
     )
     avatar_url: str | None = Field(default=None)
     created_at: datetime.datetime | None = Field(default=None)
     credits: int | None = Field(default=None)
     email: str | None = Field(default=None)
     is_test_user: bool | None = Field(default=None)
-    last_active_at: datetime.datetime | None = Field(
-        default=None, description="To track user Churn"
-    )
+    last_active_at: datetime.datetime | None = Field(default=None, description="To track user Churn")
     name: Annotated[str, StringConstraints(**{"max_length": 50})] | None = Field(
         default=None, description="The Full Name of The User"
     )
@@ -1549,14 +1501,11 @@ class GenQuestionsUpdate(CustomModelUpdate):
     # Optional fields
     activity_id: UUID4 | None = Field(default=None)
     answer_text: str | None = Field(
-        default=None,
-        description="Answer for the Generated question. Not For MCQs and MSQs",
+        default=None, description="Answer for the Generated question. Not For MCQs and MSQs"
     )
     correct_mcq_option: int | None = Field(default=None, description="can be 1 or 2 or 3 or 4")
     created_at: datetime.datetime | None = Field(default=None)
-    explanation: str | None = Field(
-        default=None, description="explanation for the question and answer"
-    )
+    explanation: str | None = Field(default=None, description="explanation for the question and answer")
     hardness_level: PublicHardnessLevelEnumEnum | None = Field(default=None)
     is_exercise_question: bool | None = Field(default=None)
     is_in_draft: bool | None = Field(default=None)
@@ -1568,18 +1517,10 @@ class GenQuestionsUpdate(CustomModelUpdate):
     is_solved_example: bool | None = Field(default=None)
     marks: int | None = Field(default=None)
     match_the_following_columns: dict | list[dict] | list[Any] | Json | None = Field(default=None)
-    msq_option1_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
-    msq_option2_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
-    msq_option3_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
-    msq_option4_answer: bool | None = Field(
-        default=None, description="Describes if the option is correct or incorrect"
-    )
+    msq_option1_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
+    msq_option2_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
+    msq_option3_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
+    msq_option4_answer: bool | None = Field(default=None, description="Describes if the option is correct or incorrect")
     option1: str | None = Field(default=None, description="For MCQ or MSQs")
     option2: str | None = Field(default=None, description="For MCQs or MSQs")
     option3: str | None = Field(default=None, description="For MCQs or MSQs")
@@ -1589,8 +1530,7 @@ class GenQuestionsUpdate(CustomModelUpdate):
         description="Position of the question in the section in the draft, if this question belongs to a draft",
     )
     qgen_draft_section_id: UUID4 | None = Field(
-        default=None,
-        description="The id of the section to which this question belongs to if, this is in draft",
+        default=None, description="The id of the section to which this question belongs to if, this is in draft"
     )
     question_text: str | None = Field(default=None, description="Actual Question")
     question_type: PublicQuestionTypeEnumEnum | None = Field(default=None)
@@ -1644,9 +1584,7 @@ class OrgsUpdate(CustomModelUpdate):
 
     # Optional fields
     address: str | None = Field(default=None)
-    board_id: UUID4 | None = Field(
-        default=None, description="To which board the organisation belongs to"
-    )
+    board_id: UUID4 | None = Field(default=None, description="To which board the organisation belongs to")
     created_at: datetime.datetime | None = Field(default=None)
     email: str | None = Field(default=None)
     header_line: str | None = Field(default=None)
@@ -1704,8 +1642,7 @@ class QgenDraftSectionsUpdate(CustomModelUpdate):
     # Optional fields
     created_at: datetime.datetime | None = Field(default=None)
     position_in_draft: int | None = Field(
-        default=None,
-        description="The position of the section in the draft of the paper to be generated as PDF",
+        default=None, description="The position of the section in the draft of the paper to be generated as PDF"
     )
     qgen_draft_id: UUID4 | None = Field(default=None)
     section_name: str | None = Field(default=None)
@@ -1739,36 +1676,28 @@ class QgenDraftsUpdate(CustomModelUpdate):
     activity_id: UUID4 | None = Field(default=None)
     created_at: datetime.datetime | None = Field(default=None)
     institute_name: str | None = Field(
-        default=None,
-        description="Institute / School Name to be shown on the top of the generated pdf of the paper",
+        default=None, description="Institute / School Name to be shown on the top of the generated pdf of the paper"
     )
     is_show_explanation_answer_key: bool | None = Field(default=None)
     is_show_instruction: bool | None = Field(default=None)
     is_show_logo: bool | None = Field(default=None)
     logo_url: str | None = Field(
-        default=None,
-        description="URL of the logo to be shown on the generated question paper pdf",
+        default=None, description="URL of the logo to be shown on the generated question paper pdf"
     )
     max_position: int | None = Field(default=None)
     maximum_marks: int | None = Field(
-        default=None,
-        description="Maximum / Total Marks to be shown on the generated paper PDF",
+        default=None, description="Maximum / Total Marks to be shown on the generated paper PDF"
     )
     paper_datetime: datetime.datetime | None = Field(
-        default=None,
-        description="The Date and time of examination to be shown on the generated PDF",
+        default=None, description="The Date and time of examination to be shown on the generated PDF"
     )
     paper_duration: datetime.time | None = Field(
-        default=None,
-        description="Duration of the paper to be shown on the generated PDF",
+        default=None, description="Duration of the paper to be shown on the generated PDF"
     )
     paper_subtitle: str | None = Field(
-        default=None,
-        description="Subtitle of the paper to be shown in the generated pdf",
+        default=None, description="Subtitle of the paper to be shown in the generated pdf"
     )
-    paper_title: str | None = Field(
-        default=None, description="Title of the Paper to be shown in the generated PDF"
-    )
+    paper_title: str | None = Field(default=None, description="Title of the Paper to be shown in the generated PDF")
     school_class_name: str | None = Field(default=None)
     subject_name: str | None = Field(default=None)
     updated_at: datetime.datetime | None = Field(default=None)
@@ -1908,17 +1837,14 @@ class UsersUpdate(CustomModelUpdate):
 
     # Optional fields
     account_status: str | None = Field(
-        default=None,
-        description="Is account active or disabled or inactive or deactivated etc.",
+        default=None, description="Is account active or disabled or inactive or deactivated etc."
     )
     avatar_url: str | None = Field(default=None)
     created_at: datetime.datetime | None = Field(default=None)
     credits: int | None = Field(default=None)
     email: str | None = Field(default=None)
     is_test_user: bool | None = Field(default=None)
-    last_active_at: datetime.datetime | None = Field(
-        default=None, description="To track user Churn"
-    )
+    last_active_at: datetime.datetime | None = Field(default=None, description="To track user Churn")
     name: Annotated[str, StringConstraints(**{"max_length": 50})] | None = Field(
         default=None, description="The Full Name of The User"
     )
@@ -2144,9 +2070,7 @@ class QgenDrafts(QgenDraftsBaseSchema):
 
     # Foreign Keys
     activity: Activities | None = Field(default=None)
-    qgen_draft_instructions_drafts_maps: list[QgenDraftInstructionsDraftsMaps] | None = Field(
-        default=None
-    )
+    qgen_draft_instructions_drafts_maps: list[QgenDraftInstructionsDraftsMaps] | None = Field(default=None)
     qgen_draft_sections: list[QgenDraftSections] | None = Field(default=None)
 
 
