@@ -43,8 +43,9 @@ export function ActivityItemEdit({
           e.stopPropagation();
           onSave();
         }}
+        aria-label="Save name"
       >
-        <Check className="h-3 w-3" />
+        <Check className="h-3 w-3" aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -53,8 +54,9 @@ export function ActivityItemEdit({
           e.stopPropagation();
           onCancel();
         }}
+        aria-label="Cancel editing"
       >
-        <X className="h-3 w-3" />
+        <X className="h-3 w-3" aria-hidden="true" />
       </button>
     </div>
   );

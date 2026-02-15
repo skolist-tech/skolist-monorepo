@@ -28,6 +28,7 @@ export function ActivitySidebarActions({
         )}
         onClick={onCreateActivity}
         title="New Activity"
+        aria-label="Create new activity"
       >
         <Plus className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
         {!isCollapsed && "New Activity"}

@@ -1,5 +1,4 @@
-// import { Label, Button } from "@skolist/ui";
-import { Button } from "@skolist/ui";
+import { Label, Button } from "@skolist/ui";
 import { cn } from "@skolist/utils";
 import { Sparkles, Loader2 } from "lucide-react";
 
@@ -20,7 +19,7 @@ export function PromptBox({
 }: PromptBoxProps) {
   return (
     <div className="space-y-2">
-      {/* <Label htmlFor="generation-prompt">Custom Instructions (Optional)</Label> */}
+      <Label htmlFor="generation-prompt">Custom Instructions (Optional)</Label>
       <div className="relative">
         <textarea
           id="generation-prompt"

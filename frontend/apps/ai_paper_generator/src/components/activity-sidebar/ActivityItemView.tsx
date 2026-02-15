@@ -1,5 +1,5 @@
 import { Button } from "@skolist/ui";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Loader2 } from "lucide-react";
 import type { Activity } from "@skolist/db";
 import { cn } from "@skolist/utils";
 
@@ -29,7 +29,7 @@ export function ActivityItemView({
         {activity.name}
       </span>
 
-      <div className="absolute right-2 top-2 flex rounded-md border border-border bg-white/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
+      <div className="absolute right-2 top-2 flex rounded-md border border-border bg-white/80 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
         <Button
           size="icon"
           variant="ghost"
@@ -38,8 +38,9 @@ export function ActivityItemView({
             e.stopPropagation();
             onEdit();
           }}
+          aria-label="Edit activity name"
         >
-          <Pencil className="h-3 w-3" />
+          <Pencil className="h-3 w-3" aria-hidden="true" />
         </Button>
         <Button
           size="icon"
@@ -50,8 +51,13 @@ export function ActivityItemView({
             onDelete();
           }}
           disabled={isDeleting}
+          aria-label="Delete activity"
         >
-          <Trash2 className="h-3 w-3" />
+          {isDeleting ? (
+            <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+          ) : (
+            <Trash2 className="h-3 w-3" aria-hidden="true" />
+          )}
         </Button>
       </div>
     </div>

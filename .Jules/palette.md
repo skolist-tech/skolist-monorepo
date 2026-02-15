@@ -1,0 +1,3 @@
+## 2025-05-15 - [Enhancing Sidebar and Form Accessibility]
+**Learning:** Icon-only buttons in the sidebar were hidden with `opacity-0` and only revealed on `group-hover`. This made them completely inaccessible to keyboard users, as the buttons would remain invisible even when focused.
+**Action:** Always use `group-focus-within:opacity-100` (or `focus-within:opacity-100`) alongside `group-hover:opacity-100` to ensure that interactive elements hidden by default are revealed when a user navigates via keyboard. Additionally, ensure all icon-only buttons have `aria-label` and their icons are `aria-hidden="true"`.

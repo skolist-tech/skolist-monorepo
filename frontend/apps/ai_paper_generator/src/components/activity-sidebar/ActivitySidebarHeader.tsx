@@ -29,6 +29,7 @@ export function ActivitySidebarHeader({
         className="h-8 w-8 text-muted-foreground"
         onClick={onToggle}
         title={isCollapsed ? "Expand" : "Collapse"}
+        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         <ChevronLeft
           className={cn(
