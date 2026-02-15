@@ -13,8 +13,3 @@ node_modules
 .env.local
 .env.*.local
 tanzania-482107-c1-firebase-adminsdk-fbsvc-ec8986c93e.json
-# Environment Secretes
-.env
-.env.test
-.env.local
-.env.*.local
