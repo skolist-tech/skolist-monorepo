@@ -1,4 +1,4 @@
-name: "Cleanup Cloud Run Preview"
+name: "Cleanup Cloud Run Preview (Backend)"
 
 on:
   pull_request:

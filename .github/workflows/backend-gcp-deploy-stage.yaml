@@ -1,4 +1,4 @@
-name: "Cloud Run Deploy (Stage)"
+name: "Cloud Run Deploy (Stage) (Backend)"
 
 on:
   push:
