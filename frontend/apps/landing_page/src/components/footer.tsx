@@ -12,9 +12,9 @@ export function Footer() {
             </h3>
             <p className="max-w-xs text-xs leading-relaxed text-blue-200">
               Empowering Schools to Provide Personalized Strategy-Based Learning
-              for Every Child&apos;s Better Future. AI-powered platform to identify
-              learning gaps and implement strategic solutions. Free pilot
-              program available.
+              for Every Child&apos;s Better Future. AI-powered platform to
+              identify learning gaps and implement strategic solutions. Free
+              pilot program available.
             </p>
           </div>
 

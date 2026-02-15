@@ -12,6 +12,9 @@ jobs:
   build:
     name: Build Frontend
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       - name: Checkout repository
@@ -27,12 +30,13 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Create .env from .env.example
-        run: cp .env.example .env
+        run: cp ../.env.example .env
 
       - name: Build
         run: pnpm build

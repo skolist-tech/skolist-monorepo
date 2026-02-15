@@ -1,0 +1,43 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.turbo
+.next
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage
+
+# Storybook
+storybook-static
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.cache
+.vercel
+.env*.local
