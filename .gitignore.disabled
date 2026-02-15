@@ -1,6 +1,0 @@
-# Environment Secrets
-.env
-.env.test
-.env.local
-.env.*.local
-tanzania-482107-c1-firebase-adminsdk-fbsvc-ec8986c93e.json
