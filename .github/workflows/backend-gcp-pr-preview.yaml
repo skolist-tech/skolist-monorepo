@@ -3,6 +3,8 @@ name: "Cloud Run PR Preview (Backend)"
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - 'backend/**'
 
 env:
   SERVICE_PREFIX: "backend-pr"
