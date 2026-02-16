@@ -37,6 +37,11 @@ export function PromptBox({
             "resize-none disabled:cursor-not-allowed disabled:opacity-50"
           )}
         />
+        {value.length > 0 && (
+          <div className="pointer-events-none absolute bottom-2 right-2 rounded bg-background/80 px-1 text-[10px] text-muted-foreground">
+            {value.length} {value.length === 1 ? "character" : "characters"}
+          </div>
+        )}
       </div>
       <div className="flex justify-center md:justify-end">
         <Button
