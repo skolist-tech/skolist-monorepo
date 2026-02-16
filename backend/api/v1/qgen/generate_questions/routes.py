@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import uuid
@@ -124,7 +125,8 @@ async def generate_questions(
     try:
         user_id = user.id
 
-        if not check_user_has_credits(user_id):
+        # Wrap sync credit check in a thread
+        if not await asyncio.to_thread(check_user_has_credits, user_id):
             return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
 
         logger.debug(f"Custom instruction received: {request.instructions}")
@@ -210,7 +212,8 @@ async def generate_questions(
         credits_to_deduct = questions_inserted * 5
 
         if credits_to_deduct > 0:
-            deduct_user_credits(user_id, credits_to_deduct)
+            # Wrap sync credit deduction in a thread
+            await asyncio.to_thread(deduct_user_credits, user_id, credits_to_deduct)
 
         return Response(status_code=status.HTTP_201_CREATED)
 
