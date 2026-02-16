@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import uuid
@@ -154,16 +155,18 @@ async def generate_questions(
         # Fetch historical questions for reference
         try:
             ids = [str(cid) for cid in request.concept_ids if cid]
-            concept_maps = []
+            batches_list = list(chunked(ids, 300))
 
-            for batch in chunked(ids, 300):
-                response = await (
+            async def fetch_concept_map(batch):
+                return await (
                     supabase_client.table("bank_questions_concepts_maps")
                     .select("bank_question_id")
                     .in_("concept_id", batch)
                     .execute()
                 )
-                concept_maps.extend(response.data or [])
+
+            responses = await asyncio.gather(*[fetch_concept_map(b) for b in batches_list])
+            concept_maps = [item for resp in responses for item in (resp.data or [])]
         except Exception as e:
             logger.warning(f"Error Fetching the concept maps: {e}")
             concept_maps = []
@@ -172,10 +175,13 @@ async def generate_questions(
 
         if bank_question_ids:
             try:
-                old_questions = []
-                for batch in chunked(bank_question_ids, 300):
-                    response = await supabase_client.table("bank_questions").select("*").in_("id", batch).execute()
-                    old_questions.extend(response.data or [])
+                question_batches = list(chunked(bank_question_ids, 300))
+
+                async def fetch_bank_questions(batch):
+                    return await supabase_client.table("bank_questions").select("*").in_("id", batch).execute()
+
+                responses = await asyncio.gather(*[fetch_bank_questions(b) for b in question_batches])
+                old_questions = [item for resp in responses for item in (resp.data or [])]
             except Exception as e:
                 logger.warning(f"Error Fetching the old questions: {e}")
                 old_questions = []
