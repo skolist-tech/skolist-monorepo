@@ -1,11 +1,11 @@
 import logging
 
-import supabase
 from fastapi import Depends, Form, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from supabase import AsyncClient
 
-from api.v1.auth import get_supabase_client, require_supabase_user
+from api.v1.auth import get_async_supabase_client, require_supabase_user
 from api.v1.qgen.credits import check_user_has_credits, deduct_user_credits
 from api.v1.qgen.edit_svg.service import EditSVGService, SVGEditError
 
@@ -22,7 +22,7 @@ class EditSVGResponse(BaseModel):
 async def edit_svg(
     gen_image_id: str = Form(..., description="UUID of the image to edit"),
     instruction: str = Form(..., description="Natural language instruction for editing the SVG"),
-    supabase_client: supabase.Client = Depends(get_supabase_client),
+    supabase_client: AsyncClient = Depends(get_async_supabase_client),
     user: dict = Depends(require_supabase_user),
 ):
     """
@@ -38,7 +38,7 @@ async def edit_svg(
     user_id = user.id
 
     # Check credits
-    if not check_user_has_credits(user_id):
+    if not await check_user_has_credits(supabase_client, user_id):
         return JSONResponse(status_code=status.HTTP_402_PAYMENT_REQUIRED, content={"error": "Insufficient credits"})
 
     logger.info(
@@ -55,7 +55,7 @@ async def edit_svg(
         )
 
         # Deduct credits (1 credit for SVG edit, less than question generation)
-        deduct_user_credits(user_id, 1)
+        await deduct_user_credits(supabase_client, user_id, 1)
 
         return JSONResponse(status_code=status.HTTP_200_OK, content=result)
 

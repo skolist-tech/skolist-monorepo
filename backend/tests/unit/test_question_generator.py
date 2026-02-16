@@ -9,7 +9,7 @@ including the build_batches_end_to_end function and the new refactored architect
 """
 
 import uuid
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import google.genai as genai
 import pytest
@@ -107,9 +107,17 @@ def mock_activity_id() -> uuid.UUID:
 
 @pytest.fixture
 def mock_supabase_client():
-    """Create a mock Supabase client for BatchProcessingContext."""
+    """Create a mock async Supabase client for BatchProcessingContext."""
     client = MagicMock()
-    client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
+    # Setup async chain for update operations
+    mock_update_chain = client.table.return_value.update.return_value.eq.return_value
+    mock_update_chain.execute = AsyncMock()
+    # Setup async chain for insert operations
+    mock_insert_chain = client.table.return_value.insert.return_value
+    mock_insert_chain.execute = AsyncMock(return_value=MagicMock(data=[{"id": "test-id"}]))
+    # Setup async chain for select operations
+    mock_select_chain = client.table.return_value.select.return_value.in_.return_value
+    mock_select_chain.execute = AsyncMock(return_value=MagicMock(data=[]))
     return client
 
 

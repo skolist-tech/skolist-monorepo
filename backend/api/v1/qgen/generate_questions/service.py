@@ -4,9 +4,10 @@ import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
-import supabase
 from google import genai
+from supabase import AsyncClient
 
 from supabase_dir import (
     GenQuestionsInsert,
@@ -30,7 +31,7 @@ class BatchProcessingContext:
     """Holds all contextual data needed for processing batches."""
 
     gemini_client: genai.Client
-    supabase_client: supabase.Client
+    supabase_client: AsyncClient
     concepts_dict: dict[str, str]  # concept_name -> description
     concepts_name_to_id: dict[str, str]  # concept_name -> concept_id
     old_questions: list[dict]  # historical questions for reference
@@ -109,12 +110,10 @@ async def process_batch_generation_and_validate(
     ctx: BatchProcessingContext,
     batch_idx: int = None,
     retry_idx: int = None,
-) -> list[dict[str, any]]:
+) -> list[dict[str, Any]]:
     # Intercept for bank fetching types
     if batch.question_type == "solved_examples":
-        # Wrap sync database call in a thread to avoid blocking the event loop
-        res = await asyncio.to_thread(
-            fetch_questions_from_bank,
+        res = await fetch_questions_from_bank(
             ctx.supabase_client,
             batch.concepts,
             ctx.concepts_name_to_id,
@@ -125,9 +124,7 @@ async def process_batch_generation_and_validate(
         logger.info(f"Found Number of solved_examples fetched for insertion : {len(res)}")
         return res
     elif batch.question_type == "exercise_questions":
-        # Wrap sync database call in a thread to avoid blocking the event loop
-        res = await asyncio.to_thread(
-            fetch_questions_from_bank,
+        res = await fetch_questions_from_bank(
             ctx.supabase_client,
             batch.concepts,
             ctx.concepts_name_to_id,
@@ -245,7 +242,7 @@ async def insert_batch_to_supabase(
     batch: Batch,
     batch_idx: int,
     ctx: BatchProcessingContext,
-    supabase_client: supabase.Client,
+    supabase_client: AsyncClient,
     max_retries: int = 3,
 ) -> int:
     """
@@ -300,44 +297,24 @@ async def insert_batch_to_supabase(
             batch_metadata.append({"concept_ids": concept_ids, "svg_list": svg_list})
         except Exception as e:
             logger.error(f"Validation failed for question data: {e}")
+            logger.debug(f"Problematic payload: {question_data}")
+            continue
+
+        try:
+            result = await (
+                supabase_client.table("gen_questions")
+                .insert(gen_question_insert.model_dump(mode="json", exclude_none=True))
+                .execute()
+            )
+        except Exception as e:
+            logger.error(f"Failed to execute insert query: {e}")
             continue
 
     if not questions_to_insert:
         return 0
 
-    try:
-        # 1. Batch insert questions
-        # Wrap sync database call in a thread
-        result = await asyncio.to_thread(supabase_client.table("gen_questions").insert(questions_to_insert).execute)
-    except Exception as e:
-        logger.error(f"Failed to execute batch insert query: {e}")
-        return 0
-
-    if result.data:
-        inserted_questions = result.data
-        inserted_count = len(inserted_questions)
-
-        versions_to_insert = []
-        images_to_insert = []
-        concept_maps_to_insert = []
-
-        # Correlate inserted questions with metadata
-        # Supabase returns inserted rows in the order of the input list
-        for i, inserted_q in enumerate(inserted_questions):
-            question_id = inserted_q["id"]
-            mdata = batch_metadata[i]
-
-            # Prepare initial version data (v0)
-            version_data = extract_version_data(inserted_q)
-            version_data.update(
-                {
-                    "gen_question_id": question_id,
-                    "version_index": 0,
-                    "is_active": True,
-                    "is_deleted": False,
-                }
-            )
-            versions_to_insert.append(version_data)
+            # Create initial version (v0) for undo/redo functionality
+            await create_initial_version(supabase_client, question_id, inserted_question)
 
             # Prepare SVGs for gen_images table
             svg_list = mdata["svg_list"]
@@ -353,6 +330,11 @@ async def insert_batch_to_supabase(
                                     "position": position,
                                 }
                             )
+                            await (
+                                supabase_client.table("gen_images")
+                                .insert(gen_image.model_dump(mode="json", exclude_none=True))
+                                .execute()
+                            )
                     except Exception as svg_error:
                         logger.warning(f"Failed to prepare SVG for question {question_id}: {svg_error}")
 
@@ -363,29 +345,10 @@ async def insert_batch_to_supabase(
                         "gen_question_id": str(question_id),
                         "concept_id": str(concept_id),
                     }
-                )
-
-        # Execute auxiliary batch inserts in parallel threads
-        async def _safe_batch_insert(table_name, data):
-            if not data:
-                return
-            try:
-                if table_name == "gen_questions_concepts_maps":
-                    # Use upsert to handle potential duplicates (though unlikely for new questions)
-                    await asyncio.to_thread(
-                        supabase_client.table(table_name).upsert(data, on_conflict="gen_question_id,concept_id").execute
-                    )
-                else:
-                    await asyncio.to_thread(supabase_client.table(table_name).insert(data).execute)
-            except Exception as e:
-                logger.error(f"Failed to batch insert into {table_name}: {e}")
-
-        # Parallelize the auxiliary insertions
-        await asyncio.gather(
-            _safe_batch_insert("gen_question_versions", versions_to_insert),
-            _safe_batch_insert("gen_images", images_to_insert),
-            _safe_batch_insert("gen_questions_concepts_maps", concept_maps_to_insert),
-        )
+                    await supabase_client.table("gen_questions_concepts_maps").insert(concept_map_payload).execute()
+                except Exception as mapping_error:
+                    if "duplicate key value violates unique constraint" not in str(mapping_error):
+                        logger.warning(f"Failed to create mapping: {mapping_error}")
 
     return inserted_count
 
@@ -393,7 +356,7 @@ async def insert_batch_to_supabase(
 async def process_all_batches(
     batches: list[Batch],
     ctx: BatchProcessingContext,
-    supabase_client: supabase.Client,
+    supabase_client: AsyncClient,
     max_retries: int = 3,
 ) -> dict[str, any]:
     tasks = [

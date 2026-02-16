@@ -1,9 +1,9 @@
 import logging
 
-import supabase
 from fastapi import UploadFile
 from google import genai
 from google.genai import types
+from supabase import AsyncClient
 
 from api.v1.qgen.models import AllQuestions
 from api.v1.qgen.prompts import regenerate_question_with_prompt_prompt
@@ -146,7 +146,7 @@ class RegenerateWithPromptService:
     async def regenerate_question(
         gen_question_data: dict,
         gen_question_id: str,
-        supabase_client: supabase.Client,
+        supabase_client: AsyncClient,
         browser_service,
         gemini_client: genai.Client,
         custom_prompt: str | None = None,
@@ -212,16 +212,16 @@ class RegenerateWithPromptService:
                         update_data["match_the_following_columns"] = cols
 
                 # Create new version before updating question
-                create_new_version_on_update(supabase_client, gen_question_id, update_data)
+                await create_new_version_on_update(supabase_client, gen_question_id, update_data)
 
-                supabase_client.table("gen_questions").update(update_data).eq("id", gen_question_id).execute()
+                await supabase_client.table("gen_questions").update(update_data).eq("id", gen_question_id).execute()
 
                 # Insert SVGs into gen_images table if present
                 if svg_list:
                     logger.debug(f"SVGs generated for question {gen_question_id}: {len(svg_list)} SVG(s) found")
 
                     # First, delete existing SVGs for this question (to replace with new ones)
-                    supabase_client.table("gen_images").delete().eq("gen_question_id", gen_question_id).execute()
+                    await supabase_client.table("gen_images").delete().eq("gen_question_id", gen_question_id).execute()
 
                     for position, svg_item in enumerate(svg_list, start=1):
                         try:
@@ -232,9 +232,11 @@ class RegenerateWithPromptService:
                                     svg_string=svg_string,
                                     position=position,
                                 )
-                                supabase_client.table("gen_images").insert(
-                                    gen_image.model_dump(mode="json", exclude_none=True)
-                                ).execute()
+                                await (
+                                    supabase_client.table("gen_images")
+                                    .insert(gen_image.model_dump(mode="json", exclude_none=True))
+                                    .execute()
+                                )
                         except Exception as svg_error:
                             logger.warning(f"Failed to insert SVG for question {gen_question_id}: {svg_error}")
 

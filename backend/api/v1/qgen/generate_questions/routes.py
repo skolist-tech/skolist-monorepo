@@ -4,13 +4,12 @@ import os
 import uuid
 from typing import Literal
 
-import supabase
 from fastapi import Depends, status
 from fastapi.responses import Response
 from google import genai
 from pydantic import BaseModel, Field, model_validator
 
-from api.v1.auth import get_supabase_client, require_supabase_user
+from api.v1.auth import get_async_supabase_client, require_supabase_user
 
 from ..credits import check_user_has_credits, deduct_user_credits
 from .batchification import Batch, build_batches_end_to_end
@@ -118,15 +117,16 @@ def batchify_request(request: GenerateQuestionsRequest, concept_names: list[str]
 
 async def generate_questions(
     request: GenerateQuestionsRequest,
-    supabase_client: supabase.Client = Depends(get_supabase_client),
     user: dict = Depends(require_supabase_user),
 ) -> Response:
     """Generate questions based on concepts and configuration."""
     try:
         user_id = user.id
 
-        # Wrap sync credit check in a thread
-        if not await asyncio.to_thread(check_user_has_credits, user_id):
+        # Get async client
+        supabase_client = await get_async_supabase_client()
+
+        if not await check_user_has_credits(supabase_client, user_id):
             return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
 
         logger.debug(f"Custom instruction received: {request.instructions}")
@@ -141,7 +141,9 @@ async def generate_questions(
             concepts = []
 
             for batch in chunked(ids, 300):
-                response = supabase_client.table("concepts").select("id, name, description").in_("id", batch).execute()
+                response = (
+                    await supabase_client.table("concepts").select("id, name, description").in_("id", batch).execute()
+                )
                 concepts.extend(response.data or [])
         except Exception as e:
             logger.exception(f"Error fetching concepts: {e}")
@@ -156,7 +158,7 @@ async def generate_questions(
             concept_maps = []
 
             for batch in chunked(ids, 300):
-                response = (
+                response = await (
                     supabase_client.table("bank_questions_concepts_maps")
                     .select("bank_question_id")
                     .in_("concept_id", batch)
@@ -173,7 +175,7 @@ async def generate_questions(
             try:
                 old_questions = []
                 for batch in chunked(bank_question_ids, 300):
-                    response = supabase_client.table("bank_questions").select("*").in_("id", batch).execute()
+                    response = await supabase_client.table("bank_questions").select("*").in_("id", batch).execute()
                     old_questions.extend(response.data or [])
             except Exception as e:
                 logger.warning(f"Error Fetching the old questions: {e}")
@@ -212,8 +214,7 @@ async def generate_questions(
         credits_to_deduct = questions_inserted * 5
 
         if credits_to_deduct > 0:
-            # Wrap sync credit deduction in a thread
-            await asyncio.to_thread(deduct_user_credits, user_id, credits_to_deduct)
+            await deduct_user_credits(supabase_client, user_id, credits_to_deduct)
 
         return Response(status_code=status.HTTP_201_CREATED)
 

@@ -58,8 +58,17 @@ def mock_browser():
 
 @pytest.fixture
 def mock_supabase():
+    """Create a mock async Supabase client."""
     client = MagicMock()
-    client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock()
+    # Setup async chain for update operations
+    mock_update_chain = client.table.return_value.update.return_value.eq.return_value
+    mock_update_chain.execute = AsyncMock()
+    # Setup async chain for delete operations
+    mock_delete_chain = client.table.return_value.delete.return_value.eq.return_value
+    mock_delete_chain.execute = AsyncMock()
+    # Setup async chain for insert operations
+    mock_insert_chain = client.table.return_value.insert.return_value
+    mock_insert_chain.execute = AsyncMock()
     return client
 
 

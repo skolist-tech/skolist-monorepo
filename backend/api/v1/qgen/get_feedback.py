@@ -7,12 +7,12 @@ Provides AI-generated feedback on question drafts.
 import logging
 import os
 
-import supabase
 from fastapi import Depends, HTTPException
 from google import genai
 from pydantic import BaseModel
+from supabase import AsyncClient
 
-from api.v1.auth import get_supabase_client
+from api.v1.auth import get_async_supabase_client
 
 from .models import FeedbackList
 
@@ -37,7 +37,7 @@ class GetFeedbackRequest(BaseModel):
 
 async def get_feedback(
     request: GetFeedbackRequest,
-    supabase_client: supabase.Client = Depends(get_supabase_client),
+    supabase_client: AsyncClient = Depends(get_async_supabase_client),
 ):
     """
     API endpoint to get AI-generated feedback on a question draft.
@@ -62,7 +62,7 @@ async def get_feedback(
     # Fetch the draft and its questions from the database
     try:
         # Fetch draft to verify it exists
-        draft_response = supabase_client.table("qgen_drafts").select("*").eq("id", request.draft_id).execute()
+        draft_response = await supabase_client.table("qgen_drafts").select("*").eq("id", request.draft_id).execute()
 
         if not draft_response.data:
             raise HTTPException(status_code=404, detail="Draft not found")
@@ -73,14 +73,17 @@ async def get_feedback(
         )
 
         sections_response = (
-            supabase_client.table("qgen_draft_sections").select("id").eq("qgen_draft_id", request.draft_id).execute()
+            await supabase_client.table("qgen_draft_sections")
+            .select("id")
+            .eq("qgen_draft_id", request.draft_id)
+            .execute()
         )
 
         section_ids = [section["id"] for section in sections_response.data]
 
         if section_ids:
             questions_response = (
-                supabase_client.table("gen_questions")
+                await supabase_client.table("gen_questions")
                 .select("*")
                 .eq("is_in_draft", True)
                 .in_("qgen_draft_section_id", section_ids)

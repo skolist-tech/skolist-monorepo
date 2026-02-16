@@ -4,11 +4,11 @@ Routes for the extract_questions endpoint.
 
 import logging
 
-import supabase
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
+from supabase import AsyncClient
 
-from api.v1.auth import get_supabase_client, require_supabase_user
+from api.v1.auth import get_async_supabase_client, require_supabase_user
 from api.v1.qgen.credits import check_user_has_credits, deduct_user_credits
 from api.v1.qgen.extract_questions.service import (
     ExtractionProcessingError,
@@ -28,7 +28,7 @@ async def extract_questions(
     qgen_draft_id: str = Form(..., description="UUID of the draft to add section to"),
     prompt: str | None = Form(None, description="Optional custom instructions for extraction"),
     section_name: str | None = Form(None, description="Optional name for the new section"),
-    supabase_client: supabase.Client = Depends(get_supabase_client),
+    supabase_client: AsyncClient = Depends(get_async_supabase_client),
     user: dict = Depends(require_supabase_user),
 ):
     """
@@ -42,7 +42,7 @@ async def extract_questions(
     user_id = user.id
 
     # Check credits
-    if not check_user_has_credits(user_id):
+    if not await check_user_has_credits(supabase_client, user_id):
         return JSONResponse(status_code=status.HTTP_402_PAYMENT_REQUIRED, content={"error": "Insufficient credits"})
 
     logger.info(
@@ -57,7 +57,7 @@ async def extract_questions(
 
     try:
         # Validate that activity exists and belongs to user
-        activity = supabase_client.table("activities").select("id, user_id").eq("id", activity_id).execute()
+        activity = await supabase_client.table("activities").select("id, user_id").eq("id", activity_id).execute()
 
         if not activity.data:
             raise HTTPException(status_code=404, detail="Activity not found")
@@ -66,7 +66,7 @@ async def extract_questions(
             raise HTTPException(status_code=403, detail="Access denied to this activity")
 
         # Validate that draft exists
-        draft = supabase_client.table("qgen_drafts").select("id").eq("id", qgen_draft_id).execute()
+        draft = await supabase_client.table("qgen_drafts").select("id").eq("id", qgen_draft_id).execute()
 
         if not draft.data:
             raise HTTPException(status_code=404, detail="Draft not found")
@@ -84,7 +84,7 @@ async def extract_questions(
         # Deduct credits based on questions extracted (min 3 credits)
         questions_count = result.get("questions_extracted", 0)
         credits_to_deduct = max(3, questions_count)
-        deduct_user_credits(user_id, credits_to_deduct)
+        await deduct_user_credits(supabase_client, user_id, credits_to_deduct)
 
         logger.info(
             "Extract questions completed",
