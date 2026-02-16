@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - stage
     paths:
       - 'frontend/**'
   pull_request:
@@ -38,7 +39,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Create .env from .env.example
-        run: cp ../.env.frontend.example .env
+        run: cp .env.example .env
 
       - name: Build
         run: pnpm build
