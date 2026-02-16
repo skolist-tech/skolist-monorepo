@@ -35,16 +35,25 @@ let supabaseClient: SupabaseClient | null = null;
  * Supports both VITE_ prefix (for Vite apps) and NEXT_PUBLIC_ prefix (for Next.js apps)
  */
 function getSupabaseConfig() {
-  // Vite apps
-  let url = import.meta.env.VITE_SUPABASE_URL || "";
-  let anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
-  let cookieDomain = import.meta.env.VITE_COOKIE_DOMAIN || "";
+  let url = "";
+  let anonKey = "";
+  let cookieDomain = "";
 
-  // Fallback for Next.js apps
-  if (!url && typeof process !== "undefined" && process.env) {
+  // Try Next.js env vars first (process.env)
+  if (typeof process !== "undefined" && process.env) {
     url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
     anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
     cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || "";
+  }
+
+  // Fallback to Vite env vars (import.meta.env) - use type assertion to avoid Next.js type errors
+  if (!url) {
+    const meta = import.meta as unknown as { env?: Record<string, string> };
+    if (meta.env) {
+      url = meta.env.VITE_SUPABASE_URL || "";
+      anonKey = meta.env.VITE_SUPABASE_ANON_KEY || "";
+      cookieDomain = meta.env.VITE_COOKIE_DOMAIN || "";
+    }
   }
 
   return { url, anonKey, cookieDomain };
