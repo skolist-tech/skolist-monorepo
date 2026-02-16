@@ -35,31 +35,15 @@ let supabaseClient: SupabaseClient | null = null;
  * Supports both VITE_ prefix (for Vite apps) and NEXT_PUBLIC_ prefix (for Next.js apps)
  */
 function getSupabaseConfig() {
-  // Try VITE_ prefix first (Vite apps)
-  let url =
-    (typeof import.meta !== "undefined" &&
-      (import.meta as unknown as { env?: Record<string, string> }).env
-        ?.VITE_SUPABASE_URL) ||
-    "";
-  let anonKey =
-    (typeof import.meta !== "undefined" &&
-      (import.meta as unknown as { env?: Record<string, string> }).env
-        ?.VITE_SUPABASE_ANON_KEY) ||
-    "";
-  let cookieDomain =
-    (typeof import.meta !== "undefined" &&
-      (import.meta as unknown as { env?: Record<string, string> }).env
-        ?.VITE_COOKIE_DOMAIN) ||
-    "";
+  // Vite apps
+  let url = import.meta.env.VITE_SUPABASE_URL || "";
+  let anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+  let cookieDomain = import.meta.env.VITE_COOKIE_DOMAIN || "";
 
-  // Fallback to NEXT_PUBLIC_ prefix (Next.js apps)
+  // Fallback for Next.js apps
   if (!url && typeof process !== "undefined" && process.env) {
     url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  }
-  if (!anonKey && typeof process !== "undefined" && process.env) {
     anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-  }
-  if (!cookieDomain && typeof process !== "undefined" && process.env) {
     cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || "";
   }
 
