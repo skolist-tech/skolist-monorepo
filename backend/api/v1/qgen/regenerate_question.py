@@ -10,13 +10,13 @@ Architecture:
 import logging
 import os
 
-import supabase
 from fastapi import Depends, HTTPException, status
 from fastapi.responses import Response
 from google import genai
 from pydantic import BaseModel, Field
+from supabase import AsyncClient
 
-from api.v1.auth import get_supabase_client, require_supabase_user
+from api.v1.auth import get_async_supabase_client, require_supabase_user
 from supabase_dir import GenImagesInsert
 
 from .credits import check_user_has_credits, deduct_user_credits
@@ -214,7 +214,7 @@ async def try_retry_and_update(
     gemini_client: genai.Client,
     gen_question_data: dict,
     gen_question_id: str,
-    supabase_client: supabase.Client,
+    supabase_client: AsyncClient,
     max_retries: int = 5,
 ) -> bool:
     """
@@ -285,14 +285,14 @@ async def try_retry_and_update(
                 else:
                     update_data["match_the_following_columns"] = cols
 
-            supabase_client.table("gen_questions").update(update_data).eq("id", gen_question_id).execute()
+            await supabase_client.table("gen_questions").update(update_data).eq("id", gen_question_id).execute()
 
             # Insert SVGs into gen_images table if present
             if svg_list:
                 logger.debug(f"SVGs generated for question {gen_question_id}: {len(svg_list)} SVG(s) found")
 
                 # First, delete existing SVGs for this question (to replace with new ones)
-                supabase_client.table("gen_images").delete().eq("gen_question_id", gen_question_id).execute()
+                await supabase_client.table("gen_images").delete().eq("gen_question_id", gen_question_id).execute()
 
                 for position, svg_item in enumerate(svg_list, start=1):
                     try:
@@ -303,9 +303,11 @@ async def try_retry_and_update(
                                 svg_string=svg_string,
                                 position=position,
                             )
-                            supabase_client.table("gen_images").insert(
-                                gen_image.model_dump(mode="json", exclude_none=True)
-                            ).execute()
+                            await (
+                                supabase_client.table("gen_images")
+                                .insert(gen_image.model_dump(mode="json", exclude_none=True))
+                                .execute()
+                            )
                     except Exception as svg_error:
                         logger.warning(f"Failed to insert SVG for question {gen_question_id}: {svg_error}")
 
@@ -350,7 +352,7 @@ async def try_retry_and_update(
 
 async def regenerate_question(
     gen_question_id: str,
-    supabase_client: supabase.Client = Depends(get_supabase_client),
+    supabase_client: AsyncClient = Depends(get_async_supabase_client),
     user: dict = Depends(require_supabase_user),
 ):
     """
@@ -369,7 +371,7 @@ async def regenerate_question(
     user_id = user.id
 
     # Check credits
-    if not check_user_has_credits(user_id):
+    if not await check_user_has_credits(supabase_client, user_id):
         return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
 
     logger.info(
@@ -379,7 +381,7 @@ async def regenerate_question(
 
     # Fetch the question from the database
     try:
-        gen_question = supabase_client.table("gen_questions").select("*").eq("id", gen_question_id).execute()
+        gen_question = await supabase_client.table("gen_questions").select("*").eq("id", gen_question_id).execute()
 
         if not gen_question.data:
             raise HTTPException(status_code=404, detail="Gen Question not found")
@@ -415,7 +417,7 @@ async def regenerate_question(
         )
 
         # Deduct 2 credits
-        deduct_user_credits(user_id, 2)
+        await deduct_user_credits(supabase_client, user_id, 2)
 
         logger.info(
             "Regenerate completed successfully",

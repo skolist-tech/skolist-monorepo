@@ -1,8 +1,8 @@
 import logging
 from datetime import time
 
-import supabase
 from fastapi import HTTPException
+from supabase import AsyncClient
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def format_duration(d_time: time | None) -> str:
     return f"{total_minutes} Mins" if total_minutes > 0 else "60 Mins"
 
 
-async def fetch_paper_data(draft_id: str, supabase_client: supabase.Client):
+async def fetch_paper_data(draft_id: str, supabase_client: AsyncClient):
     """
     Fetches all data required to generate a paper.
 
@@ -33,14 +33,14 @@ async def fetch_paper_data(draft_id: str, supabase_client: supabase.Client):
     """
     try:
         # 1. Fetch Draft Data
-        draft_res = supabase_client.table("qgen_drafts").select("*").eq("id", draft_id).execute()
+        draft_res = await supabase_client.table("qgen_drafts").select("*").eq("id", draft_id).execute()
         if not draft_res.data:
             raise HTTPException(status_code=404, detail="Draft not found")
         draft = draft_res.data[0]
 
         # 2. Fetch Sections
         sections_res = (
-            supabase_client.table("qgen_draft_sections")
+            await supabase_client.table("qgen_draft_sections")
             .select("*")
             .eq("qgen_draft_id", draft_id)
             .order("position_in_draft")
@@ -50,7 +50,7 @@ async def fetch_paper_data(draft_id: str, supabase_client: supabase.Client):
 
         # 3. Fetch Instructions
         instructions_res = (
-            supabase_client.table("qgen_draft_instructions_drafts_maps")
+            await supabase_client.table("qgen_draft_instructions_drafts_maps")
             .select("*")
             .eq("qgen_draft_id", draft_id)
             .order("created_at", desc=True)
@@ -63,7 +63,7 @@ async def fetch_paper_data(draft_id: str, supabase_client: supabase.Client):
         questions = []
         if section_ids:
             questions_res = (
-                supabase_client.table("gen_questions")
+                await supabase_client.table("gen_questions")
                 .select("*")
                 .eq("is_in_draft", True)
                 .in_("qgen_draft_section_id", section_ids)
@@ -76,7 +76,7 @@ async def fetch_paper_data(draft_id: str, supabase_client: supabase.Client):
         images_map = {}
         if question_ids:
             images_res = (
-                supabase_client.table("gen_images")
+                await supabase_client.table("gen_images")
                 .select("*")
                 .in_("gen_question_id", question_ids)
                 .order("position")
@@ -92,7 +92,9 @@ async def fetch_paper_data(draft_id: str, supabase_client: supabase.Client):
         logo_url = None
         if draft.get("logo_url"):
             try:
-                logo_res = supabase_client.storage.from_("draft_logo_bucket").create_signed_url(draft["logo_url"], 3600)
+                logo_res = await supabase_client.storage.from_("draft_logo_bucket").create_signed_url(
+                    draft["logo_url"], 3600
+                )
                 logo_url = logo_res.get("signedUrl")
             except Exception as e:
                 logger.warning(f"Failed to get signed logo URL: {e}")

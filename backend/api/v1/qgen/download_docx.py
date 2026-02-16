@@ -4,7 +4,6 @@ import re
 
 import math2docx
 import requests
-import supabase
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement
@@ -12,8 +11,9 @@ from docx.oxml.ns import qn
 from docx.shared import Inches, Mm, Pt
 from fastapi import Depends, HTTPException, Request, Response
 from pydantic import BaseModel
+from supabase import AsyncClient
 
-from api.v1.auth import get_supabase_client
+from api.v1.auth import get_async_supabase_client
 from api.v1.qgen.paper_layout_config import (
     PAGE_MARGIN_BOTTOM_MM,
     PAGE_MARGIN_LEFT_MM,
@@ -33,7 +33,7 @@ class DownloadDocxRequest(BaseModel):
 async def download_docx(
     download_req: DownloadDocxRequest,
     fastapi_request: Request,
-    supabase_client: supabase.Client = Depends(get_supabase_client),
+    supabase_client: AsyncClient = Depends(get_async_supabase_client),
 ):
     """
     API endpoint to generate and download a DOCX of the question paper.

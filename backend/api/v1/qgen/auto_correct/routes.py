@@ -1,10 +1,10 @@
 import logging
 
-import supabase
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import Response
+from supabase import AsyncClient
 
-from api.v1.auth import get_supabase_client, require_supabase_user
+from api.v1.auth import get_async_supabase_client, require_supabase_user
 from api.v1.qgen.auto_correct.service import AutoCorrectService, QuestionProcessingError
 from api.v1.qgen.credits import check_user_has_credits, deduct_user_credits
 
@@ -17,7 +17,7 @@ router = APIRouter()
 async def auto_correct_question(
     request: Request,
     gen_question_id: str = Form(..., description="UUID of the question to correct"),
-    supabase_client: supabase.Client = Depends(get_supabase_client),
+    supabase_client: AsyncClient = Depends(get_async_supabase_client),
     user: dict = Depends(require_supabase_user),
 ):
     """
@@ -26,7 +26,7 @@ async def auto_correct_question(
     user_id = user.id
 
     # Check credits
-    if not check_user_has_credits(user_id):
+    if not await check_user_has_credits(supabase_client, user_id):
         return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
 
     logger.info(
@@ -36,7 +36,7 @@ async def auto_correct_question(
 
     try:
         # Fetch Question
-        gen_question = supabase_client.table("gen_questions").select("*").eq("id", gen_question_id).execute()
+        gen_question = await supabase_client.table("gen_questions").select("*").eq("id", gen_question_id).execute()
 
         if not gen_question.data:
             raise HTTPException(status_code=404, detail="Gen Question not found")
@@ -45,7 +45,7 @@ async def auto_correct_question(
 
         # Fetch existing SVGs for this question
         gen_images = (
-            supabase_client.table("gen_images")
+            await supabase_client.table("gen_images")
             .select("*")
             .eq("gen_question_id", gen_question_id)
             .order("position")
@@ -79,7 +79,7 @@ async def auto_correct_question(
         )
 
         # Deduct credits
-        deduct_user_credits(user_id, 2)
+        await deduct_user_credits(supabase_client, user_id, 2)
 
         return Response(status_code=status.HTTP_200_OK)
 

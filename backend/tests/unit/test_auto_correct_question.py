@@ -48,10 +48,24 @@ def mock_browser_service():
     service.generate_pdf = AsyncMock(return_value=b"fake_pdf_bytes")
     return service
 
-    # ... (omitted MockSupabaseClient / same as before) ...
 
-    # ...
+@pytest.fixture
+def mock_supabase():
+    """Create a mock async Supabase client."""
+    client = MagicMock()
+    # Setup async chain for update operations
+    mock_update_chain = client.table.return_value.update.return_value.eq.return_value
+    mock_update_chain.execute = AsyncMock()
+    # Setup async chain for delete operations
+    mock_delete_chain = client.table.return_value.delete.return_value.eq.return_value
+    mock_delete_chain.execute = AsyncMock()
+    # Setup async chain for insert operations
+    mock_insert_chain = client.table.return_value.insert.return_value
+    mock_insert_chain.execute = AsyncMock()
+    return client
 
+
+class TestAutoCorrectService:
     @pytest.mark.asyncio
     async def test_correct_question_flow(self, mock_mcq4_question: dict, mock_browser_service, mock_supabase):
         # Mock generic Gemini client for this specific test to avoid real calls

@@ -5,10 +5,10 @@ Service layer for extracting questions from files.
 import logging
 import os
 
-import supabase
 from fastapi import UploadFile
 from google import genai
 from google.genai import types
+from supabase import AsyncClient
 
 from api.v1.qgen.models import QUESTION_TYPE_TO_ENUM, ExtractedQuestionsList
 from api.v1.qgen.prompts import extract_questions_prompt
@@ -114,7 +114,7 @@ class ExtractQuestionsService:
         file: UploadFile,
         activity_id: str,
         qgen_draft_id: str,
-        supabase_client: supabase.Client,
+        supabase_client: AsyncClient,
         section_name: str | None = None,
         custom_prompt: str | None = None,
     ) -> dict:
@@ -170,7 +170,7 @@ class ExtractQuestionsService:
 
         # 4. Get max position for new section
         existing_sections = (
-            supabase_client.table("qgen_draft_sections")
+            await supabase_client.table("qgen_draft_sections")
             .select("position_in_draft")
             .eq("qgen_draft_id", qgen_draft_id)
             .order("position_in_draft", desc=True)
@@ -191,7 +191,7 @@ class ExtractQuestionsService:
         )
 
         section_result = (
-            supabase_client.table("qgen_draft_sections")
+            await supabase_client.table("qgen_draft_sections")
             .insert(new_section.model_dump(mode="json", exclude_none=True))
             .execute()
         )
@@ -269,7 +269,7 @@ class ExtractQuestionsService:
 
                 # Insert question
                 result = (
-                    supabase_client.table("gen_questions")
+                    await supabase_client.table("gen_questions")
                     .insert(gen_question.model_dump(mode="json", exclude_none=True))
                     .execute()
                 )
@@ -296,9 +296,11 @@ class ExtractQuestionsService:
                                         svg_string=svg_string,
                                         position=svg_position,
                                     )
-                                    supabase_client.table("gen_images").insert(
-                                        gen_image.model_dump(mode="json", exclude_none=True)
-                                    ).execute()
+                                    await (
+                                        supabase_client.table("gen_images")
+                                        .insert(gen_image.model_dump(mode="json", exclude_none=True))
+                                        .execute()
+                                    )
                             except Exception as svg_error:
                                 logger.warning(f"Failed to insert SVG for question {question_id}: {svg_error}")
 

@@ -1,10 +1,10 @@
 import logging
 
-import supabase
 from fastapi import Depends, HTTPException, Request, Response
 from pydantic import BaseModel
+from supabase import AsyncClient
 
-from api.v1.auth import get_supabase_client
+from api.v1.auth import get_async_supabase_client
 from api.v1.qgen.paper_layout_config import (
     ANSWER_EXPLANATION_MARGIN_TOP,
     ANSWER_MARGIN_BOTTOM,
@@ -42,7 +42,7 @@ class DownloadPdfRequest(BaseModel):
 async def download_pdf(
     download_req: DownloadPdfRequest,
     request: Request,
-    supabase_client: supabase.Client = Depends(get_supabase_client),
+    supabase_client: AsyncClient = Depends(get_async_supabase_client),
 ):
     """
     API endpoint to generate and download a PDF of the question paper.

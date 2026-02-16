@@ -1,9 +1,9 @@
 import logging
 import os
 
-import supabase
 from google import genai
 from google.genai import types
+from supabase import AsyncClient
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class EditSVGService:
     async def edit_svg(
         gen_image_id: str,
         instruction: str,
-        supabase_client: supabase.Client,
+        supabase_client: AsyncClient,
     ) -> dict:
         """
         Edit an SVG based on natural language instruction.
@@ -60,7 +60,7 @@ class EditSVGService:
         """
         # 1. Fetch current SVG from gen_images
         logger.info(f"Fetching SVG for image {gen_image_id}")
-        result = supabase_client.table("gen_images").select("*").eq("id", gen_image_id).execute()
+        result = await supabase_client.table("gen_images").select("*").eq("id", gen_image_id).execute()
 
         if not result.data:
             raise SVGEditError(f"Image with id {gen_image_id} not found")
@@ -115,7 +115,9 @@ class EditSVGService:
                     continue
 
                 # 3. Update in Supabase
-                supabase_client.table("gen_images").update({"svg_string": new_svg}).eq("id", gen_image_id).execute()
+                await (
+                    supabase_client.table("gen_images").update({"svg_string": new_svg}).eq("id", gen_image_id).execute()
+                )
 
                 logger.info(f"Successfully updated SVG for image {gen_image_id}")
 
