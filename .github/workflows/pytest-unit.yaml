@@ -3,7 +3,7 @@ name: Unit Tests (pytest)
 on:
   push:
     branches:
-      - main
+      - main, stage
     paths:
       - 'backend/**'
   pull_request:

@@ -3,7 +3,7 @@ name: Pylint (Backend Linting)
 on:
   push:
     branches:
-      - main
+      - main, stage
     paths:
       - 'backend/**'
   pull_request:

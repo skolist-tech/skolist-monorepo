@@ -3,7 +3,7 @@ name: Integration Tests (pytest)
 on:
   push:
     branches:
-      - main
+      - main, stage
     paths:
       - 'backend/**'
       - 'skolist-db/**'
