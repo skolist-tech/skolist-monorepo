@@ -4,6 +4,7 @@ import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from google import genai
 from supabase import AsyncClient
@@ -110,7 +111,7 @@ async def process_batch_generation_and_validate(
     ctx: BatchProcessingContext,
     batch_idx: int = None,
     retry_idx: int = None,
-) -> list[dict[str, any]]:
+) -> list[dict[str, Any]]:
     # Intercept for bank fetching types
     if batch.question_type == "solved_examples":
         res = await fetch_questions_from_bank(

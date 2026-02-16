@@ -36,6 +36,7 @@ def mock_supabase_client():
 class TestCheckUserHasCredits:
     """Tests for check_user_has_credits function."""
 
+    @pytest.mark.asyncio
     async def test_returns_true_when_user_has_credits(self, mock_supabase_client, user_id):
         """Test that check returns True when user has positive credits."""
         # Chain for select().eq().single().execute()
@@ -49,6 +50,7 @@ class TestCheckUserHasCredits:
         assert result is True
         mock_supabase_client.table.assert_called_with("users")
 
+    @pytest.mark.asyncio
     async def test_returns_false_when_user_has_zero_credits(self, mock_supabase_client, user_id):
         """Test that check returns False when user has zero credits."""
         mock_response = MagicMock()
@@ -60,6 +62,7 @@ class TestCheckUserHasCredits:
 
         assert result is False
 
+    @pytest.mark.asyncio
     async def test_returns_false_when_user_has_negative_credits(self, mock_supabase_client, user_id):
         """Test that check returns False when user has negative credits."""
         mock_response = MagicMock()
@@ -71,6 +74,7 @@ class TestCheckUserHasCredits:
 
         assert result is False
 
+    @pytest.mark.asyncio
     async def test_returns_true_when_user_has_one_credit(self, mock_supabase_client, user_id):
         """Test that check returns True when user has exactly 1 credit."""
         mock_response = MagicMock()
@@ -91,6 +95,7 @@ class TestCheckUserHasCredits:
 class TestDeductUserCredits:
     """Tests for deduct_user_credits function."""
 
+    @pytest.mark.asyncio
     async def test_deducts_credits_correctly(self, mock_supabase_client, user_id):
         """Test that credits are deducted correctly."""
         # Mock fetch response with 1000 credits
@@ -108,6 +113,7 @@ class TestDeductUserCredits:
         # Verify update called with 900 (1000 - 100)
         mock_supabase_client.table("users").update.assert_called_with({"credits": 900})
 
+    @pytest.mark.asyncio
     async def test_floors_credits_at_zero(self, mock_supabase_client, user_id):
         """Test that credits cannot go below zero."""
         # Mock fetch response with 5 credits
@@ -126,6 +132,7 @@ class TestDeductUserCredits:
         # Verify update called with 0 (max(0, 5-10))
         mock_supabase_client.table("users").update.assert_called_with({"credits": 0})
 
+    @pytest.mark.asyncio
     async def test_deducts_exact_amount(self, mock_supabase_client, user_id):
         """Test that exact amount is deducted."""
         mock_fetch_response = MagicMock()
@@ -141,6 +148,7 @@ class TestDeductUserCredits:
 
         mock_supabase_client.table("users").update.assert_called_with({"credits": 0})
 
+    @pytest.mark.asyncio
     async def test_deducts_zero_credits(self, mock_supabase_client, user_id):
         """Test that deducting zero credits does nothing (optimization)."""
         await deduct_user_credits(mock_supabase_client, user_id, 0)
