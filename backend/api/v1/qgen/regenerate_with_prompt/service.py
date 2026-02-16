@@ -212,7 +212,7 @@ class RegenerateWithPromptService:
                         update_data["match_the_following_columns"] = cols
 
                 # Create new version before updating question
-                create_new_version_on_update(supabase_client, gen_question_id, update_data)
+                await create_new_version_on_update(supabase_client, gen_question_id, update_data)
 
                 supabase_client.table("gen_questions").update(update_data).eq("id", gen_question_id).execute()
 
