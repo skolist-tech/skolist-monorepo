@@ -5,8 +5,8 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
-import supabase
 from google import genai
+from supabase import AsyncClient
 
 from supabase_dir import (
     GenImagesInsert,
@@ -31,7 +31,7 @@ class BatchProcessingContext:
     """Holds all contextual data needed for processing batches."""
 
     gemini_client: genai.Client
-    supabase_client: supabase.Client
+    supabase_client: AsyncClient
     concepts_dict: dict[str, str]  # concept_name -> description
     concepts_name_to_id: dict[str, str]  # concept_name -> concept_id
     old_questions: list[dict]  # historical questions for reference
@@ -113,7 +113,7 @@ async def process_batch_generation_and_validate(
 ) -> list[dict[str, any]]:
     # Intercept for bank fetching types
     if batch.question_type == "solved_examples":
-        res = fetch_questions_from_bank(
+        res = await fetch_questions_from_bank(
             ctx.supabase_client,
             batch.concepts,
             ctx.concepts_name_to_id,
@@ -124,7 +124,7 @@ async def process_batch_generation_and_validate(
         logger.info(f"Found Number of solved_examples fetched for insertion : {len(res)}")
         return res
     elif batch.question_type == "exercise_questions":
-        res = fetch_questions_from_bank(
+        res = await fetch_questions_from_bank(
             ctx.supabase_client,
             batch.concepts,
             ctx.concepts_name_to_id,
@@ -242,7 +242,7 @@ async def insert_batch_to_supabase(
     batch: Batch,
     batch_idx: int,
     ctx: BatchProcessingContext,
-    supabase_client: supabase.Client,
+    supabase_client: AsyncClient,
     max_retries: int = 3,
 ) -> int:
     questions = await try_retry_batch(batch, batch_idx, ctx, max_retries)
@@ -292,7 +292,7 @@ async def insert_batch_to_supabase(
             continue
 
         try:
-            result = (
+            result = await (
                 supabase_client.table("gen_questions")
                 .insert(gen_question_insert.model_dump(mode="json", exclude_none=True))
                 .execute()
@@ -307,7 +307,7 @@ async def insert_batch_to_supabase(
             inserted_count += 1
 
             # Create initial version (v0) for undo/redo functionality
-            create_initial_version(supabase_client, question_id, inserted_question)
+            await create_initial_version(supabase_client, question_id, inserted_question)
 
             # Insert SVGs into gen_images table if present
             if svg_list:
@@ -321,9 +321,11 @@ async def insert_batch_to_supabase(
                                 svg_string=svg_string,
                                 position=position,
                             )
-                            supabase_client.table("gen_images").insert(
-                                gen_image.model_dump(mode="json", exclude_none=True)
-                            ).execute()
+                            await (
+                                supabase_client.table("gen_images")
+                                .insert(gen_image.model_dump(mode="json", exclude_none=True))
+                                .execute()
+                            )
                     except Exception as svg_error:
                         logger.warning(f"Failed to insert SVG for question {question_id}: {svg_error}")
 
@@ -336,7 +338,7 @@ async def insert_batch_to_supabase(
                         "gen_question_id": str(question_id),
                         "concept_id": str(concept_id),
                     }
-                    supabase_client.table("gen_questions_concepts_maps").insert(concept_map_payload).execute()
+                    await supabase_client.table("gen_questions_concepts_maps").insert(concept_map_payload).execute()
                 except Exception as mapping_error:
                     if "duplicate key value violates unique constraint" not in str(mapping_error):
                         logger.warning(f"Failed to create mapping: {mapping_error}")
@@ -347,7 +349,7 @@ async def insert_batch_to_supabase(
 async def process_all_batches(
     batches: list[Batch],
     ctx: BatchProcessingContext,
-    supabase_client: supabase.Client,
+    supabase_client: AsyncClient,
     max_retries: int = 3,
 ) -> dict[str, any]:
     tasks = [

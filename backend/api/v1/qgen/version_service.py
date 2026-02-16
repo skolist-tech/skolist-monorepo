@@ -7,7 +7,7 @@ Handles version management for gen_questions, enabling undo/redo functionality.
 import logging
 from typing import Any
 
-import supabase
+from supabase import AsyncClient
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +41,8 @@ def extract_version_data(question_data: dict[str, Any]) -> dict[str, Any]:
     return {key: question_data.get(key) for key in VERSION_FIELDS if key in question_data}
 
 
-def create_initial_version(
-    supabase_client: supabase.Client,
+async def create_initial_version(
+    supabase_client: AsyncClient,
     gen_question_id: str,
     question_data: dict[str, Any],
 ) -> dict[str, Any] | None:
@@ -50,7 +50,7 @@ def create_initial_version(
     Create version 0 when a question is first created.
 
     Args:
-        supabase_client: Supabase client instance
+        supabase_client: Async Supabase client instance
         gen_question_id: The ID of the newly created question
         question_data: The question data (all fields)
 
@@ -68,7 +68,7 @@ def create_initial_version(
             }
         )
 
-        result = supabase_client.table("gen_question_versions").insert(version_data).execute()
+        result = await supabase_client.table("gen_question_versions").insert(version_data).execute()
 
         if result.data:
             logger.debug(f"Created initial version (v0) for question {gen_question_id}")
@@ -81,8 +81,8 @@ def create_initial_version(
         return None
 
 
-def create_new_version_on_update(
-    supabase_client: supabase.Client,
+async def create_new_version_on_update(
+    supabase_client: AsyncClient,
     gen_question_id: str,
     new_question_data: dict[str, Any],
 ) -> dict[str, Any] | None:
@@ -98,7 +98,7 @@ def create_new_version_on_update(
     6. Creates new version with index = max + 1, is_active=true
 
     Args:
-        supabase_client: Supabase client instance
+        supabase_client: Async Supabase client instance
         gen_question_id: The ID of the question being updated
         new_question_data: The update data (may be partial)
 
@@ -107,7 +107,7 @@ def create_new_version_on_update(
     """
     try:
         # 0. Fetch the current question to get ALL fields (required for NOT NULL constraints)
-        current_question_result = (
+        current_question_result = await (
             supabase_client.table("gen_questions").select("*").eq("id", gen_question_id).single().execute()
         )
 
@@ -119,7 +119,7 @@ def create_new_version_on_update(
         full_question_data = {**current_question_result.data, **new_question_data}
 
         # 1. Get current active version
-        active_result = (
+        active_result = await (
             supabase_client.table("gen_question_versions")
             .select("id, version_index")
             .eq("gen_question_id", gen_question_id)
@@ -132,13 +132,13 @@ def create_new_version_on_update(
         if not active_result.data:
             # No active version exists - create initial version first
             logger.warning(f"No active version found for question {gen_question_id}, creating initial version")
-            return create_initial_version(supabase_client, gen_question_id, full_question_data)
+            return await create_initial_version(supabase_client, gen_question_id, full_question_data)
 
         current_active = active_result.data
         current_index = current_active["version_index"]
 
         # 2. Mark all versions with index > current as deleted (invalidate redo history)
-        (
+        await (
             supabase_client.table("gen_question_versions")
             .update({"is_deleted": True})
             .eq("gen_question_id", gen_question_id)
@@ -148,7 +148,7 @@ def create_new_version_on_update(
         )
 
         # 3. Set current active to inactive
-        (
+        await (
             supabase_client.table("gen_question_versions")
             .update({"is_active": False})
             .eq("id", current_active["id"])
@@ -156,7 +156,7 @@ def create_new_version_on_update(
         )
 
         # 4. Get max version index for this question
-        max_result = (
+        max_result = await (
             supabase_client.table("gen_question_versions")
             .select("version_index")
             .eq("gen_question_id", gen_question_id)
@@ -179,7 +179,7 @@ def create_new_version_on_update(
             }
         )
 
-        result = supabase_client.table("gen_question_versions").insert(version_data).execute()
+        result = await supabase_client.table("gen_question_versions").insert(version_data).execute()
 
         if result.data:
             logger.debug(f"Created new version (v{new_index}) for question {gen_question_id}")
