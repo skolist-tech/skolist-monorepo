@@ -3,7 +3,7 @@ import random
 from enum import Enum
 from typing import Any
 
-import supabase
+from supabase import AsyncClient
 
 logger = logging.getLogger(__name__)
 
@@ -80,8 +80,8 @@ def extract_bank_question_to_gen_payload(
     return payload
 
 
-def fetch_questions_from_bank(
-    supabase_client: supabase.Client,
+async def fetch_questions_from_bank(
+    supabase_client: AsyncClient,
     concept_names: list[str],
     concepts_name_to_id: dict[str, str],
     count: int,
@@ -108,7 +108,7 @@ def fetch_questions_from_bank(
         return []
 
     # Helper to run query
-    def run_query(target_diff: str | None = None):
+    async def run_query(target_diff: str | None = None):
         # We need to join with bank_questions_concepts_maps to filter by concept
         # Supabase-py doesn't support complex joins easily for filtering
         # in one go without raw sql or views usually, but we can try
@@ -124,7 +124,7 @@ def fetch_questions_from_bank(
             .in_("concept_id", concept_ids)
         )
 
-        map_res = map_query.execute()
+        map_res = await map_query.execute()
         valid_q_ids = [row["bank_question_id"] for row in map_res.data]
 
         if not valid_q_ids:
@@ -152,12 +152,12 @@ def fetch_questions_from_bank(
         if target_diff:
             query = query.eq("hardness_level", target_diff)
 
-        res = query.execute()
+        res = await query.execute()
         logger.info(f"Number of questions found after running the fetching query : {len(res.data)}")
         return res.data
 
     # Attempt 1: Strict difficulty
-    questions = run_query(difficulty)
+    questions = await run_query(difficulty)
 
     # Attempt 2: Relax difficulty if needed
     if len(questions) < count:
@@ -165,7 +165,7 @@ def fetch_questions_from_bank(
             f"Not enough {request_type.value} questions with difficulty "
             f"{difficulty}. Found {len(questions)}. Relaxing difficulty."
         )
-        more_questions = run_query(None)  # Fetch all for these concepts + flag
+        more_questions = await run_query(None)  # Fetch all for these concepts + flag
         logger.info(f"Number of the more_questions is : {len(more_questions)}")
         # Exclude ones we already have
         existing_ids = {q["id"] for q in questions}

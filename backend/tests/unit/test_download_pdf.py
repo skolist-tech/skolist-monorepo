@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from api.v1.auth import get_supabase_client, require_supabase_user
+from api.v1.auth import get_async_supabase_client, get_supabase_client, require_supabase_user
 from app import create_app
 
 # Mock data
@@ -23,6 +23,8 @@ MOCK_IMAGES = []
 
 
 class MockSupabaseClient:
+    """Mock for sync Supabase client (used by auth)."""
+
     def __init__(self):
         self.table_name = None
 
@@ -43,6 +45,50 @@ class MockSupabaseClient:
         return self
 
     def execute(self):
+        mock_res = MagicMock()
+        if self.table_name == "qgen_drafts":
+            mock_res.data = [MOCK_DRAFT]
+        elif self.table_name == "qgen_draft_sections":
+            mock_res.data = MOCK_SECTIONS
+        elif self.table_name == "gen_questions":
+            mock_res.data = MOCK_QUESTIONS
+        elif self.table_name == "qgen_draft_instructions_drafts_maps":
+            mock_res.data = MOCK_INSTRUCTIONS
+        elif self.table_name == "gen_images":
+            mock_res.data = MOCK_IMAGES
+        else:
+            mock_res.data = []
+        return mock_res
+
+
+class MockAsyncSupabaseClient:
+    """Mock for async Supabase client (used by routes)."""
+
+    def __init__(self):
+        self.table_name = None
+        self._storage = MagicMock()
+
+    def table(self, name):
+        self.table_name = name
+        return self
+
+    def select(self, *args, **kwargs):
+        return self
+
+    def eq(self, *args, **kwargs):
+        return self
+
+    def in_(self, *args, **kwargs):
+        return self
+
+    def order(self, *args, **kwargs):
+        return self
+
+    @property
+    def storage(self):
+        return self._storage
+
+    async def execute(self):
         mock_res = MagicMock()
         if self.table_name == "qgen_drafts":
             mock_res.data = [MOCK_DRAFT]
@@ -88,7 +134,13 @@ def test_app():
         with TestClient(app) as client:
             # Inject dependency overrides
             app.dependency_overrides[get_supabase_client] = lambda: MockSupabaseClient()
-            app.dependency_overrides[require_supabase_user] = lambda: {"id": "test-user"}
+            app.dependency_overrides[require_supabase_user] = lambda: MagicMock(id="test-user")
+
+            # Override async client
+            async def get_mock_async_client():
+                return MockAsyncSupabaseClient()
+
+            app.dependency_overrides[get_async_supabase_client] = get_mock_async_client
             yield client, app, mock_browser
 
 

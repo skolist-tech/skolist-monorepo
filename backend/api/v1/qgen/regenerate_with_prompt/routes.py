@@ -1,12 +1,12 @@
 import logging
 import os
 
-import supabase
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import Response
 from google import genai
+from supabase import AsyncClient
 
-from api.v1.auth import get_supabase_client, require_supabase_user
+from api.v1.auth import get_async_supabase_client, require_supabase_user
 from api.v1.qgen.credits import check_user_has_credits, deduct_user_credits
 from api.v1.qgen.regenerate_with_prompt.service import (
     QuestionProcessingError,
@@ -25,7 +25,7 @@ async def regenerate_question_with_prompt(
     prompt: str | None = Form(None, description="Custom prompt for regeneration"),
     is_camera_capture: bool = Form(False, description="Flag indicating if this is from camera capture"),
     files: list[UploadFile] = File(default=[], description="Optional files to attach"),
-    supabase_client: supabase.Client = Depends(get_supabase_client),
+    supabase_client: AsyncClient = Depends(get_async_supabase_client),
     user: dict = Depends(require_supabase_user),
 ):
     """
@@ -34,7 +34,7 @@ async def regenerate_question_with_prompt(
     """
     user_id = user.id
 
-    if not check_user_has_credits(user_id):
+    if not await check_user_has_credits(supabase_client, user_id):
         return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
 
     logger.info(
@@ -50,7 +50,7 @@ async def regenerate_question_with_prompt(
 
     try:
         # Fetch Question
-        gen_question = supabase_client.table("gen_questions").select("*").eq("id", gen_question_id).execute()
+        gen_question = await supabase_client.table("gen_questions").select("*").eq("id", gen_question_id).execute()
 
         if not gen_question.data:
             raise HTTPException(status_code=404, detail="Gen Question not found")
@@ -59,7 +59,7 @@ async def regenerate_question_with_prompt(
 
         # Fetch existing SVGs for this question
         gen_images = (
-            supabase_client.table("gen_images")
+            await supabase_client.table("gen_images")
             .select("*")
             .eq("gen_question_id", gen_question_id)
             .order("position")
@@ -99,7 +99,7 @@ async def regenerate_question_with_prompt(
             is_camera_capture=is_camera_capture,
         )
 
-        deduct_user_credits(user_id, 2)
+        await deduct_user_credits(supabase_client, user_id, 2)
 
         return Response(status_code=status.HTTP_200_OK)
 

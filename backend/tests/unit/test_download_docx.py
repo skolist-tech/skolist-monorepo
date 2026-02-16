@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from api.v1.auth import get_supabase_client, require_supabase_user
+from api.v1.auth import get_async_supabase_client, get_supabase_client, require_supabase_user
 from app import create_app
 
 # Basic Mock data
@@ -33,6 +33,8 @@ def mock_paper_data(questions=None):
 
 
 class MockSupabaseClient:
+    """Mock for sync Supabase client (used by auth)."""
+
     def __init__(self):
         self.table_name = None
 
@@ -63,6 +65,39 @@ class MockSupabaseClient:
         return MagicMock()
 
 
+class MockAsyncSupabaseClient:
+    """Mock for async Supabase client (used by routes)."""
+
+    def __init__(self):
+        self.table_name = None
+        self._storage = MagicMock()
+
+    def table(self, name):
+        self.table_name = name
+        return self
+
+    def select(self, *args, **kwargs):
+        return self
+
+    def eq(self, *args, **kwargs):
+        return self
+
+    def in_(self, *args, **kwargs):
+        return self
+
+    def order(self, *args, **kwargs):
+        return self
+
+    @property
+    def storage(self):
+        return self._storage
+
+    async def execute(self):
+        mock_res = MagicMock()
+        mock_res.data = []
+        return mock_res
+
+
 @pytest.fixture
 def test_app():
     # Only patch app start, not concerned with PDF browser here since we are testing DOCX
@@ -75,7 +110,13 @@ def test_app():
         app = create_app()
         with TestClient(app) as client:
             app.dependency_overrides[get_supabase_client] = lambda: MockSupabaseClient()
-            app.dependency_overrides[require_supabase_user] = lambda: {"id": "test-user"}
+            app.dependency_overrides[require_supabase_user] = lambda: MagicMock(id="test-user")
+
+            # Override async client
+            async def get_mock_async_client():
+                return MockAsyncSupabaseClient()
+
+            app.dependency_overrides[get_async_supabase_client] = get_mock_async_client
             yield client
 
 

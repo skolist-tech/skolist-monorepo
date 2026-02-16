@@ -17,7 +17,7 @@ from unittest.mock import patch
 import pytest
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
-from supabase import Client, create_client
+from supabase import AsyncClient, Client, acreate_client, create_client
 
 from api.v1.qgen.models import MCQ4, FillInTheBlank, ShortAnswer, TrueFalse
 from app import create_app
@@ -353,6 +353,31 @@ def service_supabase_client(env: dict[str, str]) -> Client:
     return create_client(env["SUPABASE_URL"], env["SUPABASE_SERVICE_KEY"])
 
 
+# Global async client for test session
+_test_async_client: AsyncClient | None = None
+
+
+@pytest.fixture(scope="session")
+def async_supabase_client(env: dict[str, str]):
+    """
+    Create an async Supabase client for integration tests.
+    This will be used to override the get_async_supabase_client dependency.
+    """
+    import asyncio
+
+    async def create_client_async():
+        global _test_async_client
+        if _test_async_client is None:
+            _test_async_client = await acreate_client(env["SUPABASE_URL"], env["SUPABASE_SERVICE_KEY"])
+        return _test_async_client
+
+    # Run the async creation in a new event loop for the session fixture
+    loop = asyncio.new_event_loop()
+    client = loop.run_until_complete(create_client_async())
+    loop.close()
+    return client
+
+
 @pytest.fixture(scope="session")
 def auth_session(env: dict[str, str], service_supabase_client: Client) -> dict[str, Any]:
     """
@@ -403,22 +428,28 @@ def auth_session(env: dict[str, str], service_supabase_client: Client) -> dict[s
 
 
 @pytest.fixture(scope="session")
-def app(service_supabase_client: Client):
+def app(service_supabase_client: Client, async_supabase_client: AsyncClient):
     """
     Create the FastAPI application instance with test Supabase client.
 
-    Overrides get_supabase_client to use the same Supabase instance that
-    the tests authenticate against, ensuring JWT validation succeeds.
+    Overrides get_supabase_client and get_async_supabase_client to use the same
+    Supabase instance that the tests authenticate against, ensuring JWT validation succeeds.
     """
-    from api.v1.auth import get_supabase_client
+    from api.v1.auth import get_async_supabase_client, get_supabase_client
 
     # Clear any cached client that may point to a different Supabase instance
     get_supabase_client.cache_clear()
 
     app_instance = create_app()
 
-    # Override the get_supabase_client dependency to return our test client
+    # Override the get_supabase_client dependency (for require_supabase_user)
     app_instance.dependency_overrides[get_supabase_client] = lambda: service_supabase_client
+
+    # Override the async client dependency for all API routes
+    async def get_test_async_client():
+        return async_supabase_client
+
+    app_instance.dependency_overrides[get_async_supabase_client] = get_test_async_client
 
     # Also patch the function directly since require_supabase_user calls it directly
     with patch("api.v1.auth.get_supabase_client", return_value=service_supabase_client):
