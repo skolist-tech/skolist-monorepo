@@ -72,12 +72,8 @@ jobs:
           # Build
           docker build -t backend:latest .
 
-          # Run container
-          # Cleanup previous run if exists
-          docker rm -f backend || true
-
           docker run -d \
-            -p 8000:8080 \
+            -p 8080:8080 \
             -e SUPABASE_URL="$SUPABASE_URL" \
             -e SUPABASE_SERVICE_KEY="$SUPABASE_SERVICE_KEY" \
             -e OPENAI_API_KEY="$OPENAI_API_KEY" \
@@ -87,29 +83,20 @@ jobs:
             backend:latest
 
           # Wait for healthcheck
-          timeout 60 bash -c 'until curl -s http://localhost:8000/ > /dev/null; do sleep 1; done' || (echo "Backend failed to start. Logs:" && docker logs "backend-${{ github.run_id }}" && exit 1)
+          timeout 60 bash -c 'until curl -s http://localhost:8080/ > /dev/null; do sleep 1; done' || (echo "Backend failed to start. Logs:" && docker logs "backend-${{ github.run_id }}" && exit 1)
 
       # Frontend (AI Paper Generator)
-      # Frontend + Tests (Combined to ensure process stays alive)
-      - name: Start Frontend and Run Tests
+      - name: Start Frontend
         env:
-          # Frontend Envs
           VITE_SUPABASE_URL: ${{ env.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ env.SUPABASE_ANON_KEY }}
-          VITE_FASTAPI_URL: "http://localhost:8000"
-          # Playwright Envs
-          BASE_URL: "http://localhost:3001"
-          API_URL: "http://localhost:8000"
-          SUPABASE_URL: ${{ env.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ env.SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
+          VITE_FASTAPI_URL: "http://localhost:8080"
         run: |
-          # 1. Start Frontend
           cd frontend/apps/ai_paper_generator
+          echo "Building Frontend..."
+          pnpm build
           echo "Starting Frontend..."
-          # Use preview if build was run, but here we use dev for speed/consistency with previous setup
-          nohup pnpm dev --port 3001 > frontend.log 2>&1 &
-          FRONTEND_PID=$!
+          pnpm preview --port 3001 > frontend.log 2>&1 &
 
           # Wait for healthcheck
           echo "Waiting for Frontend to be ready..."
@@ -120,20 +107,19 @@ jobs:
           fi
           echo "Frontend is ready!"
 
-          # 2. Run Tests
-          cd ../../../e2e
-          # Install dependencies if not already (should be cached/installed in previous step)
+      # E2E Tests
+      - name: Run E2E Tests
+        env:
+          BASE_URL: "http://localhost:3001"
+          API_URL: "http://localhost:8080"
+          SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ env.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
+        run: |
+          cd e2e
           npx playwright install --with-deps chromium
-
           echo "Running Playwright Tests..."
           npx playwright test
-          TEST_EXIT_CODE=$?
-
-          # 3. Cleanup
-          kill $FRONTEND_PID || true
-
-          # Exit with test result
-          exit $TEST_EXIT_CODE
 
       - uses: actions/upload-artifact@v4
         if: always()
