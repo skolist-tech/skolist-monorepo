@@ -28,35 +28,52 @@ export function initializeFirebase(config: FirebaseConfig) {
 export const getFirebaseAuth = () => {
   if (firebaseAuth) return firebaseAuth;
 
-  // Try to use environment variables if not initialized manually
-  // This block is for legacy support of non-refactored apps
-  try {
-    const metaWithEnv = import.meta as unknown as {
-      env: Record<string, string | undefined>;
-    };
-    if (typeof import.meta !== "undefined" && metaWithEnv.env) {
-      const config = {
-        apiKey: metaWithEnv.env.VITE_FIREBASE_API_KEY as string,
-        authDomain: metaWithEnv.env.VITE_FIREBASE_AUTH_DOMAIN as string,
-        projectId: metaWithEnv.env.VITE_FIREBASE_PROJECT_ID as string,
-        storageBucket: metaWithEnv.env.VITE_FIREBASE_STORAGE_BUCKET as string,
-        messagingSenderId: metaWithEnv.env
-          .VITE_FIREBASE_MESSAGING_SENDER_ID as string,
-        appId: metaWithEnv.env.VITE_FIREBASE_APP_ID as string,
-      };
-      // Only initialize if config keys allow (simple check)
-      if (config.apiKey) {
-        return initializeFirebase(config);
-      }
-    }
-  } catch {
-    // Ignore error if import.meta is accessed where not allowed or fields missing
+  // Try to auto-initialize from environment variables
+  // Uses the same inline import.meta.env access pattern as client.ts
+  // (Vite requires direct `import.meta.env.VITE_*` access for static replacement)
+  const apiKey =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: Record<string, string> }).env
+        ?.VITE_FIREBASE_API_KEY) ||
+    "";
+  const authDomain =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: Record<string, string> }).env
+        ?.VITE_FIREBASE_AUTH_DOMAIN) ||
+    "";
+  const projectId =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: Record<string, string> }).env
+        ?.VITE_FIREBASE_PROJECT_ID) ||
+    "";
+  const storageBucket =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: Record<string, string> }).env
+        ?.VITE_FIREBASE_STORAGE_BUCKET) ||
+    "";
+  const messagingSenderId =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: Record<string, string> }).env
+        ?.VITE_FIREBASE_MESSAGING_SENDER_ID) ||
+    "";
+  const appId =
+    (typeof import.meta !== "undefined" &&
+      (import.meta as unknown as { env?: Record<string, string> }).env
+        ?.VITE_FIREBASE_APP_ID) ||
+    "";
+
+  if (apiKey) {
+    return initializeFirebase({
+      apiKey,
+      authDomain,
+      projectId,
+      storageBucket,
+      messagingSenderId,
+      appId,
+    });
   }
 
-  // If we reach here, it means we couldn't auto-initialize.
-  // The consuming app MUST call initializeFirebase first.
-  // We return a dummy or undefined here, but ideally the app crashes if used before init.
-  // For now, let's look for existing apps.
+  // Fallback: check for existing Firebase apps
   if (getApps().length) {
     return getAuth(getApp());
   }
