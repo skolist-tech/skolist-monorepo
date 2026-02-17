@@ -73,7 +73,7 @@ jobs:
           docker build -t backend:latest .
 
           docker run -d \
-            -p 8080:8080 \
+            --network="host" \
             -e SUPABASE_URL="$SUPABASE_URL" \
             -e SUPABASE_SERVICE_KEY="$SUPABASE_SERVICE_KEY" \
             -e OPENAI_API_KEY="$OPENAI_API_KEY" \
@@ -85,31 +85,14 @@ jobs:
           # Wait for healthcheck
           timeout 60 bash -c 'until curl -s http://localhost:8080/ > /dev/null; do sleep 1; done' || (echo "Backend failed to start. Logs:" && docker logs "backend-${{ github.run_id }}" && exit 1)
 
-      # Frontend (AI Paper Generator)
-      - name: Start Frontend
+      # E2E Tests (Playwright handles frontend via webServer config)
+      - name: Run E2E Tests
         env:
+          # Frontend build env vars (used by Playwright webServer)
           VITE_SUPABASE_URL: ${{ env.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ env.SUPABASE_ANON_KEY }}
           VITE_FASTAPI_URL: "http://localhost:8080"
-        run: |
-          cd frontend/apps/ai_paper_generator
-          echo "Building Frontend..."
-          pnpm build
-          echo "Starting Frontend..."
-          pnpm preview --port 3001 > frontend.log 2>&1 &
-
-          # Wait for healthcheck
-          echo "Waiting for Frontend to be ready..."
-          if ! timeout 60 bash -c 'until curl -s http://localhost:3001/ > /dev/null; do sleep 2; done'; then
-            echo "Frontend failed to start. Logs:"
-            cat frontend.log
-            exit 1
-          fi
-          echo "Frontend is ready!"
-
-      # E2E Tests
-      - name: Run E2E Tests
-        env:
+          # Test env vars
           BASE_URL: "http://localhost:3001"
           API_URL: "http://localhost:8080"
           SUPABASE_URL: ${{ env.SUPABASE_URL }}

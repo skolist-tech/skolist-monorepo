@@ -10,8 +10,9 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
  *
  * Prerequisites (must be running before `pnpm test`):
  *   1. Supabase:  cd skolist-db && supabase start
- *   2. Backend:   cd backend && uvicorn app:app --port 8000
- *   3. Frontend:  cd frontend && pnpm dev
+ *   2. Backend:   cd backend && uvicorn app:app --port 8080
+ *
+ * Note: Frontend is started automatically via webServer config below.
  */
 export default defineConfig({
   testDir: "./tests",
@@ -51,4 +52,12 @@ export default defineConfig({
     //   use: { ...devices['Desktop Safari'] },
     // },
   ],
+
+  /* Run frontend before starting tests */
+  webServer: {
+    command: "cd ../frontend/apps/ai_paper_generator && pnpm build && pnpm preview --port 3001",
+    url: "http://localhost:3001",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+  },
 });
