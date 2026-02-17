@@ -2,9 +2,9 @@ name: "E2E Tests"
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, stage]
   pull_request:
-    branches: [main, master]
+    branches: [main, stage]
 
 jobs:
   e2e:
@@ -27,7 +27,7 @@ jobs:
           cache-dependency-path: "frontend/pnpm-lock.yaml"
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
