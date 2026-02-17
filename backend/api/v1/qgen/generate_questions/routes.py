@@ -178,7 +178,12 @@ async def generate_questions(
                 question_batches = list(chunked(bank_question_ids, 300))
 
                 async def fetch_bank_questions(batch):
-                    return await supabase_client.table("bank_questions").select("*").in_("id", batch).execute()
+                    return (
+                        await supabase_client.table("bank_questions")
+                        .select("id, question_text, answer_text, explanation, question_type, hardness_level")
+                        .in_("id", batch)
+                        .execute()
+                    )
 
                 responses = await asyncio.gather(*[fetch_bank_questions(b) for b in question_batches])
                 old_questions = [item for resp in responses for item in (resp.data or [])]

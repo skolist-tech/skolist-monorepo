@@ -134,12 +134,14 @@ async def fetch_questions_from_bank(
             logger.info(f"Number of quesitons found in bank for the req are : {len(valid_q_ids)}")
 
         # 2. Fetch questions
-        query = (
-            supabase_client.table("bank_questions")
-            .select("*, bank_questions_concepts_maps(concept_id)")
-            .in_("id", valid_q_ids)
-            .eq(flag_filter, True)
+        # Explicitly select only needed columns to improve performance
+        columns = (
+            "id, question_text, answer_text, explanation, marks, hardness_level, "
+            "question_type, option1, option2, option3, option4, correct_mcq_option, "
+            "msq_option1_answer, msq_option2_answer, msq_option3_answer, msq_option4_answer, "
+            "match_columns, svgs, bank_questions_concepts_maps(concept_id)"
         )
+        query = supabase_client.table("bank_questions").select(columns).in_("id", valid_q_ids).eq(flag_filter, True)
 
         # Filter out questions with is_image_needed=True if USE_IMAGE_NEEDED is False
         if not USE_IMAGE_NEEDED:
