@@ -138,13 +138,15 @@ async def generate_questions(
 
         try:
             ids = [str(cid) for cid in request.concept_ids if cid]
-            concepts = []
+            concept_batches = list(chunked(ids, 300))
 
-            for batch in chunked(ids, 300):
-                response = (
+            async def fetch_concepts(batch):
+                return (
                     await supabase_client.table("concepts").select("id, name, description").in_("id", batch).execute()
                 )
-                concepts.extend(response.data or [])
+
+            responses = await asyncio.gather(*[fetch_concepts(b) for b in concept_batches])
+            concepts = [item for resp in responses for item in (resp.data or [])]
         except Exception as e:
             logger.exception(f"Error fetching concepts: {e}")
             return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -177,8 +179,16 @@ async def generate_questions(
             try:
                 question_batches = list(chunked(bank_question_ids, 300))
 
+                # Bolt: Explicitly specify required columns instead of "*" to reduce DB load and AI tokens
+                columns = (
+                    "id, question_text, answer_text, explanation, question_type, "
+                    "option1, option2, option3, option4, correct_mcq_option, "
+                    "msq_option1_answer, msq_option2_answer, msq_option3_answer, msq_option4_answer, "
+                    "hardness_level, marks, svgs, match_columns"
+                )
+
                 async def fetch_bank_questions(batch):
-                    return await supabase_client.table("bank_questions").select("*").in_("id", batch).execute()
+                    return await supabase_client.table("bank_questions").select(columns).in_("id", batch).execute()
 
                 responses = await asyncio.gather(*[fetch_bank_questions(b) for b in question_batches])
                 old_questions = [item for resp in responses for item in (resp.data or [])]
