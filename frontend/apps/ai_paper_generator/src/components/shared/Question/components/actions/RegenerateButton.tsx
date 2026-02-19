@@ -5,7 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@skolist/ui";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 import {
   type ActionButtonProps,
   getButtonClasses,
@@ -39,10 +39,16 @@ export function RegenerateButton({
             disabled={isRegenerating}
             type="button"
           >
-            <RefreshCw
-              className={`${iconSizeClass} text-muted-foreground hover:text-primary ${isRegenerating ? "opacity-50" : ""}`}
-            />
-            {mode === "menu" && <span>Regenerate</span>}
+            {isRegenerating ? (
+              <Loader2 className={`${iconSizeClass} animate-spin`} />
+            ) : (
+              <RefreshCw
+                className={`${iconSizeClass} text-muted-foreground hover:text-primary`}
+              />
+            )}
+            {mode === "menu" && (
+              <span>{isRegenerating ? "Regenerating..." : "Regenerate"}</span>
+            )}
           </Button>
         </TooltipTrigger>
         {mode === "icon" && (

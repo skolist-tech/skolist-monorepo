@@ -5,7 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@skolist/ui";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import {
   type ActionButtonProps,
   getButtonClasses,
@@ -39,10 +39,14 @@ export function AutoCorrectButton({
             disabled={isAutoCorrecting}
             type="button"
           >
-            <Sparkles
-              className={`${iconSizeClass} text-yellow-400 ${isAutoCorrecting ? "opacity-50" : ""}`}
-            />
-            {mode === "menu" && <span>Auto-Correct</span>}
+            {isAutoCorrecting ? (
+              <Loader2 className={`${iconSizeClass} animate-spin`} />
+            ) : (
+              <Sparkles className={`${iconSizeClass} text-yellow-400`} />
+            )}
+            {mode === "menu" && (
+              <span>{isAutoCorrecting ? "Correcting..." : "Auto-Correct"}</span>
+            )}
           </Button>
         </TooltipTrigger>
         {mode === "icon" && (

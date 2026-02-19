@@ -171,9 +171,13 @@ export function GeneratedQuestionCard({
   return (
     <div
       ref={cardRef}
-      className={`group relative min-h-[140px] rounded-lg border bg-background p-4 shadow-sm transition-all hover:shadow-md ${
-        isSelected ? "border-primary ring-2 ring-primary" : ""
-      } ${anims.slideDirection ? "pointer-events-none" : ""} ${anims.isDisintegrating ? "pointer-events-none" : ""}`}
+      className={`group relative min-h-[140px] rounded-lg border bg-background p-4 shadow-sm transition-all ${
+        !isReadOnly && !anims.slideDirection && !anims.isDisintegrating
+          ? "hover:-translate-y-1 hover:shadow-md active:scale-[0.99]"
+          : ""
+      } ${isSelected ? "border-primary ring-2 ring-primary" : ""} ${
+        anims.slideDirection ? "pointer-events-none" : ""
+      } ${anims.isDisintegrating ? "pointer-events-none" : ""}`}
       style={{
         animation:
           anims.slideDirection === "right"
@@ -237,7 +241,13 @@ export function GeneratedQuestionCard({
 
       {/* --- Selection Checkbox --- */}
       {onSelect && (
-        <div className="absolute left-3 top-3.5 z-10">
+        <div
+          className={`absolute left-3 top-3.5 z-10 transition-opacity duration-200 ${
+            !isSelected
+              ? "md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100"
+              : "opacity-100"
+          }`}
+        >
           <Checkbox
             checked={isSelected}
             onCheckedChange={(checked) => onSelect(checked === true)}

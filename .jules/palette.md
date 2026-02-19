@@ -1,0 +1,3 @@
+## 2025-05-15 - Question Card Interactive Polish
+**Learning:** Hiding secondary actions (checkboxes, action bars) on desktop until hover significantly reduces visual noise in lists, but they must remain visible on mobile/touch devices where hover states are unreliable. Using `md:opacity-0` with `group-hover:opacity-100` is an effective pattern for this. Adding a subtle `hover:-translate-y-1` lift effect provides a pleasant tactile feel to list items.
+**Action:** Apply `md:opacity-0 group-hover:opacity-100` for desktop-only hover reveals and `-translate-y-1` for card lift effects in future list-heavy interfaces.

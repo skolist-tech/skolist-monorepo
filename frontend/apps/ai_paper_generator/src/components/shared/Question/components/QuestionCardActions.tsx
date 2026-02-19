@@ -201,7 +201,7 @@ export function QuestionCardActions({
   return (
     <>
       {/* Main Actions Container - Top Right */}
-      <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md bg-background/80 p-1 backdrop-blur-sm">
+      <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md bg-background/80 p-1 backdrop-blur-sm transition-all duration-200 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100">
         {/* DESKTOP VIEW */}
         <div className="hidden items-center md:flex">
           {desktopActions.map((action) => (
