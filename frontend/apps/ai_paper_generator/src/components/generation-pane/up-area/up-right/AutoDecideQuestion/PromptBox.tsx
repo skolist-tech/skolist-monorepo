@@ -1,7 +1,6 @@
-// import { Label, Button } from "@skolist/ui";
-import { Button } from "@skolist/ui";
+import { Label, Button } from "@skolist/ui";
 import { cn } from "@skolist/utils";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, X } from "lucide-react";
 
 interface PromptBoxProps {
   value: string;
@@ -20,7 +19,9 @@ export function PromptBox({
 }: PromptBoxProps) {
   return (
     <div className="space-y-2">
-      {/* <Label htmlFor="generation-prompt">Custom Instructions (Optional)</Label> */}
+      <Label htmlFor="generation-prompt" className="text-sm font-medium">
+        Custom Instructions (Optional)
+      </Label>
       <div className="relative">
         <textarea
           id="generation-prompt"
@@ -37,13 +38,26 @@ export function PromptBox({
             "resize-none disabled:cursor-not-allowed disabled:opacity-50"
           )}
         />
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="absolute right-2 top-2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Clear prompt"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )}
+        <div className="pointer-events-none absolute bottom-2 right-2 rounded bg-background/80 px-1 text-[10px] text-muted-foreground">
+          {value.length} {value.length === 1 ? "character" : "characters"}
+        </div>
       </div>
       <div className="flex justify-center md:justify-end">
         <Button
           size="default"
           onClick={onGenerate}
           disabled={disabled || isGenerating}
-          className="h-10 gap-2 px-8 text-base md:h-9 md:px-4 md:text-sm"
+          className="h-10 gap-2 px-8 text-base transition-transform active:scale-95 md:h-9 md:px-4 md:text-sm"
         >
           {isGenerating ? (
             <>
