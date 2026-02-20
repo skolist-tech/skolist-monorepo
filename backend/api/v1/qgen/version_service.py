@@ -81,6 +81,58 @@ async def create_initial_version(
         return None
 
 
+async def create_initial_versions_batch(
+    supabase_client: AsyncClient,
+    versions_data: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Create initial versions for multiple questions in a single batch.
+
+    Args:
+        supabase_client: Async Supabase client instance
+        versions_data: List of dictionaries, each containing question data and gen_question_id
+
+    Returns:
+        The list of created version records
+    """
+    if not versions_data:
+        return []
+
+    try:
+        batch_payload = []
+        for item in versions_data:
+            gen_question_id = item.get("gen_question_id")
+            question_data = item.get("question_data")
+            if not gen_question_id or not question_data:
+                continue
+
+            version_data = extract_version_data(question_data)
+            version_data.update(
+                {
+                    "gen_question_id": gen_question_id,
+                    "version_index": 0,
+                    "is_active": True,
+                    "is_deleted": False,
+                }
+            )
+            batch_payload.append(version_data)
+
+        if not batch_payload:
+            return []
+
+        result = await supabase_client.table("gen_question_versions").insert(batch_payload).execute()
+
+        if result.data:
+            logger.debug(f"Created {len(result.data)} initial versions in batch")
+            return result.data
+
+        return []
+
+    except Exception as e:
+        logger.error(f"Failed to create initial versions batch: {e}")
+        return []
+
+
 async def create_new_version_on_update(
     supabase_client: AsyncClient,
     gen_question_id: str,

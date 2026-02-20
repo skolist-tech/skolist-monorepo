@@ -35,6 +35,8 @@ from api.v1.qgen.generate_questions.service import (
     BatchGenerationError,
     BatchProcessingContext,
     BatchValidationError,
+    batch_insert_questions,
+    process_all_batches,
     process_batch_generation,
     process_batch_generation_and_validate,
     try_retry_batch,
@@ -852,3 +854,105 @@ class TestCustomExceptions:
         error = BatchValidationError("Validation failed")
         assert isinstance(error, Exception)
         assert str(error) == "Validation failed"
+
+
+# ============================================================================
+# TESTS FOR batch_insert_questions AND process_all_batches
+# ============================================================================
+
+
+class TestBatchOperations:
+    """Tests for batch insertion and all batches processing."""
+
+    @pytest.fixture
+    def batch_ctx(
+        self,
+        gemini_client: genai.Client,
+        mock_concepts_dict: dict[str, str],
+        mock_concepts_name_to_id: dict[str, str],
+        mock_old_questions: list[dict],
+        mock_activity_id: uuid.UUID,
+        mock_supabase_client,
+    ) -> BatchProcessingContext:
+        """Create a BatchProcessingContext for testing."""
+        return BatchProcessingContext(
+            gemini_client=gemini_client,
+            concepts_dict=mock_concepts_dict,
+            concepts_name_to_id=mock_concepts_name_to_id,
+            old_questions=mock_old_questions,
+            activity_id=mock_activity_id,
+            supabase_client=mock_supabase_client,
+        )
+
+    @pytest.mark.asyncio
+    async def test_batch_insert_questions_successful(self, batch_ctx, mock_supabase_client):
+        """Test that batch_insert_questions performs batch inserts."""
+        questions = [
+            {
+                "question": {
+                    "question_text": "Q1",
+                    "answer_text": "A1",
+                    "question_type": "mcq4",
+                    "hardness_level": "easy",
+                    "marks": 1,
+                },
+                "concept_ids": ["c1"],
+            },
+            {
+                "question": {
+                    "question_text": "Q2",
+                    "answer_text": "A2",
+                    "question_type": "mcq4",
+                    "hardness_level": "easy",
+                    "marks": 1,
+                },
+                "concept_ids": ["c2"],
+            },
+        ]
+
+        count = await batch_insert_questions(questions, batch_ctx, mock_supabase_client)
+
+        assert count == 2
+        # Verify gen_questions insert was called once with a list
+        mock_supabase_client.table.assert_any_call("gen_questions")
+        insert_call = mock_supabase_client.table("gen_questions").insert
+        assert insert_call.called
+        args, _kwargs = insert_call.call_args
+        assert isinstance(args[0], list)
+        assert len(args[0]) == 2
+
+    @pytest.mark.asyncio
+    async def test_process_all_batches_end_to_end(self, batch_ctx, mock_supabase_client):
+        """Test process_all_batches end to end with batching."""
+        batches = [
+            Batch(
+                question_type="mcq4",
+                difficulty="easy",
+                n_questions=1,
+                concepts=["Newton's Laws of Motion"],
+                custom_instruction=None,
+            ),
+            Batch(
+                question_type="mcq4",
+                difficulty="easy",
+                n_questions=1,
+                concepts=["Kinetic Energy"],
+                custom_instruction=None,
+            ),
+        ]
+
+        # Reset mock for clean check
+        mock_supabase_client.table.reset_mock()
+
+        result = await process_all_batches(batches, batch_ctx, mock_supabase_client)
+
+        assert result["successful"] == 2
+        assert result["questions_inserted"] > 0
+        assert result["total"] == 2
+
+        # Verify batching: gen_questions.insert should be called exactly once
+        # across all batches if successful
+        gen_questions_table_calls = [
+            call for call in mock_supabase_client.table.call_args_list if call[0][0] == "gen_questions"
+        ]
+        assert len(gen_questions_table_calls) == 1
