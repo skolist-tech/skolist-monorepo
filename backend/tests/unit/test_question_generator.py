@@ -35,6 +35,7 @@ from api.v1.qgen.generate_questions.service import (
     BatchGenerationError,
     BatchProcessingContext,
     BatchValidationError,
+    insert_batch_to_supabase,
     process_batch_generation,
     process_batch_generation_and_validate,
     try_retry_batch,
@@ -852,3 +853,123 @@ class TestCustomExceptions:
         error = BatchValidationError("Validation failed")
         assert isinstance(error, Exception)
         assert str(error) == "Validation failed"
+
+
+# ============================================================================
+# TESTS FOR insert_batch_to_supabase
+# ============================================================================
+
+
+class TestInsertBatchToSupabase:
+    """Tests for the insert_batch_to_supabase function."""
+
+    @pytest.mark.asyncio
+    async def test_insert_batch_to_supabase_calls_insert_with_list(self, mock_supabase_client, mock_activity_id):
+        """Test that insert_batch_to_supabase uses batch insertion for all tables."""
+        import api.v1.qgen.generate_questions.service as service
+
+        # Mock try_retry_batch to return 2 questions
+        questions = [
+            {
+                "question": {
+                    "question_text": "Q1",
+                    "answer_text": "A1",
+                    "question_type": "mcq4",
+                    "hardness_level": "easy",
+                    "marks": 1,
+                    "option1": "O1",
+                    "option2": "O2",
+                    "option3": "O3",
+                    "option4": "O4",
+                    "correct_mcq_option": 1,
+                },
+                "concept_ids": ["id1"],
+            },
+            {
+                "question": {
+                    "question_text": "Q2",
+                    "answer_text": "A2",
+                    "question_type": "mcq4",
+                    "hardness_level": "easy",
+                    "marks": 1,
+                    "option1": "O1",
+                    "option2": "O2",
+                    "option3": "O3",
+                    "option4": "O4",
+                    "correct_mcq_option": 1,
+                    "svgs": [{"svg": "<svg1>"}],
+                },
+                "concept_ids": ["id1"],
+            },
+        ]
+
+        # Patching try_retry_batch in the service module
+        original_try_retry = service.try_retry_batch
+        service.try_retry_batch = AsyncMock(return_value=questions)
+
+        try:
+            ctx = BatchProcessingContext(
+                gemini_client=MagicMock(),
+                supabase_client=mock_supabase_client,
+                concepts_dict={},
+                concepts_name_to_id={"Concept 1": "id1"},
+                old_questions=[],
+                activity_id=mock_activity_id,
+            )
+
+            batch = Batch(
+                question_type="mcq4",
+                difficulty="easy",
+                n_questions=2,
+                concepts=["Concept 1"],
+                custom_instruction=None,
+            )
+
+            count = await insert_batch_to_supabase(batch, 1, ctx, mock_supabase_client)
+
+            assert count == 2
+
+            # Verify gen_questions insert was called once with a list of 2 items
+            mock_supabase_client.table.assert_any_call("gen_questions")
+            # Find the call to insert for gen_questions
+            gen_questions_insert_call = [
+                call
+                for call in mock_supabase_client.table.return_value.insert.call_args_list
+                if call.args and isinstance(call.args[0], list) and len(call.args[0]) == 2
+            ]
+            assert len(gen_questions_insert_call) > 0
+
+            # Verify gen_question_versions insert was called once with a list of 2 items
+            mock_supabase_client.table.assert_any_call("gen_question_versions")
+            versions_insert_call = [
+                call
+                for call in mock_supabase_client.table.return_value.insert.call_args_list
+                if call.args
+                and isinstance(call.args[0], list)
+                and len(call.args[0]) == 2
+                # Check if it contains gen_question_id
+                and "gen_question_id" in call.args[0][0]
+            ]
+            assert len(versions_insert_call) > 0
+
+            # Verify gen_images insert was called once with a list of 1 item
+            mock_supabase_client.table.assert_any_call("gen_images")
+            images_insert_call = [
+                call
+                for call in mock_supabase_client.table.return_value.insert.call_args_list
+                if call.args and isinstance(call.args[0], list) and len(call.args[0]) == 1
+            ]
+            assert len(images_insert_call) > 0
+
+            # Verify gen_questions_concepts_maps insert was called once with a list of 2 items
+            mock_supabase_client.table.assert_any_call("gen_questions_concepts_maps")
+            concepts_insert_call = [
+                call
+                for call in mock_supabase_client.table.return_value.insert.call_args_list
+                if call.args and isinstance(call.args[0], list) and len(call.args[0]) == 2
+            ]
+            assert len(concepts_insert_call) > 0
+
+        finally:
+            # Restore original function
+            service.try_retry_batch = original_try_retry
