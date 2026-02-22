@@ -1,7 +1,6 @@
-// import { Label, Button } from "@skolist/ui";
-import { Button } from "@skolist/ui";
+import { Label, Button, Textarea } from "@skolist/ui";
 import { cn } from "@skolist/utils";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, X } from "lucide-react";
 
 interface PromptBoxProps {
   value: string;
@@ -20,9 +19,9 @@ export function PromptBox({
 }: PromptBoxProps) {
   return (
     <div className="space-y-2">
-      {/* <Label htmlFor="generation-prompt">Custom Instructions (Optional)</Label> */}
+      <Label htmlFor="generation-prompt">Custom Instructions (Optional)</Label>
       <div className="relative">
-        <textarea
+        <Textarea
           id="generation-prompt"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -31,19 +30,32 @@ export function PromptBox({
 • Feel free to specify any constraints you need.
 "
           className={cn(
-            "flex min-h-[110px] w-full rounded-md border border-input bg-background px-3 py-2",
-            "text-sm ring-offset-background placeholder:text-muted-foreground",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            "resize-none disabled:cursor-not-allowed disabled:opacity-50"
+            "min-h-[110px] resize-none pr-8",
+            "disabled:cursor-not-allowed disabled:opacity-50"
           )}
         />
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:bg-muted transition-colors"
+            aria-label="Clear instructions"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+        {value.length > 0 && (
+          <div className="absolute bottom-2 right-2 text-[10px] text-muted-foreground bg-background/80 px-1 rounded pointer-events-none">
+            {value.length} {value.length === 1 ? "character" : "characters"}
+          </div>
+        )}
       </div>
       <div className="flex justify-center md:justify-end">
         <Button
           size="default"
           onClick={onGenerate}
           disabled={disabled || isGenerating}
-          className="h-10 gap-2 px-8 text-base md:h-9 md:px-4 md:text-sm"
+          className="h-10 gap-2 px-8 text-base transition-transform active:scale-95 md:h-9 md:px-4 md:text-sm"
         >
           {isGenerating ? (
             <>
