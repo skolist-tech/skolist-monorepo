@@ -12,6 +12,7 @@ from supabase import AsyncClient
 from supabase_dir import (
     GenImagesInsert,
     GenQuestionsInsert,
+    GenQuestionVersionsInsert,
     PublicHardnessLevelEnumEnum,
 )
 
@@ -19,7 +20,7 @@ from ..models import (
     QUESTION_TYPE_TO_ENUM,
 )
 from ..prompts import generate_questions_with_concepts_prompt
-from ..version_service import create_initial_version
+from ..version_service import extract_version_data
 from .batchification import Batch
 from .models import QUESTION_TYPE_TO_SCHEMA_WITH_CONCEPTS
 from .utils.fetch_questions import QuestionRequestType, fetch_questions_from_bank
@@ -246,12 +247,25 @@ async def insert_batch_to_supabase(
     supabase_client: AsyncClient,
     max_retries: int = 3,
 ) -> int:
+    """
+    Inserts a batch of generated questions into Supabase.
+    Optimized to use batch insertions for gen_questions, versions, images, and concepts.
+    """
     questions = await try_retry_batch(batch, batch_idx, ctx, max_retries)
-    inserted_count = 0
     logger.info(f"Started Inserting questions in supabase : {len(questions)}")
-    for _idx, item in enumerate(questions):
+
+    gen_questions_payloads = []
+    versions_payloads = []
+    images_payloads = []
+    concepts_payloads = []
+
+    for item in questions:
         question_data = item["question"]
         concept_ids = item["concept_ids"]
+
+        # Pre-generate UUID for the question to enable batching related tables
+        question_id = str(uuid.uuid4())
+        question_data["id"] = question_id
 
         # Ensure required fields are present (especially for fetched questions)
         if "activity_id" not in question_data or not question_data["activity_id"]:
@@ -264,7 +278,6 @@ async def insert_batch_to_supabase(
         svg_list = question_data.pop("svgs", None)
 
         # Set created_at with offset to preserve insertion order
-        # Earlier inserted questions get higher timestamps (appear first in DESC order)
         offset = ctx.timestamp_offset_ms
         ctx.timestamp_offset_ms += 1
         question_created_at = ctx.base_timestamp - timedelta(milliseconds=offset)
@@ -273,78 +286,90 @@ async def insert_batch_to_supabase(
         # Map columns to match_the_following_columns if present
         if "columns" in question_data:
             cols = question_data.pop("columns")
+            dict_cols = {}
             if isinstance(cols, list):
-                # Convert list of Column objects/dicts to a single dictionary
-                dict_cols = {}
                 for col in cols:
                     if isinstance(col, dict):
                         dict_cols[col["name"]] = col["items"]
                     else:
                         dict_cols[col.name] = col.items
-                question_data["match_the_following_columns"] = dict_cols
             else:
-                question_data["match_the_following_columns"] = cols
+                dict_cols = cols
+            question_data["match_the_following_columns"] = dict_cols
 
         try:
+            # Validate and prepare gen_questions payload
             gen_question_insert = GenQuestionsInsert(**question_data)
+            gen_questions_payloads.append(gen_question_insert.model_dump(mode="json", exclude_none=True))
+
+            # Prepare initial version (v0) payload
+            version_data = extract_version_data(question_data)
+            version_data.update(
+                {
+                    "gen_question_id": question_id,
+                    "version_index": 0,
+                    "is_active": True,
+                    "is_deleted": False,
+                }
+            )
+            # Validate version payload
+            version_insert = GenQuestionVersionsInsert(**version_data)
+            versions_payloads.append(version_insert.model_dump(mode="json", exclude_none=True))
+
+            # Prepare SVGs payloads
+            if svg_list:
+                for position, svg_item in enumerate(svg_list, start=1):
+                    svg_string = svg_item.get("svg") if isinstance(svg_item, dict) else getattr(svg_item, "svg", None)
+                    if svg_string:
+                        gen_image = GenImagesInsert(
+                            gen_question_id=question_id,
+                            svg_string=svg_string,
+                            position=position,
+                        )
+                        images_payloads.append(gen_image.model_dump(mode="json", exclude_none=True))
+
+            # Prepare concepts mapping payloads
+            for concept_id in concept_ids:
+                concept_map = {
+                    "gen_question_id": question_id,
+                    "concept_id": str(concept_id),
+                }
+                # Validation bypass for raw dict due to UUIDv7 concerns in existing code
+                concepts_payloads.append(concept_map)
+
         except Exception as e:
             logger.error(f"Validation failed for question data: {e}")
             logger.debug(f"Problematic payload: {question_data}")
             continue
 
-        try:
-            result = await (
-                supabase_client.table("gen_questions")
-                .insert(gen_question_insert.model_dump(mode="json", exclude_none=True))
-                .execute()
-            )
-        except Exception as e:
-            logger.error(f"Failed to execute insert query: {e}")
-            continue
+    if not gen_questions_payloads:
+        return 0
 
-        if result.data:
-            inserted_question = result.data[0]
-            question_id = inserted_question["id"]
-            inserted_count += 1
+    try:
+        # Step 1: Batch insert questions
+        await supabase_client.table("gen_questions").insert(gen_questions_payloads).execute()
 
-            # Create initial version (v0) for undo/redo functionality
-            await create_initial_version(supabase_client, question_id, inserted_question)
+        # Step 2: Batch insert related entities (parallel round trips)
+        tasks = []
+        if versions_payloads:
+            tasks.append(supabase_client.table("gen_question_versions").insert(versions_payloads).execute())
+        if images_payloads:
+            tasks.append(supabase_client.table("gen_images").insert(images_payloads).execute())
+        if concepts_payloads:
+            # upsert to handle potential duplicates as in existing code's try-except
+            tasks.append(supabase_client.table("gen_questions_concepts_maps").upsert(concepts_payloads).execute())
 
-            # Insert SVGs into gen_images table if present
-            if svg_list:
-                for position, svg_item in enumerate(svg_list, start=1):
-                    try:
-                        # svg_item can be a dict with 'svg' key or an object with svg attribute
-                        svg_string = svg_item.get("svg") if isinstance(svg_item, dict) else svg_item.svg
-                        if svg_string:
-                            gen_image = GenImagesInsert(
-                                gen_question_id=question_id,
-                                svg_string=svg_string,
-                                position=position,
-                            )
-                            await (
-                                supabase_client.table("gen_images")
-                                .insert(gen_image.model_dump(mode="json", exclude_none=True))
-                                .execute()
-                            )
-                    except Exception as svg_error:
-                        logger.warning(f"Failed to insert SVG for question {question_id}: {svg_error}")
+        if tasks:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for res in results:
+                if isinstance(res, Exception):
+                    logger.error(f"Error in batch related entity insertion: {res}")
 
-            for concept_id in concept_ids:
-                try:
-                    # UUIDv7 support fix: Bypassing strict Pydantic UUID4 validation
-                    # concept_map = GenQuestionsConceptsMapsInsert(...)
-                    # We insert raw dict instead.
-                    concept_map_payload = {
-                        "gen_question_id": str(question_id),
-                        "concept_id": str(concept_id),
-                    }
-                    await supabase_client.table("gen_questions_concepts_maps").insert(concept_map_payload).execute()
-                except Exception as mapping_error:
-                    if "duplicate key value violates unique constraint" not in str(mapping_error):
-                        logger.warning(f"Failed to create mapping: {mapping_error}")
+        return len(gen_questions_payloads)
 
-    return inserted_count
+    except Exception as e:
+        logger.error(f"Failed to execute batch insert: {e}")
+        return 0
 
 
 async def process_all_batches(
