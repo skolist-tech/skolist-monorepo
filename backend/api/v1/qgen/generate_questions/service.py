@@ -12,6 +12,7 @@ from supabase import AsyncClient
 from supabase_dir import (
     GenImagesInsert,
     GenQuestionsInsert,
+    GenQuestionVersionsInsert,
     PublicHardnessLevelEnumEnum,
 )
 
@@ -19,7 +20,7 @@ from ..models import (
     QUESTION_TYPE_TO_ENUM,
 )
 from ..prompts import generate_questions_with_concepts_prompt
-from ..version_service import create_initial_version
+from ..version_service import extract_version_data
 from .batchification import Batch
 from .models import QUESTION_TYPE_TO_SCHEMA_WITH_CONCEPTS
 from .utils.fetch_questions import QuestionRequestType, fetch_questions_from_bank
@@ -249,9 +250,19 @@ async def insert_batch_to_supabase(
     questions = await try_retry_batch(batch, batch_idx, ctx, max_retries)
     inserted_count = 0
     logger.info(f"Started Inserting questions in supabase : {len(questions)}")
+
+    gen_questions_payloads = []
+    versions_payloads = []
+    images_payloads = []
+    concepts_maps_payloads = []
+
     for _idx, item in enumerate(questions):
         question_data = item["question"]
         concept_ids = item["concept_ids"]
+
+        # Pre-generate UUID for the question to link related records
+        question_id = str(uuid.uuid4())
+        question_data["id"] = question_id
 
         # Ensure required fields are present (especially for fetched questions)
         if "activity_id" not in question_data or not question_data["activity_id"]:
@@ -287,62 +298,82 @@ async def insert_batch_to_supabase(
 
         try:
             gen_question_insert = GenQuestionsInsert(**question_data)
+            gen_questions_payloads.append(gen_question_insert.model_dump(mode="json", exclude_none=True))
         except Exception as e:
             logger.error(f"Validation failed for question data: {e}")
             logger.debug(f"Problematic payload: {question_data}")
             continue
 
+        # Prepare version payload (v0)
         try:
-            result = await (
-                supabase_client.table("gen_questions")
-                .insert(gen_question_insert.model_dump(mode="json", exclude_none=True))
-                .execute()
+            version_data = extract_version_data(question_data)
+            version_data.update(
+                {
+                    "gen_question_id": question_id,
+                    "version_index": 0,
+                    "is_active": True,
+                    "is_deleted": False,
+                }
             )
+            # Validate version payload
+            gen_version_insert = GenQuestionVersionsInsert(**version_data)
+            versions_payloads.append(gen_version_insert.model_dump(mode="json", exclude_none=True))
         except Exception as e:
-            logger.error(f"Failed to execute insert query: {e}")
-            continue
+            logger.error(f"Failed to prepare version payload for question {question_id}: {e}")
 
-        if result.data:
-            inserted_question = result.data[0]
-            question_id = inserted_question["id"]
-            inserted_count += 1
-
-            # Create initial version (v0) for undo/redo functionality
-            await create_initial_version(supabase_client, question_id, inserted_question)
-
-            # Insert SVGs into gen_images table if present
-            if svg_list:
-                for position, svg_item in enumerate(svg_list, start=1):
-                    try:
-                        # svg_item can be a dict with 'svg' key or an object with svg attribute
-                        svg_string = svg_item.get("svg") if isinstance(svg_item, dict) else svg_item.svg
-                        if svg_string:
-                            gen_image = GenImagesInsert(
-                                gen_question_id=question_id,
-                                svg_string=svg_string,
-                                position=position,
-                            )
-                            await (
-                                supabase_client.table("gen_images")
-                                .insert(gen_image.model_dump(mode="json", exclude_none=True))
-                                .execute()
-                            )
-                    except Exception as svg_error:
-                        logger.warning(f"Failed to insert SVG for question {question_id}: {svg_error}")
-
-            for concept_id in concept_ids:
+        # Prepare SVG payloads
+        if svg_list:
+            for position, svg_item in enumerate(svg_list, start=1):
                 try:
-                    # UUIDv7 support fix: Bypassing strict Pydantic UUID4 validation
-                    # concept_map = GenQuestionsConceptsMapsInsert(...)
-                    # We insert raw dict instead.
-                    concept_map_payload = {
-                        "gen_question_id": str(question_id),
-                        "concept_id": str(concept_id),
-                    }
-                    await supabase_client.table("gen_questions_concepts_maps").insert(concept_map_payload).execute()
-                except Exception as mapping_error:
-                    if "duplicate key value violates unique constraint" not in str(mapping_error):
-                        logger.warning(f"Failed to create mapping: {mapping_error}")
+                    # svg_item can be a dict with 'svg' key or an object with svg attribute
+                    svg_string = svg_item.get("svg") if isinstance(svg_item, dict) else getattr(svg_item, "svg", None)
+                    if svg_string:
+                        gen_image = GenImagesInsert(
+                            gen_question_id=question_id,
+                            svg_string=svg_string,
+                            position=position,
+                        )
+                        images_payloads.append(gen_image.model_dump(mode="json", exclude_none=True))
+                except Exception as svg_error:
+                    logger.warning(f"Failed to prepare SVG for question {question_id}: {svg_error}")
+
+        # Prepare concept mapping payloads
+        for concept_id in concept_ids:
+            # We don't use Pydantic here as per original code comment (UUIDv7 support fix)
+            concepts_maps_payloads.append(
+                {
+                    "gen_question_id": question_id,
+                    "concept_id": str(concept_id),
+                }
+            )
+
+    # Batch insert into all tables
+    if gen_questions_payloads:
+        try:
+            result = await supabase_client.table("gen_questions").insert(gen_questions_payloads).execute()
+            inserted_count = len(result.data) if result.data else 0
+        except Exception as e:
+            logger.error(f"Failed to execute batch insert for gen_questions: {e}")
+            return 0
+
+    if versions_payloads:
+        try:
+            await supabase_client.table("gen_question_versions").insert(versions_payloads).execute()
+        except Exception as e:
+            logger.error(f"Failed to execute batch insert for gen_question_versions: {e}")
+
+    if images_payloads:
+        try:
+            await supabase_client.table("gen_images").insert(images_payloads).execute()
+        except Exception as e:
+            logger.error(f"Failed to execute batch insert for gen_images: {e}")
+
+    if concepts_maps_payloads:
+        try:
+            await supabase_client.table("gen_questions_concepts_maps").insert(concepts_maps_payloads).execute()
+        except Exception as e:
+            if "duplicate key value violates unique constraint" not in str(e):
+                logger.warning(f"Failed to execute batch insert for gen_questions_concepts_maps: {e}")
 
     return inserted_count
 
