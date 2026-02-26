@@ -171,7 +171,7 @@ export function GeneratedQuestionCard({
   return (
     <div
       ref={cardRef}
-      className={`group relative min-h-[140px] rounded-lg border bg-background p-4 shadow-sm transition-all hover:shadow-md ${
+      className={`group relative min-h-[140px] rounded-lg border bg-background p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
         isSelected ? "border-primary ring-2 ring-primary" : ""
       } ${anims.slideDirection ? "pointer-events-none" : ""} ${anims.isDisintegrating ? "pointer-events-none" : ""}`}
       style={{
