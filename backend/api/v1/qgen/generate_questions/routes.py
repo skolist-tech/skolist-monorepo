@@ -126,31 +126,45 @@ async def generate_questions(
         # Get async client
         supabase_client = await get_async_supabase_client()
 
-        if not await check_user_has_credits(supabase_client, user_id):
-            return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
-
         logger.debug(f"Custom instruction received: {request.instructions}")
 
-        # Fetch concepts
-        def chunked(lst, size):
-            for i in range(0, len(lst), size):
-                yield lst[i : i + size]
+        # 1. Parallelize initial checks and data fetching
+        async def fetch_concepts():
+            ids = [str(cid) for cid in request.concept_ids if cid]
+            results = []
+            # Chunking concepts fetch if there are many
+            chunk_size = 300
+            tasks = [
+                supabase_client.table("concepts")
+                .select("id, name, description")
+                .in_("id", ids[i : i + chunk_size])
+                .execute()
+                for i in range(0, len(ids), chunk_size)
+            ]
+            responses = await asyncio.gather(*tasks)
+            for resp in responses:
+                results.extend(resp.data or [])
+            return results
 
         try:
-            ids = [str(cid) for cid in request.concept_ids if cid]
-            concepts = []
+            credits_check_task = check_user_has_credits(supabase_client, user_id)
+            concepts_task = fetch_concepts()
 
-            for batch in chunked(ids, 300):
-                response = (
-                    await supabase_client.table("concepts").select("id, name, description").in_("id", batch).execute()
-                )
-                concepts.extend(response.data or [])
+            has_credits, concepts = await asyncio.gather(credits_check_task, concepts_task)
+
+            if not has_credits:
+                return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
         except Exception as e:
-            logger.exception(f"Error fetching concepts: {e}")
+            logger.exception(f"Error during initial data fetching: {e}")
             return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         concepts_dict = {concept["name"]: concept["description"] for concept in concepts}
         concepts_name_to_id = {concept["name"]: concept["id"] for concept in concepts}
+
+        # Helper for chunking
+        def chunked(lst, size):
+            for i in range(0, len(lst), size):
+                yield lst[i : i + size]
 
         # Fetch historical questions for reference
         try:
