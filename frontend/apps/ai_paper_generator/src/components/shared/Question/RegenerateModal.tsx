@@ -10,7 +10,7 @@ import {
   Textarea,
   Label,
 } from "@skolist/ui";
-import { ImagePlus, Send } from "lucide-react";
+import { ImagePlus, Send, X } from "lucide-react";
 import type { GeneratedQuestion } from "@skolist/db";
 
 interface RegenerateModalProps {
@@ -28,6 +28,7 @@ export function RegenerateModal({
 }: RegenerateModalProps) {
   const [prompt, setPrompt] = useState("");
   const [image, setImage] = useState<File | null>(null);
+  const maxLength = 1000;
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -64,16 +65,34 @@ export function RegenerateModal({
           </div>
 
           {/* Prompt Input */}
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="prompt">Instructions</Label>
-            <Textarea
-              id="prompt"
-              placeholder="E.g., Make it easier, add more context, focus on concept X..."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={4}
-              className="mt-1.5"
-            />
+            <div className="relative">
+              <Textarea
+                id="prompt"
+                placeholder="E.g., Make it easier, add more context, focus on concept X..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                maxLength={maxLength}
+                rows={4}
+                className="resize-none pr-20"
+              />
+              <div className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-2">
+                {prompt.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPrompt("")}
+                    className="pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="Clear instructions"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+                <span className="rounded bg-background/80 px-1 text-[10px] text-muted-foreground">
+                  {prompt.length}/{maxLength}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Image Attachment */}

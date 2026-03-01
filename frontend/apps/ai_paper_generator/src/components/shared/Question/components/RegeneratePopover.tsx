@@ -30,6 +30,8 @@ export function RegeneratePopover({
   onRegenerateSubmit,
   onAttachmentClick,
 }: RegeneratePopoverProps) {
+  const maxLength = 1000;
+
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
@@ -44,18 +46,36 @@ export function RegeneratePopover({
       >
         <div className="flex w-full items-start gap-3">
           <div className="flex flex-1 flex-col gap-2">
-            <Textarea
-              placeholder="Ask AI to improve, modify, or extract this question from an image…"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="h-16 resize-none py-2 text-sm"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                  e.preventDefault();
-                  onRegenerateSubmit();
-                }
-              }}
-            />
+            <div className="relative">
+              <Textarea
+                placeholder="Ask AI to improve, modify, or extract this question from an image…"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                maxLength={maxLength}
+                className="h-20 resize-none py-2 pr-12 text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    onRegenerateSubmit();
+                  }
+                }}
+              />
+              <div className="pointer-events-none absolute bottom-1 right-1 flex items-center gap-1.5">
+                {prompt.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPrompt("")}
+                    className="pointer-events-auto flex h-4 w-4 items-center justify-center rounded-full bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="Clear instructions"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                )}
+                <span className="rounded bg-background/80 px-1 text-[9px] text-muted-foreground">
+                  {prompt.length}/{maxLength}
+                </span>
+              </div>
+            </div>
 
             {attachedFiles.length > 0 && (
               <div className="flex flex-wrap gap-2">
