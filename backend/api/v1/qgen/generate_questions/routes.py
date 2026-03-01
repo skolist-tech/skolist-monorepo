@@ -126,50 +126,64 @@ async def generate_questions(
         # Get async client
         supabase_client = await get_async_supabase_client()
 
-        if not await check_user_has_credits(supabase_client, user_id):
-            return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
-
-        logger.debug(f"Custom instruction received: {request.instructions}")
-
-        # Fetch concepts
         def chunked(lst, size):
             for i in range(0, len(lst), size):
                 yield lst[i : i + size]
 
-        try:
-            ids = [str(cid) for cid in request.concept_ids if cid]
-            concepts = []
+        # Define fetching functions for parallel execution
+        async def get_concepts():
+            try:
+                ids = [str(cid) for cid in request.concept_ids if cid]
 
-            for batch in chunked(ids, 300):
-                response = (
-                    await supabase_client.table("concepts").select("id, name, description").in_("id", batch).execute()
-                )
-                concepts.extend(response.data or [])
-        except Exception as e:
-            logger.exception(f"Error fetching concepts: {e}")
+                async def fetch_concepts_batch(batch):
+                    return await (
+                        supabase_client.table("concepts").select("id, name, description").in_("id", batch).execute()
+                    )
+
+                responses = await asyncio.gather(*[fetch_concepts_batch(b) for b in chunked(ids, 300)])
+                return [item for resp in responses for item in (resp.data or [])]
+            except Exception as e:
+                logger.exception(f"Error fetching concepts: {e}")
+                return []
+
+        async def get_concept_maps():
+            try:
+                ids = [str(cid) for cid in request.concept_ids if cid]
+
+                async def fetch_concept_map(batch):
+                    return await (
+                        supabase_client.table("bank_questions_concepts_maps")
+                        .select("bank_question_id")
+                        .in_("concept_id", batch)
+                        .execute()
+                    )
+
+                responses = await asyncio.gather(*[fetch_concept_map(b) for b in chunked(ids, 300)])
+                return [item for resp in responses for item in (resp.data or [])]
+            except Exception as e:
+                logger.warning(f"Error Fetching the concept maps: {e}")
+                return []
+
+        # Parallelize independent initial checks and fetches
+        results = await asyncio.gather(
+            check_user_has_credits(supabase_client, user_id), get_concepts(), get_concept_maps(), return_exceptions=True
+        )
+
+        has_credits = results[0] if not isinstance(results[0], Exception) else False
+        concepts = results[1] if not isinstance(results[1], Exception) else []
+        concept_maps = results[2] if not isinstance(results[2], Exception) else []
+
+        if not has_credits:
+            return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
+
+        if not concepts:
+            logger.error("No concepts found for the given IDs")
             return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        logger.debug(f"Custom instruction received: {request.instructions}")
 
         concepts_dict = {concept["name"]: concept["description"] for concept in concepts}
         concepts_name_to_id = {concept["name"]: concept["id"] for concept in concepts}
-
-        # Fetch historical questions for reference
-        try:
-            ids = [str(cid) for cid in request.concept_ids if cid]
-            batches_list = list(chunked(ids, 300))
-
-            async def fetch_concept_map(batch):
-                return await (
-                    supabase_client.table("bank_questions_concepts_maps")
-                    .select("bank_question_id")
-                    .in_("concept_id", batch)
-                    .execute()
-                )
-
-            responses = await asyncio.gather(*[fetch_concept_map(b) for b in batches_list])
-            concept_maps = [item for resp in responses for item in (resp.data or [])]
-        except Exception as e:
-            logger.warning(f"Error Fetching the concept maps: {e}")
-            concept_maps = []
 
         bank_question_ids = list({m["bank_question_id"] for m in concept_maps})
 
