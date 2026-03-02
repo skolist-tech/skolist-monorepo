@@ -1,0 +1,3 @@
+## 2025-05-15 - PromptBox Enhancement with Character Counter and Clear Button
+**Learning:** For multi-line inputs like the 'PromptBox' in the question generation flow, users benefit from immediate visual feedback on content length (character counter) and a quick way to reset the state (clear button). Using a shared `Textarea` component ensures consistent focus states and styling, while absolute-positioned overlays (`bottom-2 right-2`) maintain a clean UI without taking up additional vertical space.
+**Action:** Always implement character counters and clear buttons for main prompt textareas using the established absolute overlay pattern to provide a polished, "app-like" experience.
