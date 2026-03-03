@@ -126,67 +126,71 @@ async def generate_questions(
         # Get async client
         supabase_client = await get_async_supabase_client()
 
-        if not await check_user_has_credits(supabase_client, user_id):
-            return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
-
-        logger.debug(f"Custom instruction received: {request.instructions}")
-
-        # Fetch concepts
+        # Fetch initial data (credits check, concepts, and concept maps) in parallel
         def chunked(lst, size):
             for i in range(0, len(lst), size):
                 yield lst[i : i + size]
 
-        try:
-            ids = [str(cid) for cid in request.concept_ids if cid]
-            concepts = []
+        concept_ids_str = [str(cid) for cid in request.concept_ids if cid]
 
-            for batch in chunked(ids, 300):
-                response = (
-                    await supabase_client.table("concepts").select("id, name, description").in_("id", batch).execute()
-                )
-                concepts.extend(response.data or [])
+        async def fetch_all_concepts(ids):
+            if not ids:
+                return []
+            tasks = [
+                supabase_client.table("concepts").select("id, name, description").in_("id", batch).execute()
+                for batch in chunked(ids, 300)
+            ]
+            responses = await asyncio.gather(*tasks)
+            return [item for resp in responses for item in (resp.data or [])]
+
+        async def fetch_all_concept_maps(ids):
+            if not ids:
+                return []
+            tasks = [
+                supabase_client.table("bank_questions_concepts_maps")
+                .select("bank_question_id")
+                .in_("concept_id", batch)
+                .execute()
+                for batch in chunked(ids, 300)
+            ]
+            responses = await asyncio.gather(*tasks)
+            return [item for resp in responses for item in (resp.data or [])]
+
+        try:
+            # Parallelize credit check, concepts fetch, and concept maps fetch
+            initial_results = await asyncio.gather(
+                check_user_has_credits(supabase_client, user_id),
+                fetch_all_concepts(concept_ids_str),
+                fetch_all_concept_maps(concept_ids_str),
+            )
+            has_credits, concepts, concept_maps = initial_results
+
+            if not has_credits:
+                return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
+
         except Exception as e:
-            logger.exception(f"Error fetching concepts: {e}")
+            logger.exception(f"Error fetching initial data: {e}")
             return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        logger.debug(f"Custom instruction received: {request.instructions}")
 
         concepts_dict = {concept["name"]: concept["description"] for concept in concepts}
         concepts_name_to_id = {concept["name"]: concept["id"] for concept in concepts}
 
-        # Fetch historical questions for reference
-        try:
-            ids = [str(cid) for cid in request.concept_ids if cid]
-            batches_list = list(chunked(ids, 300))
-
-            async def fetch_concept_map(batch):
-                return await (
-                    supabase_client.table("bank_questions_concepts_maps")
-                    .select("bank_question_id")
-                    .in_("concept_id", batch)
-                    .execute()
-                )
-
-            responses = await asyncio.gather(*[fetch_concept_map(b) for b in batches_list])
-            concept_maps = [item for resp in responses for item in (resp.data or [])]
-        except Exception as e:
-            logger.warning(f"Error Fetching the concept maps: {e}")
-            concept_maps = []
-
+        # Fetch historical questions for reference (depends on concept_maps)
         bank_question_ids = list({m["bank_question_id"] for m in concept_maps})
+        old_questions = []
 
         if bank_question_ids:
             try:
-                question_batches = list(chunked(bank_question_ids, 300))
-
-                async def fetch_bank_questions(batch):
-                    return await supabase_client.table("bank_questions").select("*").in_("id", batch).execute()
-
-                responses = await asyncio.gather(*[fetch_bank_questions(b) for b in question_batches])
+                question_tasks = [
+                    supabase_client.table("bank_questions").select("*").in_("id", batch).execute()
+                    for batch in chunked(bank_question_ids, 300)
+                ]
+                responses = await asyncio.gather(*question_tasks)
                 old_questions = [item for resp in responses for item in (resp.data or [])]
             except Exception as e:
-                logger.warning(f"Error Fetching the old questions: {e}")
-                old_questions = []
-        else:
-            old_questions = []
+                logger.warning(f"Error fetching historical questions: {e}")
 
         # Batchification
         concept_names = [concept["name"] for concept in concepts]
