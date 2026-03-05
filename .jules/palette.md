@@ -1,0 +1,3 @@
+## 2025-05-14 - Character Counters and Clear Buttons in Textareas
+**Learning:** Adding a character counter and a clear button to textareas significantly improves the "feedback loop" for users. The clear button reduces friction when starting over, and the character counter prevents "surprise" validation errors by providing real-time constraints. Using `tabular-nums` for the counter prevents visual jitter.
+**Action:** When implementing textareas for prompts or custom instructions, always include a character counter at `bottom-2 right-2` and a conditional clear button to maintain consistency and delight.
