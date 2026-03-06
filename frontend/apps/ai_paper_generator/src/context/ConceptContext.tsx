@@ -312,52 +312,31 @@ export function ConceptProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       try {
-        // Fetch chapters for subject
-        const { data: chapterData, error: chapterError } = await supabase
-          .from("chapters")
-          .select("*")
-          .eq("subject_id", selection.subjectId)
-          .order("position");
+        // Call RPC function to fetch all tree data in a single optimized query
+        const { data, error } = await supabase.rpc("get_subject_tree_data", {
+          p_subject_id: selection.subjectId,
+        });
 
-        if (chapterError) throw chapterError;
-        setChapters(chapterData || []);
+        if (error) throw error;
 
-        if (!chapterData?.length) {
+        if (!data) {
+          setChapters([]);
           setTopics([]);
           setConcepts([]);
           setIsLoadingTree(false);
           return;
         }
 
-        const chapterIds = chapterData.map((c: Chapter) => c.id);
+        // Extract arrays from the returned JSON
+        const treeData = data as {
+          chapters: Chapter[];
+          topics: Topic[];
+          concepts: Concept[];
+        };
 
-        // Fetch topics for all chapters
-        const { data: topicData, error: topicError } = await supabase
-          .from("topics")
-          .select("*")
-          .in("chapter_id", chapterIds)
-          .order("position");
-
-        if (topicError) throw topicError;
-        setTopics(topicData || []);
-
-        if (!topicData?.length) {
-          setConcepts([]);
-          setIsLoadingTree(false);
-          return;
-        }
-
-        const topicIds = topicData.map((t: Topic) => t.id);
-
-        // Fetch concepts for all topics
-        const { data: conceptData, error: conceptError } = await supabase
-          .from("concepts")
-          .select("*")
-          .in("topic_id", topicIds)
-          .order("page_number");
-
-        if (conceptError) throw conceptError;
-        setConcepts(conceptData || []);
+        setChapters(treeData.chapters || []);
+        setTopics(treeData.topics || []);
+        setConcepts(treeData.concepts || []);
       } catch (err) {
         console.error("Error fetching tree data:", err);
         setError("Failed to load concept tree");
