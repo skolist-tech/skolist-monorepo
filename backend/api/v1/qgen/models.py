@@ -2,7 +2,7 @@
 Defines the Pydantic models relavant to qgen
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from supabase_dir import PublicQuestionTypeEnumEnum
 
@@ -151,6 +151,66 @@ class MatchTheFollowingList(BaseModel):
     questions: list[MatchTheFollowing]
 
 
+class NumericalAnswer(BaseModel):
+    """Numerical answer question schema for Gemini structured output."""
+
+    question_text: str  = Field(default=None, description="The question text")
+    answer_text: float = Field(
+        description="The numerical answer (float/decimal), should be a valid numerical value only like 3.15 or -9.06"
+    )
+    explanation: str | None = Field(default=None, description="Explanation for the answer")
+    hardness_level: str | None = Field(default=None, description="Difficulty: easy, medium, hard")
+    marks: int | None = Field(default=None, description="Marks for this question")
+    svgs: list[SVG] | None = Field(default=None, description="List of SVGs relavant to the question if needed")
+
+    @field_validator("answer_text")
+    @classmethod
+    def validate_numerical_answer(cls, v: float | None) -> float | None:
+        """Validate that answer_text is a valid number (float)."""
+        if v is not None:
+            try:
+                float(v)
+            except (ValueError, TypeError):
+                raise ValueError("answer_text must be a valid number")
+        return v
+
+
+class NumericalAnswerList(BaseModel):
+    """List of NumericalAnswer questions."""
+
+    questions: list[NumericalAnswer]
+
+
+class IntegerAnswer(BaseModel):
+    """Integer answer question schema for Gemini structured output."""
+
+    question_text: str = Field(default=None, description="The question text")
+    answer_text: int = Field(
+        description="The integer answer, strictly an integer value"
+    )
+    explanation: str | None = Field(default=None, description="Explanation for the answer")
+    hardness_level: str | None = Field(default=None, description="Difficulty: easy, medium, hard")
+    marks: int | None = Field(default=None, description="Marks for this question")
+    svgs: list[SVG] | None = Field(default=None, description="List of SVGs relavant to the question if needed")
+
+    @field_validator("answer_text")
+    @classmethod
+    def validate_integer_answer(cls, v: int | None) -> int | None:
+        """Validate that answer_text is a valid integer."""
+        if v is not None:
+            try:
+                int(v)
+            except (ValueError, TypeError):
+                raise ValueError("answer_text must be a valid integer")
+        return v
+
+
+class IntegerAnswerList(BaseModel):
+    """List of IntegerAnswer questions."""
+
+    questions: list[IntegerAnswer]
+
+
 # Type alias for any question type
 AllQuestions = MCQ4 | MSQ4 | FillInTheBlank | TrueFalse | ShortAnswer | LongAnswer | MatchTheFollowing
 
@@ -164,6 +224,8 @@ QUESTION_TYPE_TO_SCHEMA: dict[str, type[BaseModel]] = {
     "short_answer": ShortAnswerList,
     "long_answer": LongAnswerList,
     "match_the_following": MatchTheFollowingList,
+    "numerical_answer": NumericalAnswerList,
+    "integer_answer": IntegerAnswerList,
 }
 
 # Mapping from question type key to database enum value
@@ -175,6 +237,8 @@ QUESTION_TYPE_TO_ENUM: dict[str, PublicQuestionTypeEnumEnum] = {
     "short_answer": PublicQuestionTypeEnumEnum.SHORT_ANSWER,
     "long_answer": PublicQuestionTypeEnumEnum.LONG_ANSWER,
     "match_the_following": PublicQuestionTypeEnumEnum.MATCH_THE_FOLLOWING,
+    "numerical_answer": PublicQuestionTypeEnumEnum.NUMERICAL_ANSWER,
+    "integer_answer": PublicQuestionTypeEnumEnum.INTEGER_ANSWER,
 }
 
 QUESTION_TYPE_TO_FIELD = {
@@ -185,6 +249,8 @@ QUESTION_TYPE_TO_FIELD = {
     "short_answer": "total_short_answers",
     "long_answer": "total_long_answers",
     "match_the_following": "match_the_following_count",
+    "numerical_answer": "total_numerical_answers",
+    "integer_answer": "total_integer_answers",
 }
 
 

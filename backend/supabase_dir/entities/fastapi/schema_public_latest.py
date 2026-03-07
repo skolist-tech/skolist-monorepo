@@ -24,6 +24,8 @@ class PublicQuestionTypeEnumEnum(str, Enum):
     FILL_IN_THE_BLANKS = "fill_in_the_blanks"
     LONG_ANSWER = "long_answer"
     MATCH_THE_FOLLOWING = "match_the_following"
+    NUMERICAL_ANSWER = "numerical_answer"
+    INTEGER_ANSWER = "integer_answer"
 
 
 class PublicHardnessLevelEnumEnum(str, Enum):

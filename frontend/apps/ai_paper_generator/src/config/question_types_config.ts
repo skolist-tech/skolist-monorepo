@@ -17,6 +17,8 @@ export const DEFAULT_QUESTION_COUNTS: Partial<
   long_answer: 2,
   true_or_false: 2,
   fill_in_the_blanks: 2,
+  // numerical_answer: 2,
+  // integer_answer: 2,
   // solved_examples: 2,
   // exercise_questions: 2,
 };
@@ -48,5 +50,14 @@ export const SUBJECT_QUESTION_CONFIG: Record<
     long_answer: 2,
     solved_examples: 2,
     exercise_questions: 2,
+  },
+
+  "physics - jee": {
+    mcq4: 2,
+    msq4: 2,
+    match_the_following: 2,
+    long_answer: 2,
+    numerical_answer: 2,
+    integer_answer: 2,
   },
 };

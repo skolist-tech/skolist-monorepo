@@ -285,6 +285,11 @@ async def insert_batch_to_supabase(
             else:
                 question_data["match_the_following_columns"] = cols
 
+        # Convert numeric answer_text to string for numerical/integer answer types
+        # Database expects answer_text as string, but AI generates numeric types
+        if "answer_text" in question_data and isinstance(question_data["answer_text"], (int, float)):
+            question_data["answer_text"] = str(question_data["answer_text"])
+
         try:
             gen_question_insert = GenQuestionsInsert(**question_data)
         except Exception as e:

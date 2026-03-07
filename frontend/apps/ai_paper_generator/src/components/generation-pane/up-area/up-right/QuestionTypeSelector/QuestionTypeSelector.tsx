@@ -11,6 +11,8 @@ import {
   Columns,
   Lightbulb,
   Dumbbell,
+  Calculator,
+  Hash,
 } from "lucide-react";
 
 // Custom extended type
@@ -72,6 +74,16 @@ const QUESTION_TYPES: Array<{
     type: QUESTION_TYPE.MATCH_THE_FOLLOWING,
     label: "Match the Following",
     icon: <Columns className="h-4 w-4 text-primary" />,
+  },
+  {
+    type: QUESTION_TYPE.NUMERICAL_ANSWER,
+    label: "Numerical Answer",
+    icon: <Calculator className="h-4 w-4 text-primary" />,
+  },
+  {
+    type: QUESTION_TYPE.INTEGER_ANSWER,
+    label: "Integer Answer",
+    icon: <Hash className="h-4 w-4 text-primary" />,
   },
   {
     type: "solved_examples",

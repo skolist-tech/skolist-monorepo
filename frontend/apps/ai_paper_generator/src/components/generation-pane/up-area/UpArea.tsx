@@ -30,6 +30,8 @@ const QUESTION_TYPE_API_MAP: Record<ExtendedQuestionType, string> = {
   true_or_false: "true_false",
   fill_in_the_blanks: "fill_in_the_blank",
   match_the_following: "match_the_following",
+  numerical_answer: "numerical_answer",
+  integer_answer: "integer_answer",
   solved_examples: "solved_examples",
   exercise_questions: "exercise_questions",
 };
@@ -134,6 +136,10 @@ export function UpArea({
             restored.solved_examples = savedStatus.solved_examples_count;
           if (savedStatus.exercise_questions_count !== null)
             restored.exercise_questions = savedStatus.exercise_questions_count;
+          if (savedStatus.numerical_answer_count !== null)
+            restored.numerical_answer = savedStatus.numerical_answer_count;
+          if (savedStatus.integer_answer_count !== null)
+            restored.integer_answer = savedStatus.integer_answer_count;
 
           setRestoredCounts(restored);
 
@@ -427,6 +433,8 @@ export function UpArea({
           true_false_count: questionCounts.true_or_false,
           fill_in_the_blanks_count: questionCounts.fill_in_the_blanks,
           match_the_following_count: questionCounts.match_the_following,
+          numerical_answer_count: questionCounts.numerical_answer,
+          integer_answer_count: questionCounts.integer_answer,
           difficulty_level_easy_count: hardnessLevels.easy,
           difficulty_level_medium_count: hardnessLevels.medium,
           difficulty_level_hard_count: hardnessLevels.hard,
@@ -483,6 +491,8 @@ export function UpArea({
         "true_or_false",
         "fill_in_the_blanks",
         "match_the_following",
+        "numerical_answer",
+        "integer_answer",
         "solved_examples",
         "exercise_questions",
       ];

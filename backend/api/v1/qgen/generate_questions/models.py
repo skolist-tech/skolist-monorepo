@@ -12,6 +12,8 @@ from ..models import (
     MatchTheFollowing,
     ShortAnswer,
     TrueFalse,
+    NumericalAnswer,
+    IntegerAnswer,
 )
 
 
@@ -71,6 +73,22 @@ class MatchTheFollowingWithConceptsList(BaseModel):
     questions: list[MatchTheFollowingWithConcepts]
 
 
+class NumericalAnswerWithConcepts(NumericalAnswer):
+    concepts: list[str] = Field(..., description="List of concept names relevant to this specific question")
+
+
+class NumericalAnswerWithConceptsList(BaseModel):
+    questions: list[NumericalAnswerWithConcepts]
+
+
+class IntegerAnswerWithConcepts(IntegerAnswer):
+    concepts: list[str] = Field(..., description="List of concept names relevant to this specific question")
+
+
+class IntegerAnswerWithConceptsList(BaseModel):
+    questions: list[IntegerAnswerWithConcepts]
+
+
 QUESTION_TYPE_TO_SCHEMA_WITH_CONCEPTS: dict[str, type[BaseModel]] = {
     "mcq4": MCQ4WithConceptsList,
     "msq4": MSQ4WithConceptsList,
@@ -79,4 +97,6 @@ QUESTION_TYPE_TO_SCHEMA_WITH_CONCEPTS: dict[str, type[BaseModel]] = {
     "short_answer": ShortAnswerWithConceptsList,
     "long_answer": LongAnswerWithConceptsList,
     "match_the_following": MatchTheFollowingWithConceptsList,
+    "numerical_answer": NumericalAnswerWithConceptsList,
+    "integer_answer": IntegerAnswerWithConceptsList,
 }

@@ -14,6 +14,10 @@ export const formatQuestionType = (type: string): string => {
       return "Fill in the Blanks";
     case "match_the_following":
       return "Match the Following";
+    case "numerical_answer":
+      return "Numerical Answer";
+    case "integer_answer":
+      return "Integer Answer";
     default:
       return type.replace(/_/g, " ");
   }

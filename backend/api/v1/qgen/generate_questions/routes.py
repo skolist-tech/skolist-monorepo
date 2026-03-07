@@ -36,6 +36,8 @@ class QuestionTypeConfig(BaseModel):
         "fill_in_the_blank",
         "msq4",
         "match_the_following",
+        "numerical_answer",
+        "integer_answer",
         "solved_examples",
         "exercise_questions",
     ]

@@ -18,6 +18,8 @@ export function useQuestionCounts(
     true_or_false: 0,
     fill_in_the_blanks: 0,
     match_the_following: 0,
+    numerical_answer: 0,
+    integer_answer: 0,
     solved_examples: 0,
     exercise_questions: 0,
   };

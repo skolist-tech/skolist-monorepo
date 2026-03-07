@@ -882,10 +882,12 @@ export type Database = {
           exercise_questions_count: number | null;
           fill_in_the_blanks_count: number | null;
           id: string;
+          integer_answer_count: number | null;
           long_answer_count: number | null;
           match_the_following_count: number | null;
           mcq_count: number | null;
           msq_count: number | null;
+          numerical_answer_count: number | null;
           school_class_id: string | null;
           short_answer_count: number | null;
           solved_examples_count: number | null;
@@ -905,10 +907,12 @@ export type Database = {
           exercise_questions_count?: number | null;
           fill_in_the_blanks_count?: number | null;
           id?: string;
+          integer_answer_count?: number | null;
           long_answer_count?: number | null;
           match_the_following_count?: number | null;
           mcq_count?: number | null;
           msq_count?: number | null;
+          numerical_answer_count?: number | null;
           school_class_id?: string | null;
           short_answer_count?: number | null;
           solved_examples_count?: number | null;
@@ -1146,6 +1150,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      get_subject_tree_data: { Args: { p_subject_id: string }; Returns: Json };
       update_question_position_and_section_ids: {
         Args: { updates: Json };
         Returns: undefined;
@@ -1161,7 +1166,9 @@ export type Database = {
         | "true_or_false"
         | "fill_in_the_blanks"
         | "long_answer"
-        | "match_the_following";
+        | "match_the_following"
+        | "numerical_answer"
+        | "integer_answer";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1302,6 +1309,8 @@ export const Constants = {
         "fill_in_the_blanks",
         "long_answer",
         "match_the_following",
+        "numerical_answer",
+        "integer_answer",
       ],
     },
   },
