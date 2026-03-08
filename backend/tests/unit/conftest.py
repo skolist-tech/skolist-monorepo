@@ -29,6 +29,7 @@ def create_mock_mcq4(question_text: str | None = None) -> MCQ4:
         option3="KE = 1/2*m*v^2",
         option4="KE = m*g*h",
         correct_mcq_option=3,
+        answer_text="KE = 1/2*m*v^2",
         explanation="The kinetic energy formula is KE = 1/2 * m * v^2",
     )
 
@@ -46,7 +47,7 @@ def create_mock_true_false(question_text: str | None = None) -> TrueFalse:
     """Create a mock TrueFalse question."""
     return TrueFalse(
         question_text=question_text or "Kinetic energy depends on velocity squared.",
-        correct_answer=True,
+        answer_text="True",
         explanation="KE = 1/2 * m * v^2, so it depends on v squared.",
     )
 

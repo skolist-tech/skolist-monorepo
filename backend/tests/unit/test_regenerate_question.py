@@ -38,6 +38,7 @@ def mock_mcq4_question() -> dict:
         "option3": "KE = 1/2*m*v^2",
         "option4": "KE = m*g*h",
         "correct_mcq_option": 3,
+        "answer_text": "KE = 1/2*m*v^2",
         "explanation": "The kinetic energy formula is KE = 1/2 * m * v^2",
         "hardness_level": "medium",
         "marks": 2,
