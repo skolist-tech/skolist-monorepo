@@ -50,13 +50,13 @@ jobs:
         with:
           version: latest
       
-      - name: Pre-pull Supabase images
-        run: |
-          docker pull supabase/postgres:15.1.0 &
-          docker pull supabase/gotrue:latest &
-          docker pull supabase/realtime:latest &
-          docker pull supabase/storage-api:latest &
-          wait
+      # - name: Pre-pull Supabase images
+      #   run: |
+      #     docker pull supabase/postgres:15.1.0 &
+      #     docker pull supabase/gotrue:latest &
+      #     docker pull supabase/realtime:latest &
+      #     docker pull supabase/storage-api:latest &
+      #     wait
 
       - name: Start Supabase
         run: |
