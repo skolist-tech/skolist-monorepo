@@ -49,11 +49,19 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      
+      - name: Pre-pull Supabase images
+        run: |
+          docker pull supabase/postgres:15.1.0 &
+          docker pull supabase/gotrue:latest &
+          docker pull supabase/realtime:latest &
+          docker pull supabase/storage-api:latest &
+          wait
 
       - name: Start Supabase
         run: |
           cd skolist-db 
-          supabase start
+          supabase start -x studio -x imgproxy
           # Export envs for subsequent steps
           echo "SUPABASE_URL=$(supabase status -o json | jq -r .api_url)" >> $GITHUB_ENV
           echo "SUPABASE_ANON_KEY=$(supabase status -o json | jq -r .anon_key)" >> $GITHUB_ENV
@@ -87,6 +95,11 @@ jobs:
           timeout 60 bash -c 'until curl -s http://localhost:8080/ > /dev/null; do sleep 1; done' || (echo "Backend failed to start. Logs:" && docker logs "backend-${{ github.run_id }}" && exit 1)
 
       # E2E Tests (Playwright handles frontend via webServer config)
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}
+
       - name: Run E2E Tests
         env:
           # Frontend build env vars (used by Playwright webServer)
