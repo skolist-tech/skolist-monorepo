@@ -61,7 +61,13 @@ jobs:
       - name: Start Supabase
         run: |
           cd skolist-db 
-          supabase start -x studio -x imgproxy
+          supabase start \
+            -x studio \
+            -x imgproxy \
+            -x edge-runtime \
+            -x logflare \
+            -x vector \
+            -x mailpit
           # Export envs for subsequent steps
           echo "SUPABASE_URL=$(supabase status -o json | jq -r .api_url)" >> $GITHUB_ENV
           echo "SUPABASE_ANON_KEY=$(supabase status -o json | jq -r .anon_key)" >> $GITHUB_ENV
