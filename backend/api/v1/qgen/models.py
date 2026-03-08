@@ -28,7 +28,7 @@ class MCQ4(BaseModel):
     explanation: str | None = Field(default=None, description="Explanation for the answer")
     hardness_level: str | None = Field(default=None, description="Difficulty: easy, medium, hard")
     marks: int | None = Field(default=None, description="Marks for this question")
-    answer_text: str | None = Field(default=None, description="Answer text if applicable")
+    answer_text: str = Field( description="Answer text if applicable")
     svgs: list[SVG] | None = Field(default=None, description="List of SVGs relavant to the question if needed")
 
 
@@ -53,7 +53,7 @@ class MSQ4(BaseModel):
     explanation: str | None = Field(default=None, description="Explanation for the answer")
     hardness_level: str | None = Field(default=None, description="Difficulty: easy, medium, hard")
     marks: int | None = Field(default=None, description="Marks for this question")
-    answer_text: str | None = Field(default=None, description="Answer text if applicable")
+    answer_text: str = Field(description="Answer text if applicable")
     svgs: list[SVG] | None = Field(default=None, description="List of SVGs relavant to the question if needed")
 
 
@@ -67,7 +67,7 @@ class FillInTheBlank(BaseModel):
     """Fill in the blank question schema for Gemini structured output."""
 
     question_text: str | None = Field(default=None, description="The question text with blank")
-    answer_text: str | None = Field(default=None, description="The correct answer")
+    answer_text: str = Field(description="The correct answer")
     explanation: str | None = Field(default=None, description="Explanation for the answer")
     hardness_level: str | None = Field(default=None, description="Difficulty: easy, medium, hard")
     marks: int | None = Field(default=None, description="Marks for this question")
@@ -84,7 +84,7 @@ class TrueFalse(BaseModel):
     """True/False question schema for Gemini structured output."""
 
     question_text: str | None = Field(default=None, description="The statement to evaluate")
-    answer_text: str | None = Field(default=None, description="True or False")
+    answer_text: str = Field(description="True or False")
     explanation: str | None = Field(default=None, description="Explanation for the answer")
     hardness_level: str | None = Field(default=None, description="Difficulty: easy, medium, hard")
     marks: int | None = Field(default=None, description="Marks for this question")
@@ -101,7 +101,7 @@ class ShortAnswer(BaseModel):
     """Short answer question schema for Gemini structured output."""
 
     question_text: str | None = Field(default=None, description="The question text")
-    answer_text: str | None = Field(default=None, description="The short answer")
+    answer_text: str = Field(description="The short answer")
     explanation: str | None = Field(default=None, description="Explanation for the answer")
     hardness_level: str | None = Field(default=None, description="Difficulty: easy, medium, hard")
     marks: int | None = Field(default=None, description="Marks for this question")
@@ -118,7 +118,7 @@ class LongAnswer(BaseModel):
     """Long answer question schema for Gemini structured output."""
 
     question_text: str | None = Field(default=None, description="The question text")
-    answer_text: str | None = Field(default=None, description="The long answer")
+    answer_text: str = Field(description="The long answer")
     explanation: str | None = Field(default=None, description="Explanation for the answer")
     hardness_level: str | None = Field(default=None, description="Difficulty: easy, medium, hard")
     marks: int | None = Field(default=None, description="Marks for this question")
@@ -138,7 +138,7 @@ class MatchTheFollowing(BaseModel):
         default=None, description="The main question text, like Match The Following Things"
     )
     columns: list[Column] = Field(default=None, description="List of columns for matching")
-    answer_text: str | None = Field(default=None, description="The answer text")
+    answer_text: str = Field(description="The answer text")
     explanation: str | None = Field(default=None, description="Explanation for the answer")
     hardness_level: str | None = Field(default=None, description="Difficulty: easy, medium, hard")
     marks: int | None = Field(default=None, description="Marks for this question")
