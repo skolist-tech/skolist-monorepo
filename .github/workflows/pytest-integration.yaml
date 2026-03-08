@@ -12,6 +12,7 @@ on:
     paths:
       - 'backend/**'
       - 'skolist-db/**'
+  workflow_dispatch:
 
 permissions:
   contents: read

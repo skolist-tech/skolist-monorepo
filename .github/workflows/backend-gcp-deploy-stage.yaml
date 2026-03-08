@@ -6,6 +6,7 @@ on:
       - stage
     paths:
       - "backend/**"
+  workflow_dispatch:
 
 env:
   SERVICE_NAME: "backend-stage"
