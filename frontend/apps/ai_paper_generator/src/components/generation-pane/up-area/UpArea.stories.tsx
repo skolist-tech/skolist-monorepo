@@ -85,14 +85,6 @@ function InteractiveUpArea() {
     expanded: [],
   });
 
-  const [hardnessLevels, setHardnessLevels] = useState<
-    Record<HardnessLevel, number>
-  >({
-    easy: 30,
-    medium: 40,
-    hard: 30,
-  });
-
   const [isGenerating, setIsGenerating] = useState(false);
 
   const activityContextValue = {
@@ -220,7 +212,9 @@ function InteractiveUpArea() {
   };
 
   const handleHardnessLevelChange = (level: HardnessLevel, value: number) => {
-    setHardnessLevels((prev) => ({ ...prev, [level]: value }));
+    // UpArea now manages difficulty levels internally
+    // This callback is for syncing with parent if needed
+    console.log(`Difficulty level changed: ${level} = ${value}`);
   };
 
   const handleGenerateStart = () => {
@@ -237,7 +231,6 @@ function InteractiveUpArea() {
         <ConceptContext.Provider value={conceptContextValue}>
           <div className="bg-background p-4">
             <UpArea
-              hardnessLevels={hardnessLevels}
               onHardnessLevelChange={handleHardnessLevelChange}
               isGenerating={isGenerating}
               onGenerateStart={handleGenerateStart}
@@ -328,7 +321,6 @@ const questionsContextDefault = {
 };
 
 const defaultProps = {
-  hardnessLevels: { easy: 30, medium: 40, hard: 30 },
   onHardnessLevelChange: fn(),
   isGenerating: false,
   onGenerateStart: fn(),
