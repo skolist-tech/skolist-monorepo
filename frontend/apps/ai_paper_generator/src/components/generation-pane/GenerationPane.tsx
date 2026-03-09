@@ -51,7 +51,6 @@ export function GenerationPane() {
     <div ref={containerRef} className="flex h-full flex-col overflow-y-auto">
       {/* UpArea stays visible during generation */}
       <UpArea
-        hardnessLevels={hardnessLevels}
         onHardnessLevelChange={handleLevelChange}
         isGenerating={isGenerating}
         onGenerateStart={handleGenerateStart}

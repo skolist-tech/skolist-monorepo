@@ -36,12 +36,15 @@ const QUESTION_TYPE_API_MAP: Record<ExtendedQuestionType, string> = {
   exercise_questions: "exercise_questions",
 };
 
-import { SUBJECT_QUESTION_CONFIG } from "../../../config/question_types_config";
+import {
+  SUBJECT_QUESTION_CONFIG,
+  type DifficultyDistribution,
+} from "../../../config/question_types_config";
 import type { ExtendedQuestionType } from "../../../config/question_types_config";
 import { useQuestionCounts } from "../../../hooks/useQuestionCounts";
+import { useDifficultyLevels } from "../../../hooks/useDifficultyLevels";
 
 interface UpAreaProps {
-  hardnessLevels: Record<HardnessLevel, number>;
   onHardnessLevelChange: (level: HardnessLevel, value: number) => void;
   isGenerating?: boolean;
   onGenerateStart?: () => void;
@@ -49,7 +52,6 @@ interface UpAreaProps {
 }
 
 export function UpArea({
-  hardnessLevels,
   onHardnessLevelChange,
   isGenerating = false,
   onGenerateStart,
@@ -79,6 +81,10 @@ export function UpArea({
     Record<ExtendedQuestionType, number>
   > | null>(null);
 
+  // State to hold restored difficulty levels from database
+  const [restoredDifficultyLevels, setRestoredDifficultyLevels] =
+    useState<DifficultyDistribution | null>(null);
+
   // Custom hook for question counts logic
   const {
     questionCounts,
@@ -87,6 +93,10 @@ export function UpArea({
     totalQuestions,
     setTotalQuestions,
   } = useQuestionCounts(subjectName, restoredCounts);
+
+  // Custom hook for difficulty levels logic
+  const { difficultyLevels, handleLevelChange: handleDifficultyChange } =
+    useDifficultyLevels(subjectName, restoredDifficultyLevels);
 
   const [internalIsGenerating, setInternalIsGenerating] = useState(false);
 
@@ -149,25 +159,18 @@ export function UpArea({
           setTotalTime(savedStatus.total_time_count ?? 60);
           setCustomPrompt(savedStatus.custom_instructions ?? "");
 
-          // Restore difficulty levels via the parent callback
-          if (savedStatus.difficulty_level_easy_count != null) {
-            onHardnessLevelChange(
-              "easy",
-              savedStatus.difficulty_level_easy_count
-            );
-          }
-          if (savedStatus.difficulty_level_medium_count != null) {
-            onHardnessLevelChange(
-              "medium",
-              savedStatus.difficulty_level_medium_count
-            );
-          }
-          if (savedStatus.difficulty_level_hard_count != null) {
-            onHardnessLevelChange(
-              "hard",
-              savedStatus.difficulty_level_hard_count
-            );
-          }
+          // Restore difficulty levels
+          const restoredDiff: Partial<DifficultyDistribution> = {};
+          if (savedStatus.difficulty_level_easy_count != null)
+            restoredDiff.easy = savedStatus.difficulty_level_easy_count;
+          if (savedStatus.difficulty_level_medium_count != null)
+            restoredDiff.medium = savedStatus.difficulty_level_medium_count;
+          if (savedStatus.difficulty_level_hard_count != null)
+            restoredDiff.hard = savedStatus.difficulty_level_hard_count;
+
+          setRestoredDifficultyLevels(
+            restoredDiff as DifficultyDistribution | null
+          );
 
           // Restore class immediately
           if (savedStatus.school_class_id) {
@@ -196,6 +199,13 @@ export function UpArea({
     loadSavedStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentActivity?.id]);
+
+  // Sync internal difficulty levels with parent
+  useEffect(() => {
+    onHardnessLevelChange("easy", difficultyLevels.easy);
+    onHardnessLevelChange("medium", difficultyLevels.medium);
+    onHardnessLevelChange("hard", difficultyLevels.hard);
+  }, [difficultyLevels, onHardnessLevelChange]);
 
   // Effect 2: Restore Subject once Classes/Subjects are ready
   const { isLoadingSubjects, isLoadingTree } = useConceptContext();
@@ -409,7 +419,7 @@ export function UpArea({
         concept_ids: conceptIds,
         config: {
           question_types: questionTypes,
-          difficulty_distribution: hardnessLevels,
+          difficulty_distribution: difficultyLevels,
         },
         // forward the custom prompt to backend as `instructions`
         instructions: customPrompt || undefined,
@@ -435,9 +445,9 @@ export function UpArea({
           match_the_following_count: questionCounts.match_the_following,
           numerical_answer_count: questionCounts.numerical_answer,
           integer_answer_count: questionCounts.integer_answer,
-          difficulty_level_easy_count: hardnessLevels.easy,
-          difficulty_level_medium_count: hardnessLevels.medium,
-          difficulty_level_hard_count: hardnessLevels.hard,
+          difficulty_level_easy_count: difficultyLevels.easy,
+          difficulty_level_medium_count: difficultyLevels.medium,
+          difficulty_level_hard_count: difficultyLevels.hard,
           total_marks_count: totalMarks,
           total_time_count: totalTime,
           custom_instructions: customPrompt || null,
@@ -558,8 +568,8 @@ export function UpArea({
             onQuestionCountChange={handleCountChange}
             onGenerate={handleGenerateQuestions}
             isGenerating={isBusy}
-            hardnessLevels={hardnessLevels}
-            onHardnessLevelChange={onHardnessLevelChange}
+            hardnessLevels={difficultyLevels}
+            onHardnessLevelChange={handleDifficultyChange}
             totalQuestions={totalQuestions}
             onTotalQuestionsChange={handleTotalQuestionsChange}
             totalMarks={totalMarks}
