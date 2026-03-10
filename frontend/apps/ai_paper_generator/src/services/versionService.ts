@@ -263,6 +263,62 @@ export async function getVersionState(
 }
 
 /**
+ * Batch get version states for multiple questions in a single RPC call.
+ * Reduces N questions × 3 API calls down to 1 API call.
+ */
+export async function getVersionStatesBatch(
+  questionIds: string[]
+): Promise<Map<string, VersionState>> {
+  const client = getSupabaseClient();
+  const resultMap = new Map<string, VersionState>();
+
+  if (questionIds.length === 0) {
+    return resultMap;
+  }
+
+  try {
+    const { data, error } = await client.rpc("get_version_states_batch", {
+      question_ids: questionIds,
+    });
+
+    if (error) {
+      console.error("Failed to fetch version states batch:", error);
+      // Return default states for all questions
+      questionIds.forEach((id) => {
+        resultMap.set(id, { canUndo: false, canRedo: false });
+      });
+      return resultMap;
+    }
+
+    // Map the results
+    if (data) {
+      data.forEach((row: any) => {
+        resultMap.set(row.gen_question_id, {
+          canUndo: row.can_undo,
+          canRedo: row.can_redo,
+        });
+      });
+    }
+
+    // Fill in missing questions with default state
+    questionIds.forEach((id) => {
+      if (!resultMap.has(id)) {
+        resultMap.set(id, { canUndo: false, canRedo: false });
+      }
+    });
+
+    return resultMap;
+  } catch (err) {
+    console.error("Error in getVersionStatesBatch:", err);
+    // Return default states for all questions
+    questionIds.forEach((id) => {
+      resultMap.set(id, { canUndo: false, canRedo: false });
+    });
+    return resultMap;
+  }
+}
+
+/**
  * Undo: Activate previous version and copy data to question.
  * Returns the updated question.
  */

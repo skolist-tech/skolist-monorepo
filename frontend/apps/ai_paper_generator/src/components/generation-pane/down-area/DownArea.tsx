@@ -18,6 +18,7 @@ import { useSmartDraftActions } from "../../../hooks/useSmartDraftActions";
 import { useQuestionFilters } from "./hooks/useQuestionFilters";
 import { useQuestionSelection } from "./hooks/useQuestionSelection";
 import { GeneratedQuestionsList } from "./GeneratedQuestionsList";
+import { VersionStateProvider } from "../../../context/VersionStateContext";
 import { ConfirmDialog } from "../../shared/ConfirmDialog";
 
 interface DownAreaProps {
@@ -214,19 +215,21 @@ export function DownArea({
           <DraftProgress />
         </div>
 
-        {/* Scrollable Content */}
-        <GeneratedQuestionsList
-          questions={visibleQuestions}
-          isGenerating={isGenerating}
-          selectedIds={selectedIds}
-          animatingIds={animatingIds}
-          deletingIds={deletingIds}
-          onMoveToDraft={(ids) => handleSmartMoveToDraft(ids)}
-          onSaveQuestion={saveQuestion}
-          onDeleteQuestion={deleteQuestion}
-          onRefetchQuestions={refetchQuestions}
-          onToggleSelect={handleToggleSelect}
-        />
+        {/* Scrollable Content - Wrapped with VersionStateProvider for batched version fetching */}
+        <VersionStateProvider>
+          <GeneratedQuestionsList
+            questions={visibleQuestions}
+            isGenerating={isGenerating}
+            selectedIds={selectedIds}
+            animatingIds={animatingIds}
+            deletingIds={deletingIds}
+            onMoveToDraft={(ids) => handleSmartMoveToDraft(ids)}
+            onSaveQuestion={saveQuestion}
+            onDeleteQuestion={deleteQuestion}
+            onRefetchQuestions={refetchQuestions}
+            onToggleSelect={handleToggleSelect}
+          />
+        </VersionStateProvider>
       </div>
 
       {/* Bulk Delete Confirmation Dialog */}

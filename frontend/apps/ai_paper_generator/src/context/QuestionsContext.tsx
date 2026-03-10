@@ -36,6 +36,7 @@ import {
   undoQuestionVersion,
   redoQuestionVersion,
   getVersionState,
+  getVersionStatesBatch,
   type VersionState,
 } from "../services/versionService";
 
@@ -59,6 +60,7 @@ interface QuestionsContextValue {
   undoQuestion: (id: string) => Promise<void>;
   redoQuestion: (id: string) => Promise<void>;
   getQuestionVersionState: (id: string) => Promise<VersionState>;
+  batchGetVersionStates: (ids: string[]) => Promise<Map<string, VersionState>>;
 }
 
 export const QuestionsContext = createContext<
@@ -128,15 +130,19 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
             });
           } else if (payload.eventType === "UPDATE") {
             setQuestions((prev) =>
-              prev.map((q) =>
-                q.id === payload.new.id
-                  ? {
-                      ...(payload.new as GeneratedQuestion),
-                      concepts: q.concepts,
-                      images: q.images,
-                    }
-                  : q
-              )
+              prev.map((q) => {
+                // Only create new object for the updated question
+                // This prevents ALL question cards from re-rendering
+                if (q.id === payload.new.id) {
+                  return {
+                    ...(payload.new as GeneratedQuestion),
+                    concepts: q.concepts,
+                    images: q.images,
+                  };
+                }
+                // Return same reference for unchanged questions
+                return q;
+              })
             );
           } else if (payload.eventType === "DELETE") {
             setQuestions((prev) => prev.filter((q) => q.id !== payload.old.id));
@@ -547,6 +553,11 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     return getVersionState(id);
   }, []);
 
+  // Batch get version states for multiple questions
+  const batchGetVersionStates = useCallback(async (ids: string[]) => {
+    return getVersionStatesBatch(ids);
+  }, []);
+
   const value: QuestionsContextValue = {
     questions,
     isLoading,
@@ -565,6 +576,7 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
     undoQuestion,
     redoQuestion,
     getQuestionVersionState,
+    batchGetVersionStates,
   };
 
   return (
