@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import random
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -36,11 +37,20 @@ class BatchProcessingContext:
     concepts_dict: dict[str, str]  # concept_name -> description
     concepts_name_to_id: dict[str, str]  # concept_name -> concept_id
     old_questions: list[dict]  # historical questions for reference
+    concept_maps: list[dict]  # maps bank_question_id to concept_id
     activity_id: uuid.UUID
     default_marks: int = 1
     # Timestamp tracking for ordered question insertion
     base_timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     timestamp_offset_ms: int = 0  # Counter for ordering questions
+    # Token usage tracking
+    total_prompt_tokens: int = 0
+    total_response_tokens: int = 0
+    total_tokens: int = 0
+    # Per-batch metrics for reporting
+    batch_metrics: list[dict] = field(default_factory=list)
+    # Store original instructions
+    original_instructions: str | None = None
 
 
 class BatchGenerationError(Exception):
@@ -79,17 +89,106 @@ async def process_batch_generation(
         raise BatchGenerationError(f"Unknown question type: {batch.question_type}")
 
     unique_concepts = list(dict.fromkeys(batch.concepts))
-    logger.debug(f"{prefix}Processing batch with custom instructions: {batch.custom_instruction}")
-
+    
+    # Filter old_questions to only those relevant to this batch's concepts
+    batch_concept_ids = set(
+        ctx.concepts_name_to_id.get(concept) 
+        for concept in unique_concepts 
+        if ctx.concepts_name_to_id.get(concept)
+    )
+    
+    # Get bank_question_ids that are mapped to any of the batch's concepts
+    relevant_bank_question_ids = set(
+        cm["bank_question_id"] 
+        for cm in ctx.concept_maps 
+        if cm.get("concept_id") in batch_concept_ids
+    )
+    
+    # DEBUG: Log concept matching details
+    logger.debug(
+        f"{prefix}FILTER_DEBUG | batch_concept_ids={list(batch_concept_ids)[:3]}... | "
+        f"concept_maps_sample={ctx.concept_maps[:2] if ctx.concept_maps else []} | "
+        f"relevant_bank_question_ids_count={len(relevant_bank_question_ids)}"
+    )
+    
+    # Filter old_questions to only include relevant ones
+    filtered_old_questions = [
+        q for q in ctx.old_questions 
+        if q.get("id") in relevant_bank_question_ids
+    ]
+    
+    # Apply random sampling to limit to maximum 5 questions
+    max_sample_size = 5
+    if len(filtered_old_questions) > max_sample_size:
+        sampled_old_questions = random.sample(filtered_old_questions, max_sample_size)
+        logger.info(
+            f"{prefix}OLD_QUESTIONS_FILTER | total={len(ctx.old_questions)} "
+            f"filtered_for_batch={len(filtered_old_questions)} "
+            f"sampled={len(sampled_old_questions)} "
+            f"reduction={len(ctx.old_questions) - len(sampled_old_questions)}"
+        )
+    else:
+        sampled_old_questions = filtered_old_questions
+        logger.info(
+            f"{prefix}OLD_QUESTIONS_FILTER | total={len(ctx.old_questions)} "
+            f"filtered_for_batch={len(filtered_old_questions)} "
+            f"reduction={len(ctx.old_questions) - len(filtered_old_questions)}"
+        )
+    
+    # Count tokens for concepts text only
+    concepts_text = "\n".join([
+        f"{concept}: {ctx.concepts_dict.get(concept, '')}" 
+        for concept in unique_concepts
+    ])
+    
+    # Count tokens for old_questions only
+    old_questions_text = json.dumps(sampled_old_questions)
+    
+    try:
+        concepts_token_response = await ctx.gemini_client.aio.models.count_tokens(
+            model="gemini-2.5-flash",
+            contents=concepts_text,
+        )
+        concepts_token_count = concepts_token_response.total_tokens
+    except Exception:
+        concepts_token_count = 0
+    
+    try:
+        old_questions_token_response = await ctx.gemini_client.aio.models.count_tokens(
+            model="gemini-2.5-flash",
+            contents=old_questions_text,
+        )
+        old_questions_token_count = old_questions_token_response.total_tokens
+    except Exception:
+        old_questions_token_count = 0
+    
     prompt = generate_questions_with_concepts_prompt(
         concepts=unique_concepts,
         concepts_descriptions=ctx.concepts_dict,
-        old_questions_on_concepts=ctx.old_questions,
+        old_questions_on_concepts=sampled_old_questions,
         n=batch.n_questions,
         question_type=batch.question_type,
         difficulty=batch.difficulty,
         instructions=batch.custom_instruction,
     )
+
+    # LOG: Count actual tokens in the prompt before sending
+    try:
+        token_count_response = await ctx.gemini_client.aio.models.count_tokens(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        prompt_token_estimate = token_count_response.total_tokens
+        
+        logger.info(
+            f"{prefix}BATCH_INPUT | type={batch.question_type} n={batch.n_questions} "
+            f"difficulty={batch.difficulty} | concepts={len(unique_concepts)} "
+            f"old_questions_count={len(sampled_old_questions)} | "
+            f"PROMPT_TOKENS_ESTIMATE={prompt_token_estimate}"
+        )
+    except Exception as token_count_error:
+        logger.warning(f"{prefix}Could not count tokens: {token_count_error}")
+        prompt_token_estimate = 0
 
     response = await ctx.gemini_client.aio.models.generate_content(
         model="gemini-2.5-flash",
@@ -99,6 +198,45 @@ async def process_batch_generation(
             "response_schema": question_schema,
         },
     )
+
+    # LOG: Extract and log token usage from response
+    try:
+        usage_metadata = response.usage_metadata
+        prompt_tokens = usage_metadata.prompt_token_count if usage_metadata else 0
+        response_tokens = usage_metadata.candidates_token_count if usage_metadata else 0
+        total_tokens = usage_metadata.total_token_count if usage_metadata else 0
+        
+        # Update context token counters
+        ctx.total_prompt_tokens += prompt_tokens
+        ctx.total_response_tokens += response_tokens
+        ctx.total_tokens += total_tokens
+        
+        logger.info(
+            f"{prefix}TOKEN_USAGE | prompt_tokens={prompt_tokens} "
+            f"response_tokens={response_tokens} total_tokens={total_tokens} | "
+            f"cumulative_total={ctx.total_tokens}"
+        )
+    except Exception as token_error:
+        logger.warning(f"{prefix}Could not extract token usage: {token_error}")
+        prompt_tokens = 0
+        response_tokens = 0
+        total_tokens = 0
+    
+    # Store batch metrics for final report
+    batch_metrics = {
+        "batch_idx": batch_idx,
+        "concepts_count": len(unique_concepts),
+        "question_type": batch.question_type,
+        "n_questions": batch.n_questions,
+        "difficulty": batch.difficulty,
+        "has_instructions": bool(batch.custom_instruction),
+        "concepts_tokens": concepts_token_count,
+        "old_questions_count": len(sampled_old_questions),
+        "old_questions_tokens": old_questions_token_count,
+        "output_tokens": response_tokens,
+        "total_input_tokens": prompt_tokens,
+    }
+    ctx.batch_metrics.append(batch_metrics)
 
     return {
         "response": response,
@@ -376,9 +514,60 @@ async def process_all_batches(
             successful += 1
             questions_inserted += result if isinstance(result, int) else 0
 
+    # LOG: Final token usage summary
+    logger.info(
+        f"REQUEST_COMPLETE | batches_total={len(batches)} successful={successful} "
+        f"failed={failed} questions_inserted={questions_inserted} | "
+        f"TOKENS: prompt={ctx.total_prompt_tokens} response={ctx.total_response_tokens} "
+        f"total={ctx.total_tokens}"
+    )
+    
+    # LOG: Detailed per-batch metrics table
+    if ctx.batch_metrics:
+        # Sort by batch_idx to ensure correct order
+        sorted_metrics = sorted(ctx.batch_metrics, key=lambda x: x.get("batch_idx", 0))
+        
+        logger.info("\n" + "=" * 160)
+        logger.info("PER-BATCH METRICS TABLE")
+        logger.info("=" * 160)
+        
+        # Header
+        header = (
+            f"{'Batch':<7} | {'Concepts':<9} | {'Q-Type':<20} | {'#Q':<4} | "
+            f"{'Difficulty':<10} | {'Instructions':<12} | {'Concept Tokens':<15} | "
+            f"{'Old-Q Count':<12} | {'Old-Q Tokens':<13} | {'Output Tokens':<13} | {'Total Input':<11}"
+        )
+        logger.info(header)
+        logger.info("-" * 160)
+        
+        # Rows
+        for m in sorted_metrics:
+            row = (
+                f"{m['batch_idx']:<7} | {m['concepts_count']:<9} | {m['question_type']:<20} | {m['n_questions']:<4} | "
+                f"{m['difficulty']:<10} | {'Yes' if m['has_instructions'] else 'No':<12} | {m['concepts_tokens']:<15} | "
+                f"{m['old_questions_count']:<12} | {m['old_questions_tokens']:<13} | {m['output_tokens']:<13} | {m['total_input_tokens']:<11}"
+            )
+            logger.info(row)
+        
+        logger.info("=" * 160)
+        
+        # Log instructions if provided
+        if ctx.original_instructions:
+            logger.info("\nCUSTOM INSTRUCTIONS PROVIDED:")
+            logger.info(f"{ctx.original_instructions}")
+            logger.info("=" * 160)
+        else:
+            logger.info("\nCUSTOM INSTRUCTIONS: None")
+            logger.info("=" * 160)
+
     return {
         "successful": successful,
         "failed": failed,
         "total": len(batches),
         "questions_inserted": questions_inserted,
+        "token_usage": {
+            "prompt_tokens": ctx.total_prompt_tokens,
+            "response_tokens": ctx.total_response_tokens,
+            "total_tokens": ctx.total_tokens,
+        },
     }
