@@ -209,6 +209,7 @@ function InteractiveUpArea() {
     undoQuestion: async () => {},
     redoQuestion: async () => {},
     getQuestionVersionState: async () => ({ canUndo: false, canRedo: false }),
+    batchGetVersionStates: async () => new Map(),
   };
 
   const handleHardnessLevelChange = (level: HardnessLevel, value: number) => {
@@ -318,6 +319,7 @@ const questionsContextDefault = {
   undoQuestion: async () => {},
   redoQuestion: async () => {},
   getQuestionVersionState: async () => ({ canUndo: false, canRedo: false }),
+  batchGetVersionStates: async () => new Map(),
 };
 
 const defaultProps = {
