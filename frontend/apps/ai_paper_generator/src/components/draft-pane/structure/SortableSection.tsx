@@ -29,6 +29,7 @@ import { ConfirmDialog } from "../../shared/ConfirmDialog";
 import { usePrevious } from "../../../hooks/usePrevious";
 import { type GeneratedQuestionWithConcepts } from "../../../services/questionService";
 import { SortableQuestion } from "./SortableQuestion";
+import { VersionStateProvider } from "../../../context/VersionStateContext";
 
 interface SortableSectionProps {
   section: QgenDraftSection;
@@ -447,20 +448,22 @@ export function SortableSection({
                 No questions in this section
               </div>
             ) : (
-              <SortableContext
-                items={sectionQuestions.map((q) => q.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {sectionQuestions.map((q, idx) => (
-                  <SortableQuestion
-                    key={q.id}
-                    question={q}
-                    index={idx}
-                    onMoveUp={() => moveQuestion(idx, "up")}
-                    onMoveDown={() => moveQuestion(idx, "down")}
-                  />
-                ))}
-              </SortableContext>
+              <VersionStateProvider>
+                <SortableContext
+                  items={sectionQuestions.map((q) => q.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {sectionQuestions.map((q, idx) => (
+                    <SortableQuestion
+                      key={q.id}
+                      question={q}
+                      index={idx}
+                      onMoveUp={() => moveQuestion(idx, "up")}
+                      onMoveDown={() => moveQuestion(idx, "down")}
+                    />
+                  ))}
+                </SortableContext>
+              </VersionStateProvider>
             )}
           </div>
           <div className="hidden border-t p-3 md:block">

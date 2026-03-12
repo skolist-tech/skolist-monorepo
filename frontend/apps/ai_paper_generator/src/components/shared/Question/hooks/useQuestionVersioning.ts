@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useToast } from "@skolist/ui";
 import type { GeneratedQuestionWithConcepts } from "../../../../services/questionService";
 import {
-  getVersionState,
   undoQuestionVersion,
   redoQuestionVersion,
 } from "../../../../services/versionService";
+import { useVersionStateContext } from "../../../../context/VersionStateContext";
 
 interface UseQuestionVersioningProps {
   question: GeneratedQuestionWithConcepts;
@@ -17,35 +17,14 @@ export function useQuestionVersioning({
   onUpdate,
 }: UseQuestionVersioningProps) {
   const { toast } = useToast();
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
+  const { getVersionState, refreshVersionState } = useVersionStateContext();
   const [isUndoing, setIsUndoing] = useState(false);
   const [isRedoing, setIsRedoing] = useState(false);
 
-  // Fetch version state on mount and when question changes
-  useEffect(() => {
-    const fetchVersionState = async () => {
-      try {
-        const state = await getVersionState(question.id);
-        setCanUndo(state.canUndo);
-        setCanRedo(state.canRedo);
-      } catch {
-        setCanUndo(false);
-        setCanRedo(false);
-      }
-    };
-    fetchVersionState();
-  }, [question.id, question.updated_at]);
-
-  const refreshVersionState = useCallback(async () => {
-    try {
-      const newState = await getVersionState(question.id);
-      setCanUndo(newState.canUndo);
-      setCanRedo(newState.canRedo);
-    } catch {
-      // Ignore errors in version state refresh
-    }
-  }, [question.id]);
+  // Get version state from context (batched, no API calls here)
+  const versionState = getVersionState(question.id);
+  const canUndo = versionState.canUndo;
+  const canRedo = versionState.canRedo;
 
   const handleUndo = useCallback(async () => {
     try {
@@ -54,9 +33,7 @@ export function useQuestionVersioning({
       if (updated && onUpdate) {
         onUpdate({ ...question, ...updated });
       }
-      const newState = await getVersionState(question.id);
-      setCanUndo(newState.canUndo);
-      setCanRedo(newState.canRedo);
+      await refreshVersionState(question.id);
       toast({
         title: "Undo Successful",
         description: "Reverted to previous version.",
@@ -72,7 +49,7 @@ export function useQuestionVersioning({
     } finally {
       setIsUndoing(false);
     }
-  }, [question, onUpdate, toast]);
+  }, [question, onUpdate, toast, refreshVersionState]);
 
   const handleRedo = useCallback(async () => {
     try {
@@ -81,9 +58,7 @@ export function useQuestionVersioning({
       if (updated && onUpdate) {
         onUpdate({ ...question, ...updated });
       }
-      const newState = await getVersionState(question.id);
-      setCanUndo(newState.canUndo);
-      setCanRedo(newState.canRedo);
+      await refreshVersionState(question.id);
       toast({
         title: "Redo Successful",
         description: "Advanced to next version.",
@@ -99,14 +74,14 @@ export function useQuestionVersioning({
     } finally {
       setIsRedoing(false);
     }
-  }, [question, onUpdate, toast]);
+  }, [question, onUpdate, toast, refreshVersionState]);
 
   return {
     canUndo,
     canRedo,
     isUndoing,
     isRedoing,
-    refreshVersionState,
+    refreshVersionState: () => refreshVersionState(question.id),
     handleUndo,
     handleRedo,
   };

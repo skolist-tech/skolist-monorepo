@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import uuid
@@ -131,7 +132,20 @@ async def generate_questions(
         if not await check_user_has_credits(supabase_client, user_id):
             return Response(status_code=status.HTTP_402_PAYMENT_REQUIRED, content="Insufficient credits")
 
-        logger.debug(f"Custom instruction received: {request.instructions}")
+        # LOG: Request overview
+        total_questions = sum(qt.count for qt in request.config.question_types)
+        question_types_summary = ", ".join([f"{qt.type}:{qt.count}" for qt in request.config.question_types])
+        instruction_length = len(request.instructions) if request.instructions else 0
+        
+        logger.info(
+            f"REQUEST_START | user_id={user_id} activity_id={request.activity_id} | "
+            f"concepts_count={len(request.concept_ids)} total_questions={total_questions} | "
+            f"question_types=[{question_types_summary}] | "
+            f"difficulty=[E:{request.config.difficulty_distribution.easy}% "
+            f"M:{request.config.difficulty_distribution.medium}% "
+            f"H:{request.config.difficulty_distribution.hard}%] | "
+            f"instruction_length={instruction_length}"
+        )
 
         # Fetch concepts
         def chunked(lst, size):
@@ -153,6 +167,9 @@ async def generate_questions(
 
         concepts_dict = {concept["name"]: concept["description"] for concept in concepts}
         concepts_name_to_id = {concept["name"]: concept["id"] for concept in concepts}
+        
+        # LOG: Concepts loaded
+        logger.info(f"CONCEPTS_LOADED | count={len(concepts)}")
 
         # Fetch historical questions for reference
         try:
@@ -162,13 +179,17 @@ async def generate_questions(
             async def fetch_concept_map(batch):
                 return await (
                     supabase_client.table("bank_questions_concepts_maps")
-                    .select("bank_question_id")
+                    .select("bank_question_id, concept_id")
                     .in_("concept_id", batch)
                     .execute()
                 )
 
             responses = await asyncio.gather(*[fetch_concept_map(b) for b in batches_list])
             concept_maps = [item for resp in responses for item in (resp.data or [])]
+            
+            logger.debug(f"Concept maps fetched: {len(concept_maps)} mappings")
+            if concept_maps:
+                logger.debug(f"Sample concept_map: {concept_maps[0]}")
         except Exception as e:
             logger.warning(f"Error Fetching the concept maps: {e}")
             concept_maps = []
@@ -189,12 +210,54 @@ async def generate_questions(
                 old_questions = []
         else:
             old_questions = []
+        
+        # LOG: Historical questions count (LIKELY TOKEN BOTTLENECK)
+        logger.info(f"OLD_QUESTIONS_LOADED | count={len(old_questions)}")
+        
+        if len(old_questions) > 100:
+            logger.warning(
+                f"⚠️  HIGH_OLD_QUESTIONS_COUNT | count={len(old_questions)} | "
+                f"This may cause token limit issues. Consider limiting historical questions."
+            )
+        
+        # Estimate token count for old_questions using Gemini's count_tokens
+        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        try:
+            old_questions_text = json.dumps(old_questions[:50])  # Sample first 50 for estimation
+            token_count_response = await gemini_client.aio.models.count_tokens(
+                model="gemini-2.5-flash",
+                contents=old_questions_text,
+            )
+            sample_tokens = token_count_response.total_tokens
+            estimated_total_tokens = (sample_tokens * len(old_questions)) // min(50, len(old_questions)) if old_questions else 0
+            
+            logger.info(
+                f"OLD_QUESTIONS_TOKENS | sample_size={min(50, len(old_questions))} "
+                f"sample_tokens={sample_tokens} estimated_total_tokens={estimated_total_tokens}"
+            )
+            
+            if estimated_total_tokens > 50000:
+                logger.warning(
+                    f"⚠️  HIGH_TOKEN_ESTIMATE_FOR_OLD_QUESTIONS | estimated={estimated_total_tokens} | "
+                    f"This is likely causing rate limit issues!"
+                )
+        except Exception as token_est_error:
+            logger.warning(f"Could not estimate tokens for old_questions: {token_est_error}")
 
         # Batchification
         concept_names = [concept["name"] for concept in concepts]
         batches = batchify_request(request, concept_names)
-
-        logger.debug(f"Total batches created: {len(batches)}")
+        
+        # LOG: Batch summary
+        batch_types = {}
+        for batch in batches:
+            batch_types[batch.question_type] = batch_types.get(batch.question_type, 0) + 1
+        batch_summary = ", ".join([f"{k}:{v}" for k, v in batch_types.items()])
+        
+        logger.info(
+            f"BATCHES_CREATED | total_batches={len(batches)} | "
+            f"batch_distribution=[{batch_summary}]"
+        )
 
         # Initialize context
         gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -205,7 +268,9 @@ async def generate_questions(
             concepts_dict=concepts_dict,
             concepts_name_to_id=concepts_name_to_id,
             old_questions=old_questions,
+            concept_maps=concept_maps,
             activity_id=request.activity_id,
+            original_instructions=request.instructions,
         )
 
         # Process all batches
@@ -219,9 +284,19 @@ async def generate_questions(
         # Credits deduction
         questions_inserted = result.get("questions_inserted", 0)
         credits_to_deduct = questions_inserted * 5
+        token_usage = result.get("token_usage", {})
 
         if credits_to_deduct > 0:
             await deduct_user_credits(supabase_client, user_id, credits_to_deduct)
+        
+        # LOG: Final summary
+        logger.info(
+            f"REQUEST_SUCCESS | user_id={user_id} activity_id={request.activity_id} | "
+            f"questions_inserted={questions_inserted} credits_deducted={credits_to_deduct} | "
+            f"TOKEN_SUMMARY: prompt={token_usage.get('prompt_tokens', 0)} "
+            f"response={token_usage.get('response_tokens', 0)} "
+            f"total={token_usage.get('total_tokens', 0)}"
+        )
 
         return Response(status_code=status.HTTP_201_CREATED)
 
