@@ -464,6 +464,17 @@ export async function submitTestAttempt(attemptId: string): Promise<void> {
     console.error("Failed to submit test attempt:", error);
     throw new Error(error.message || "Failed to submit test");
   }
+
+  const { error: gradingError } = await client.rpc("grade_test_attempt", {
+    p_attempt_id: attemptId,
+  });
+
+  if (gradingError) {
+    console.error("Test submitted but auto-grading failed:", gradingError);
+    throw new Error(
+      gradingError.message || "Test submitted but auto-grading failed"
+    );
+  }
 }
 
 /**
