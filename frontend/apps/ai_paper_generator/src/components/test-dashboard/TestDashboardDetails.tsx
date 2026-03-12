@@ -16,7 +16,7 @@ import {
   AvatarImage,
   AvatarFallback,
 } from "@skolist/ui";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Eye } from "lucide-react";
 
 export function TestDashboardDetails() {
   const { testId } = useParams();
@@ -108,6 +108,9 @@ export function TestDashboardDetails() {
                     <th className="h-12 w-[100px] px-4 text-right align-middle font-medium text-muted-foreground">
                       Marks
                     </th>
+                    <th className="h-12 w-[140px] px-4 text-right align-middle font-medium text-muted-foreground">
+                      View Attempt
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
@@ -161,6 +164,16 @@ export function TestDashboardDetails() {
                         {attempt.total_marks_possible
                           ? ` / ${attempt.total_marks_possible}`
                           : ""}
+                      </td>
+                      <td className="p-4 text-right align-middle">
+                        <Link
+                          to={`/test-dashboard/details/${testId}/attempt/${attempt.id}`}
+                        >
+                          <Button variant="outline" size="sm">
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </Button>
+                        </Link>
                       </td>
                     </tr>
                   ))}
