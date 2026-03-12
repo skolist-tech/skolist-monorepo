@@ -5,8 +5,8 @@ import {
   ChevronLeft,
   ChevronRight,
   List,
-  Monitor,
   Loader2,
+  Monitor,
 } from "lucide-react";
 import {
   Badge,
@@ -16,19 +16,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@skolist/ui";
-import { getOnlineTestById } from "../../services/onlineTestService";
 import {
-  getTestAnswers,
-  getTestAttemptsByTestId,
-  getTestQuestions,
-  type TestAnswer,
-  type TestAttemptDetails,
-  type TestQuestion,
-} from "../../services/testAttemptService";
+  studentAttemptApiService,
+  type StudentAttemptDetailResponse,
+} from "../../services/studentAttemptApiService";
 
 type ViewMode = "live" | "list";
 
-function getQuestionResultStyle(answer?: TestAnswer) {
+type AnswerRow = StudentAttemptDetailResponse["answers"][number];
+type QuestionRow = StudentAttemptDetailResponse["questions"][number];
+
+function getQuestionResultStyle(answer?: AnswerRow) {
   if (
     !answer ||
     answer.marks_obtained === null ||
@@ -53,12 +51,13 @@ function getQuestionResultStyle(answer?: TestAnswer) {
   };
 }
 
-function getAnswerDisplay(question: TestQuestion, answer?: TestAnswer): string {
+function getAnswerDisplay(question: QuestionRow, answer?: AnswerRow): string {
   if (!answer) return "Not answered";
 
   if (question.type === "multiple_choice_single") {
     const idx = (answer.selected_mcq_option || 0) - 1;
-    if (idx >= 0 && question.options?.[idx]) return question.options[idx];
+    if (idx >= 0 && question.options?.[idx])
+      return String(question.options[idx]);
     return "Not answered";
   }
 
@@ -80,56 +79,47 @@ function getAnswerDisplay(question: TestQuestion, answer?: TestAnswer): string {
   return answer.text_answer?.trim() ? answer.text_answer : "Not answered";
 }
 
-export function TestAttemptView() {
-  const { testId, attemptId } = useParams();
+export function StudentAttemptView() {
+  const { attemptId } = useParams();
   const [viewMode, setViewMode] = useState<ViewMode>("live");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [test, setTest] = useState<any>(null);
-  const [attempt, setAttempt] = useState<TestAttemptDetails | null>(null);
-  const [questions, setQuestions] = useState<TestQuestion[]>([]);
-  const [answers, setAnswers] = useState<TestAnswer[]>([]);
+  const [detail, setDetail] = useState<StudentAttemptDetailResponse | null>(
+    null
+  );
 
   useEffect(() => {
-    if (!testId || !attemptId) return;
+    if (!attemptId) return;
 
-    const loadAttempt = async () => {
+    const load = async () => {
       setIsLoading(true);
       setError(null);
-
       try {
-        const [testData, attemptsData, questionsData, answersData] =
-          await Promise.all([
-            getOnlineTestById(testId),
-            getTestAttemptsByTestId(testId),
-            getTestQuestions(attemptId),
-            getTestAnswers(attemptId),
-          ]);
-
-        setTest(testData);
-        setAttempt(attemptsData.find((a) => a.id === attemptId) || null);
-        setQuestions(questionsData);
-        setAnswers(answersData);
+        const data =
+          await studentAttemptApiService.getMyAttemptDetail(attemptId);
+        setDetail(data);
       } catch (err) {
-        console.error(err);
         setError(err instanceof Error ? err.message : "Failed to load attempt");
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadAttempt();
-  }, [attemptId, testId]);
+    load();
+  }, [attemptId]);
 
   const answersByQuestionId = useMemo(() => {
-    const map: Record<string, TestAnswer> = {};
-    for (const ans of answers) {
+    const map: Record<string, AnswerRow> = {};
+    for (const ans of detail?.answers || []) {
       map[ans.gen_question_id] = ans;
     }
     return map;
-  }, [answers]);
+  }, [detail?.answers]);
+
+  const questions = detail?.questions || [];
+  const attempt = detail?.attempt;
+  const test = detail?.test;
 
   const currentQuestion = questions[currentIndex];
   const currentAnswer = currentQuestion
@@ -145,15 +135,15 @@ export function TestAttemptView() {
     );
   }
 
-  if (error || !test || !attempt) {
+  if (error || !detail || !attempt || !test) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-4">
         <h2 className="text-xl font-semibold">Unable to load attempt</h2>
         <p className="text-sm text-muted-foreground">
           {error || "Attempt not found"}
         </p>
-        <Link to={`/test-dashboard/details/${testId}`}>
-          <Button>Back to Attempts</Button>
+        <Link to="/my-attempts">
+          <Button>Back to My Attempts</Button>
         </Link>
       </div>
     );
@@ -163,17 +153,15 @@ export function TestAttemptView() {
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link to={`/test-dashboard/details/${testId}`}>
+          <Link to="/my-attempts">
             <Button variant="outline" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">
-              {test.title || test.qgen_drafts?.paper_title || "Untitled Test"}
-            </h2>
+            <h2 className="text-2xl font-bold tracking-tight">{test.title}</h2>
             <p className="text-sm text-muted-foreground">
-              Attempt by {attempt.student?.name || "Unknown Student"} •{" "}
+              Attempt #{attempt.attempt_number} •{" "}
               {new Date(attempt.started_at).toLocaleString()}
             </p>
           </div>
@@ -229,10 +217,11 @@ export function TestAttemptView() {
             <p className="text-xs text-muted-foreground">Answered</p>
             <p className="font-semibold">
               {
-                questions.filter((q) => {
-                  const text = getAnswerDisplay(q, answersByQuestionId[q.id]);
-                  return text !== "Not answered";
-                }).length
+                questions.filter(
+                  (q) =>
+                    getAnswerDisplay(q, answersByQuestionId[q.id]) !==
+                    "Not answered"
+                ).length
               }
             </p>
           </div>
@@ -271,10 +260,7 @@ export function TestAttemptView() {
                       Student Answer
                     </p>
                     <p className="whitespace-pre-wrap text-sm">
-                      {getAnswerDisplay(
-                        currentQuestion,
-                        answersByQuestionId[currentQuestion.id]
-                      )}
+                      {getAnswerDisplay(currentQuestion, currentAnswer)}
                     </p>
                   </div>
                 </>

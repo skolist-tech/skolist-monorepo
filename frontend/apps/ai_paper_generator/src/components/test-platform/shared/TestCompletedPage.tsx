@@ -72,8 +72,15 @@ export function TestCompletedPage() {
         {/* Action Buttons */}
         <div className="space-y-3">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/my-attempts")}
             className="w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+          >
+            View My Attempts
+          </button>
+
+          <button
+            onClick={() => navigate("/")}
+            className="w-full rounded-md bg-slate-100 px-4 py-2 font-medium text-slate-700 transition-colors hover:bg-slate-200"
           >
             Go to Dashboard
           </button>

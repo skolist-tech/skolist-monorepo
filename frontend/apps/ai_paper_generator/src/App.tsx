@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@skolist/auth";
 import { DashboardPage } from "./pages/dashboard";
 import { TestDashboardPage } from "./pages/TestDashboardPage";
+import { StudentAttemptsPage } from "./pages/StudentAttemptsPage";
 import { LoginPage } from "./pages/login";
 import { TestPlatformRouter } from "./components/test-platform";
 
@@ -20,6 +21,16 @@ function App() {
         element={
           <ProtectedRoute>
             <TestDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Student Attempts Dashboard */}
+      <Route
+        path="/my-attempts/*"
+        element={
+          <ProtectedRoute>
+            <StudentAttemptsPage />
           </ProtectedRoute>
         }
       />
