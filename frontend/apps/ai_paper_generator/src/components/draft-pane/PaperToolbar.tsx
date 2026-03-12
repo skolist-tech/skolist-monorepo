@@ -9,6 +9,7 @@ import {
   Download,
   Loader2,
   Printer,
+  Globe,
 } from "lucide-react";
 import {
   Button,
@@ -32,6 +33,7 @@ interface PaperToolbarProps {
   onDownloadPdf: () => void;
   onDownloadDocx: () => void;
   onPrint: () => void;
+  onOnlineTest: () => void;
 }
 
 export function PaperToolbar({
@@ -47,6 +49,7 @@ export function PaperToolbar({
   onDownloadPdf,
   onDownloadDocx,
   onPrint,
+  onOnlineTest,
 }: PaperToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-white p-2 shadow-sm md:gap-4 md:p-4">
@@ -115,52 +118,67 @@ export function PaperToolbar({
         </div>
       </div>
 
-      {/* Download Button Group */}
-      <div className="flex items-center">
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2">
+        {/* Online Test Button */}
         <Button
           size="sm"
-          className="gap-2 rounded-r-none border-r border-white/20 px-3 md:px-4"
-          onClick={onDownloadPdf}
-          disabled={isDownloadingPdf || isDownloadingDocx}
+          variant="outline"
+          className="gap-2 px-3 md:px-4"
+          onClick={onOnlineTest}
         >
-          {isDownloadingPdf ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4" />
-          )}
-          <span className="hidden sm:inline">Download</span>
-          <span className="sm:hidden">Download</span>
+          <Globe className="h-4 w-4" />
+          <span className="hidden sm:inline">Online Test</span>
+          <span className="sm:hidden">Test</span>
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              className="rounded-l-none border-l-0 px-1 shadow-none md:px-2"
-              disabled={isDownloadingPdf || isDownloadingDocx}
-            >
-              <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={onDownloadDocx}
-              className="gap-2"
-              disabled={isDownloadingDocx}
-            >
-              {isDownloadingDocx ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FileDown className="h-4 w-4" />
-              )}
-              Download Word File
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onPrint} className="gap-2">
-              <Printer className="h-4 w-4" />
-              Print PDF (Browser)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Download Button Group */}
+        <div className="flex items-center">
+          <Button
+            size="sm"
+            className="gap-2 rounded-r-none border-r border-white/20 px-3 md:px-4"
+            onClick={onDownloadPdf}
+            disabled={isDownloadingPdf || isDownloadingDocx}
+          >
+            {isDownloadingPdf ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">Download</span>
+            <span className="sm:hidden">Download</span>
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                className="rounded-l-none border-l-0 px-1 shadow-none md:px-2"
+                disabled={isDownloadingPdf || isDownloadingDocx}
+              >
+                <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={onDownloadDocx}
+                className="gap-2"
+                disabled={isDownloadingDocx}
+              >
+                {isDownloadingDocx ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
+                Download Word File
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onPrint} className="gap-2">
+                <Printer className="h-4 w-4" />
+                Print PDF (Browser)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );
