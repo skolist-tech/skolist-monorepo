@@ -39,6 +39,7 @@ jobs:
           source: "./backend"
           flags: |
             --allow-unauthenticated
+            --memory=1Gi
             --set-secrets=SUPABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_URL_STAGE:latest
             --set-secrets=SUPABASE_SERVICE_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_SERVICE_KEY_STAGE:latest
             --set-secrets=SUPABASE_ANON_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_ANON_KEY_STAGE:latest
