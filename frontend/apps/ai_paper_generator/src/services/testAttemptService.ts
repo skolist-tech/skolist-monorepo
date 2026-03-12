@@ -7,10 +7,10 @@ import { getSupabaseClient } from "@skolist/auth";
 
 export interface TestAttemptDetails extends TestAttempt {
   student: {
-    name: string;
-    email?: string;
-    phone_num?: string;
-    avatar_url?: string;
+    name?: string | null;
+    email?: string | null;
+    phone_num?: string | null;
+    avatar_url?: string | null;
   };
 }
 
@@ -34,13 +34,13 @@ export interface TestAnswer {
   test_attempt_id: string;
   gen_question_id: string;
   question_position: number;
-  selected_mcq_option?: number;
-  selected_msq_options?: boolean[];
-  text_answer?: string;
-  numerical_answer?: number;
-  match_answer?: Record<string, any>;
-  is_correct?: boolean;
-  marks_obtained?: number;
+  selected_mcq_option?: number | null;
+  selected_msq_options?: boolean[] | null;
+  text_answer?: string | null;
+  numerical_answer?: number | null;
+  match_answer?: Record<string, any> | null;
+  is_correct?: boolean | null;
+  marks_obtained?: number | null;
   answered_at?: string;
 }
 
@@ -219,7 +219,89 @@ export async function getTestQuestions(
 }
 
 /**
- * Save/update an answer for a question
+ * Save/update an answer for a question (High Level)
+ * - Automatically handles mapping string/array answers to correct DB columns (selected_mcq_option, text_answer, etc.)
+ */
+export async function saveSingleStudentAnswer(
+  attemptId: string,
+  question: TestQuestion,
+  answerValue: string | string[]
+): Promise<void> {
+  const client = getSupabaseClient();
+  const questionId = question.id;
+  const questionPosition = question.position_in_draft || 0;
+
+  // Ensure we have options list for mapping indices
+  const optionsList =
+    question.options ||
+    [
+      question.option1,
+      question.option2,
+      question.option3,
+      question.option4,
+    ].filter((opt): opt is string => typeof opt === "string");
+
+  const baseAnswer = {
+    test_attempt_id: attemptId,
+    gen_question_id: questionId,
+    question_position: questionPosition,
+    answered_at: new Date().toISOString(),
+  };
+
+  let payload: Partial<TestAnswer> = {};
+
+  if (Array.isArray(answerValue)) {
+    // MSQ Case
+    const booleanOptions = [false, false, false, false];
+    answerValue.forEach((val) => {
+      const idx = optionsList.indexOf(val);
+      if (idx !== -1 && idx < 4) {
+        booleanOptions[idx] = true;
+      }
+    });
+    payload = {
+      ...baseAnswer,
+      selected_msq_options: booleanOptions,
+      selected_mcq_option: null,
+      text_answer: null,
+    };
+  } else {
+    // Single Answer Case
+    const isMcq =
+      question.type === "multiple_choice_single" ||
+      question.question_type?.toLowerCase().includes("mcq") ||
+      question.question_type?.toLowerCase().includes("true_false");
+
+    if (isMcq) {
+      const idx = optionsList.indexOf(answerValue);
+      payload = {
+        ...baseAnswer,
+        selected_mcq_option: idx !== -1 ? idx + 1 : null,
+        text_answer: null,
+        selected_msq_options: null,
+      };
+    } else {
+      payload = {
+        ...baseAnswer,
+        text_answer: answerValue,
+        selected_mcq_option: null,
+        selected_msq_options: null,
+      };
+    }
+  }
+
+  const { error } = await client.from("test_answers").upsert(payload, {
+    onConflict: "test_attempt_id,gen_question_id",
+  });
+
+  if (error) {
+    console.error("Failed to save test answer:", error);
+    throw new Error(error.message || "Failed to save answer");
+  }
+}
+
+/**
+ * Save/update an answer for a question (Low Level - Raw Payload)
  */
 export async function saveTestAnswer(
   attemptId: string,
@@ -229,16 +311,18 @@ export async function saveTestAnswer(
 ): Promise<void> {
   const client = getSupabaseClient();
 
-  const { error } = await client
-    .from("test_answers")
-    .upsert({
+  const { error } = await client.from("test_answers").upsert(
+    {
       test_attempt_id: attemptId,
       gen_question_id: questionId,
       question_position: questionPosition,
       ...answerData,
       answered_at: new Date().toISOString(),
-    })
-    .match({ test_attempt_id: attemptId, gen_question_id: questionId });
+    },
+    {
+      onConflict: "test_attempt_id,gen_question_id",
+    }
+  );
 
   if (error) {
     console.error("Failed to save test answer:", error);
@@ -251,48 +335,93 @@ export async function saveTestAnswer(
  */
 export async function saveTestAnswers(
   attemptId: string,
-  answers: Record<string, string | string[]>
+  answers: Record<string, string | string[]>,
+  questions: TestQuestion[]
 ): Promise<void> {
   const client = getSupabaseClient();
 
-  // Convert answers object to array of test answers
-  const answersToSave = Object.entries(answers).map(
-    ([questionId, answer], index) => {
+  // 1. Map questions to get proper structure for saving answers
+  const answersToSave = Object.entries(answers)
+    .map(([questionId, answerValue]) => {
+      const question = questions.find((q) => q.id === questionId);
+      if (!question) return null;
+
+      // Ensure we have options list for mapping indices
+      const optionsList =
+        question.options ||
+        [
+          question.option1,
+          question.option2,
+          question.option3,
+          question.option4,
+        ].filter((opt): opt is string => typeof opt === "string");
+
+      // Common fields
       const baseAnswer = {
         test_attempt_id: attemptId,
         gen_question_id: questionId,
-        question_position: index + 1,
+        question_position: question.position_in_draft || 0, // Fallback if position missing
         answered_at: new Date().toISOString(),
       };
 
-      if (Array.isArray(answer)) {
-        // Multiple choice answers
+      // Determine answer type to save based on stored data type and question type
+      if (Array.isArray(answerValue)) {
+        // MSQ Case: answerValue is string[] (selected options)
+        const booleanOptions = [false, false, false, false];
+        answerValue.forEach((val) => {
+          const idx = optionsList.indexOf(val);
+          if (idx !== -1 && idx < 4) {
+            booleanOptions[idx] = true;
+          }
+        });
+
         return {
           ...baseAnswer,
-          selected_msq_options: answer.map(() => true), // Simplified - in real app, map to actual boolean array
+          selected_msq_options: booleanOptions,
+          // Clear others just in case
+          selected_mcq_option: null,
+          text_answer: null,
         };
       } else {
-        // Single choice or text answer
-        return {
-          ...baseAnswer,
-          text_answer: answer,
-        };
-      }
-    }
-  );
+        // Single Answer Case: string
+        const isMcq =
+          question.type === "multiple_choice_single" ||
+          question.question_type?.toLowerCase().includes("mcq") ||
+          question.question_type?.toLowerCase().includes("true_false");
 
+        if (isMcq) {
+          const idx = optionsList.indexOf(answerValue);
+          return {
+            ...baseAnswer,
+            selected_mcq_option: idx !== -1 ? idx + 1 : null, // 1-based index
+            text_answer: null,
+            selected_msq_options: null,
+          };
+        } else {
+          // Text/Numeric/Match
+          return {
+            ...baseAnswer,
+            text_answer: answerValue,
+            selected_mcq_option: null,
+            selected_msq_options: null,
+          };
+        }
+      }
+    })
+    .filter((a): a is NonNullable<typeof a> => a !== null);
+
+  if (answersToSave.length === 0) return;
+
+  // 2. Perform upsert
   for (const answer of answersToSave) {
-    const { error } = await client
-      .from("test_answers")
-      .upsert(answer)
-      .match({
-        test_attempt_id: attemptId,
-        gen_question_id: answer.gen_question_id,
-      });
+    const { error } = await client.from("test_answers").upsert(answer, {
+      onConflict: "test_attempt_id,gen_question_id",
+    });
 
     if (error) {
       console.error("Failed to save test answer:", error);
-      throw new Error(error.message || "Failed to save answers");
+      // Depending on requirements, we can throw or continue
+      // throw new Error(error.message || "Failed to save answers");
     }
   }
 }
@@ -365,6 +494,7 @@ export const testAttemptService = {
   getTestByShareCode,
   startTestAttempt,
   getTestQuestions,
+  saveSingleStudentAnswer,
   saveTestAnswers,
   saveTestAnswer,
   getTestAnswers,

@@ -5,11 +5,19 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Clock, Flag, CheckCircle, AlertTriangle } from "lucide-react";
+import {
+  Clock,
+  Flag,
+  CheckCircle,
+  AlertTriangle,
+  Loader2,
+  Save,
+  X,
+  Edit2,
+} from "lucide-react";
 import { useTestContext } from "../../../context/TestContext";
 import {
   useTestTimer,
-  useAutoSave,
   useQuestionNavigation,
 } from "../../../hooks/test-platform";
 import { testAttemptService } from "../../../services/testAttemptService";
@@ -25,6 +33,13 @@ export function TestInterface() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTextValue, setEditTextValue] = useState<string>("");
+  const [isSavingAnswer, setIsSavingAnswer] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">(
+    "idle"
+  );
+
   // Custom hooks
   const { formattedTime, timerColor, isInWarning, startTimer } = useTestTimer({
     onTimeUp: handleTimeUp,
@@ -38,12 +53,7 @@ export function TestInterface() {
     },
   });
 
-  const { hasUnsavedChanges, isSaving } = useAutoSave({
-    onSaveError: (error) => {
-      console.error("Auto-save failed:", error);
-      // Show user-friendly error
-    },
-  });
+  // Removed useAutoSave - handling saves explicitly per question type
 
   const {
     goToNext,
@@ -88,12 +98,26 @@ export function TestInterface() {
     loadQuestions();
   }, [state.currentAttempt?.id, dispatch, startTimer]);
 
+  useEffect(() => {
+    setIsEditing(false);
+    setEditTextValue("");
+    setSaveStatus("idle");
+  }, [state.currentQuestionId]);
+
   async function handleTimeUp() {
     await handleSubmitTest(true); // Auto-submit when time is up
   }
 
   async function handleSubmitTest(isAutoSubmit = false) {
     if (!state.currentAttempt?.id) return;
+
+    // Check if currently editing a text answer
+    if (isEditing && editTextValue.trim() !== "") {
+      const confirmSubmit = window.confirm(
+        "You have an unsaved answer in the editor. Do you want to submit anyway? Any unsaved changes will be lost."
+      );
+      if (!confirmSubmit) return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -106,6 +130,7 @@ export function TestInterface() {
         state: { isAutoSubmit },
       });
     } catch (err) {
+      console.error(err);
       setError(err instanceof Error ? err.message : "Failed to submit test");
     } finally {
       setIsSubmitting(false);
@@ -113,14 +138,82 @@ export function TestInterface() {
     }
   }
 
-  const handleAnswerChange = (
+  // Handle immediate save for MCQ/MSQ
+  const handleOptionChange = async (
     questionId: string,
     answer: string | string[]
   ) => {
+    // Optimistic update
     dispatch({
       type: "SET_ANSWER",
       payload: { questionId, answer },
     });
+
+    if (!state.currentAttempt?.id) return;
+
+    const question = state.questions.find((q) => q.id === questionId);
+    if (!question) return;
+
+    setIsSavingAnswer(true);
+    setSaveStatus("idle");
+
+    try {
+      await testAttemptService.saveSingleStudentAnswer(
+        state.currentAttempt.id,
+        question,
+        answer
+      );
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (err) {
+      console.error("Failed to save answer:", err);
+      setSaveStatus("error");
+      // Could revert state here if strict, but maybe better to show error UI
+    } finally {
+      setIsSavingAnswer(false);
+    }
+  };
+
+  // Handle explicit save for Text answers
+  const handleTextSave = async (questionId: string) => {
+    if (!state.currentAttempt?.id) return;
+
+    const answer = editTextValue;
+    const question = state.questions.find((q) => q.id === questionId);
+    if (!question) return;
+
+    setIsSavingAnswer(true);
+    setSaveStatus("idle");
+
+    try {
+      // Save to DB first
+      await testAttemptService.saveSingleStudentAnswer(
+        state.currentAttempt.id,
+        question,
+        answer
+      );
+
+      // Then update context and exit edit mode
+      dispatch({
+        type: "SET_ANSWER",
+        payload: { questionId, answer },
+      });
+
+      setIsEditing(false);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (err) {
+      console.error("Failed to save answer:", err);
+      setSaveStatus("error");
+      alert("Failed to save answer. Please try again.");
+    } finally {
+      setIsSavingAnswer(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditTextValue("");
   };
 
   const handleMarkForReview = (questionId: string) => {
@@ -200,13 +293,21 @@ export function TestInterface() {
                     value={option}
                     checked={currentAnswer === option}
                     onChange={(e) =>
-                      handleAnswerChange(question.id, e.target.value)
+                      handleOptionChange(question.id, e.target.value)
                     }
                     className="mt-1 text-blue-600"
                   />
                   <span className="flex-1">{option}</span>
                 </label>
               ))}
+              {/* Saving Indicator for MCQ */}
+              {isSavingAnswer && (
+                <div className="mt-2 flex justify-end text-xs text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Saving...
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -226,24 +327,90 @@ export function TestInterface() {
                       const newAnswers = e.target.checked
                         ? [...currentAnswers, option]
                         : currentAnswers.filter((a) => a !== option);
-                      handleAnswerChange(question.id, newAnswers);
+                      handleOptionChange(question.id, newAnswers);
                     }}
                     className="mt-1 text-blue-600"
                   />
                   <span className="flex-1">{option}</span>
                 </label>
               ))}
+              {isSavingAnswer && (
+                <div className="mt-2 flex justify-end text-xs text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Saving...
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
           {question.type === "text_input" && (
-            <textarea
-              value={currentAnswer as string}
-              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-              placeholder="Enter your answer..."
-              className="w-full rounded-lg border p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-              rows={4}
-            />
+            <div className="space-y-4">
+              {!isEditing && currentAnswer ? (
+                <div className="rounded-lg border bg-gray-50 p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-500">
+                      Saved Answer
+                    </span>
+                    <button
+                      onClick={() => {
+                        setEditTextValue(currentAnswer as string);
+                        setIsEditing(true);
+                      }}
+                      className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      Edit
+                    </button>
+                  </div>
+                  <p className="whitespace-pre-wrap text-gray-900">
+                    {currentAnswer as string}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <textarea
+                    value={editTextValue}
+                    onChange={(e) => setEditTextValue(e.target.value)}
+                    placeholder="Type your answer here..."
+                    className="min-h-[150px] w-full rounded-lg border p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="mt-2 flex items-center justify-end gap-2">
+                    {currentAnswer && (
+                      <button
+                        onClick={handleCancelEdit}
+                        className="flex items-center gap-1 rounded bg-gray-100 px-3 py-2 text-gray-700 hover:bg-gray-200"
+                      >
+                        <X className="h-4 w-4" />
+                        Cancel
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleTextSave(question.id)}
+                      disabled={
+                        isSavingAnswer ||
+                        (editTextValue.trim() === "" && !!currentAnswer)
+                      } // Prevent saving empty over existing?, actually allow saving empty to clear? No, typically not desired.
+                      className="flex items-center gap-1 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {isSavingAnswer ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : saveStatus === "saved" ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      {isSavingAnswer
+                        ? "Saving..."
+                        : saveStatus === "saved"
+                          ? "Saved"
+                          : "Save Answer"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -302,9 +469,9 @@ export function TestInterface() {
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   {questionStats.answered.length} Answered
                 </span>
-                {hasUnsavedChanges && (
-                  <span className="flex items-center gap-1 text-orange-600">
-                    {isSaving ? "Saving..." : "Unsaved changes"}
+                {isSavingAnswer && (
+                  <span className="flex items-center gap-1 text-sm text-blue-600">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Saving...
                   </span>
                 )}
               </div>

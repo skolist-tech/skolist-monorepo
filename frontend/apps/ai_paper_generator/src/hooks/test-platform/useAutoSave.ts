@@ -55,9 +55,11 @@ export function useAutoSave(options: UseAutoSaveOptions = {}) {
         }
       });
 
+      // Pass state.questions to map answers to options/indices correctly
       await testAttemptService.saveTestAnswers(
         state.currentAttempt.id,
-        serializableAnswers
+        serializableAnswers,
+        state.questions
       );
 
       hasUnsavedChanges.current = false;

@@ -119,7 +119,9 @@ export function TestDashboardDetails() {
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-3">
                           <Avatar>
-                            <AvatarImage src={attempt.student?.avatar_url} />
+                            <AvatarImage
+                              src={attempt.student?.avatar_url ?? undefined}
+                            />
                             <AvatarFallback>
                               {attempt.student?.name?.charAt(0).toUpperCase() ||
                                 "S"}
@@ -130,7 +132,9 @@ export function TestDashboardDetails() {
                               {attempt.student?.name || "Unknown Student"}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {attempt.student?.email}
+                              {attempt.student?.email ||
+                                attempt.student?.phone_num ||
+                                "No contact info"}
                             </div>
                           </div>
                         </div>
