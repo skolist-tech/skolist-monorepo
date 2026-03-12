@@ -12,6 +12,7 @@ from .bank.router import router as bank_router
 from .qgen.router import router as qgen_router
 from .security import router as security_router
 from .sms_hook import router as sms_hook_router
+from .test_attempts_router import router as test_attempts_router
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ router.include_router(security_router)
 router.include_router(sms_hook_router)
 router.include_router(auth_exchange_router)
 router.include_router(bank_router)
+router.include_router(test_attempts_router)
 
 
 @router.get("/hello", dependencies=[Depends(require_supabase_user)])
