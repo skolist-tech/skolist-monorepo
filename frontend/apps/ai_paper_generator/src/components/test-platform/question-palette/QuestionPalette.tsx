@@ -162,7 +162,6 @@ export function QuestionPalette() {
 
       {/* Legend */}
       <div className="mt-6 border-t pt-4">
-        <h4 className="mb-3 text-sm font-medium text-gray-800">Legend</h4>
         <div className="space-y-2">
           {legendItems.map((item) => {
             return (
