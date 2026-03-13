@@ -58,7 +58,7 @@ export function QuestionPalette() {
     {
       status: "answered-marked",
       color: "bg-purple-500",
-      label: "Answered & Marked",
+      label: "Answered & Marked For Review",
     },
     {
       status: "marked",
