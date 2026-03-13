@@ -50,6 +50,7 @@ interface LoginPageProps {
 }
 
 export function LoginPage({
+  title,
   onSuccess,
   className,
   enabledMethods = ["phone", "google", "email"],
@@ -307,6 +308,9 @@ export function LoginPage({
 
           {/* Header */}
           <div className="login-right-panel__header">
+            {title && (
+              <p className="login-right-panel__subtitle text-4xl">{title}</p>
+            )}
             <h2 className="login-right-panel__title">
               {isSignUp ? "Sign Up Now" : "Welcome Back"}
             </h2>

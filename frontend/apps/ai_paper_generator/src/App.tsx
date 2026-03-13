@@ -29,7 +29,7 @@ function App() {
       <Route
         path="/my-attempts/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute redirectTo="/login?mode=test">
             <StudentAttemptsPage />
           </ProtectedRoute>
         }

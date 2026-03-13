@@ -39,6 +39,7 @@ export function LoginPage() {
         "true"
       }
       showLeftPanel={!isTestLoginMode}
+      title={isTestLoginMode ? "Student Portal" : undefined}
       productTagline={
         isTestLoginMode ? "To continue your test" : "To use the QGEN"
       }
