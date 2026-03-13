@@ -6,10 +6,22 @@ export function LoginPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const mode = params.get("mode");
+  const redirectParam = params.get("redirect");
 
   // Get the page user was trying to access
+  const fromState = (
+    location.state as {
+      from?: { pathname?: string; search?: string; hash?: string };
+    }
+  )?.from;
   const from =
-    (location.state as { from?: { pathname: string } })?.from?.pathname || "/";
+    redirectParam ||
+    (fromState?.pathname
+      ? `${fromState.pathname}${fromState.search || ""}${fromState.hash || ""}`
+      : "/");
+  const isTestLoginMode = mode === "test";
 
   // Redirect to intended page if already authenticated
   useEffect(() => {
@@ -26,6 +38,12 @@ export function LoginPage() {
         (import.meta.env.VITE_PHONE_SMS_AVAILABLE || "false").toLowerCase() ===
         "true"
       }
+      showLeftPanel={!isTestLoginMode}
+      productTagline={
+        isTestLoginMode ? "To continue your test" : "To use the QGEN"
+      }
+      defaultToSignIn={isTestLoginMode}
+      hideSignUpToggle={isTestLoginMode}
     />
   );
 }
