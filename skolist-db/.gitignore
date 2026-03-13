@@ -7,3 +7,6 @@ supabase/.temp
 
 # Virtual Env
 venv
+
+# cache files
+*/__pycache__/*
