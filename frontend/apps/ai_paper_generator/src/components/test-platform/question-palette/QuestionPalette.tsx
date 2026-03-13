@@ -17,7 +17,20 @@ export function QuestionPalette() {
 
   const getStatusColor = (status: string, isCurrent: boolean) => {
     if (isCurrent) {
-      return "bg-blue-600 text-white border-blue-600";
+      switch (status) {
+        case "answered":
+          return "bg-green-500 text-white border-blue-600 border-2";
+        case "answered-marked":
+          return "bg-purple-500 text-white border-blue-600 border-2";
+        case "marked":
+          return "bg-orange-500 text-white border-blue-600 border-2";
+        case "visited":
+          return "bg-red-300 text-white border-blue-600 border-2";
+        case "not-visited":
+          return "bg-white text-gray-700 border-blue-600 border-2 hover:bg-gray-50";
+        default:
+          return "bg-white text-gray-700 border-blue-600 border-2 hover:bg-gray-50";
+      }
     }
 
     switch (status) {
