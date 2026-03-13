@@ -5,6 +5,18 @@
 
 import { getSupabaseClient } from "@skolist/auth";
 
+const API_URL = import.meta.env.VITE_FASTAPI_URL;
+
+async function getAuthToken(): Promise<string> {
+  const {
+    data: { session },
+  } = await getSupabaseClient().auth.getSession();
+
+  const token = session?.access_token;
+  if (!token) throw new Error("User not authenticated");
+  return token;
+}
+
 export interface TestAttemptDetails extends TestAttempt {
   student: {
     name?: string | null;
@@ -90,16 +102,24 @@ export interface OnlineTest {
 export async function getTestByShareCode(
   shareCode: string
 ): Promise<OnlineTest> {
-  const client = getSupabaseClient();
+  const token = await getAuthToken();
+  const response = await fetch(
+    `${API_URL}/api/v1/test-attempts/share-code/${encodeURIComponent(shareCode.toUpperCase())}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
-  const { data, error } = await client.rpc("get_online_test_by_share_code", {
-    p_share_code: shareCode.toUpperCase(),
-  });
-
-  if (error) {
-    console.error("Failed to fetch test by share code:", error);
-    throw new Error(error.message || "Test not found");
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Test not found");
   }
+
+  const data = await response.json();
 
   if (!data) {
     throw new Error("Test not found");
@@ -188,15 +208,25 @@ export async function startTestAttempt(testId: string): Promise<TestAttempt> {
 export async function getTestQuestions(
   attemptId: string
 ): Promise<TestQuestion[]> {
-  const client = getSupabaseClient();
-  const { data, error } = await client.rpc("get_test_attempt_questions", {
-    p_attempt_id: attemptId,
-  });
+  const token = await getAuthToken();
+  const response = await fetch(
+    `${API_URL}/api/v1/test-attempts/${attemptId}/questions`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
-  if (error) {
-    console.error("Failed to fetch test questions:", error);
-    throw new Error(error.message || "Failed to fetch test questions");
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to fetch test questions");
   }
+
+  const payload = await response.json();
+  const data = payload.questions || [];
 
   const normalizeType = (questionType: string): string => {
     const t = (questionType || "").toLowerCase();
@@ -465,15 +495,22 @@ export async function submitTestAttempt(attemptId: string): Promise<void> {
     throw new Error(error.message || "Failed to submit test");
   }
 
-  const { error: gradingError } = await client.rpc("grade_test_attempt", {
-    p_attempt_id: attemptId,
-  });
+  const token = await getAuthToken();
+  const gradingResponse = await fetch(
+    `${API_URL}/api/v1/test-attempts/${attemptId}/grade`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
-  if (gradingError) {
-    console.error("Test submitted but auto-grading failed:", gradingError);
-    throw new Error(
-      gradingError.message || "Test submitted but auto-grading failed"
-    );
+  if (!gradingResponse.ok) {
+    const err = await gradingResponse.json().catch(() => ({}));
+    console.error("Test submitted but auto-grading failed:", err);
+    throw new Error(err.detail || "Test submitted but auto-grading failed");
   }
 }
 

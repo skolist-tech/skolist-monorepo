@@ -5,6 +5,18 @@
 
 import { getSupabaseClient, getCurrentUserId } from "@skolist/auth";
 
+const API_URL = import.meta.env.VITE_FASTAPI_URL;
+
+async function getAuthToken(): Promise<string> {
+  const {
+    data: { session },
+  } = await getSupabaseClient().auth.getSession();
+
+  const token = session?.access_token;
+  if (!token) throw new Error("User not authenticated");
+  return token;
+}
+
 export interface CreateOnlineTestResult {
   id: string;
   share_code: string;
@@ -59,18 +71,24 @@ export function getTestShareUrl(shareCode: string): string {
  * Get online test details by share code
  */
 export async function getOnlineTestByShareCode(shareCode: string) {
-  const client = getSupabaseClient();
+  const token = await getAuthToken();
+  const response = await fetch(
+    `${API_URL}/api/v1/test-attempts/share-code/${encodeURIComponent(shareCode.toUpperCase())}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
-  const { data, error } = await client.rpc("get_online_test_by_share_code", {
-    p_share_code: shareCode.toUpperCase(),
-  });
-
-  if (error) {
-    console.error("Failed to get online test:", error);
-    throw new Error(error.message || "Failed to get online test");
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to get online test");
   }
 
-  return data;
+  return response.json();
 }
 
 /**

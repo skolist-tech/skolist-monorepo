@@ -12,7 +12,7 @@ from .bank.router import router as bank_router
 from .qgen.router import router as qgen_router
 from .security import router as security_router
 from .sms_hook import router as sms_hook_router
-from .test_attempts_router import router as test_attempts_router
+from .testing_platform import router as test_attempts_router
 
 logger = logging.getLogger(__name__)
 

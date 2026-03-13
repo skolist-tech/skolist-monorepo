@@ -14,7 +14,7 @@ interface UseTestTimerOptions {
 
 export function useTestTimer(options: UseTestTimerOptions = {}) {
   const { state, dispatch } = useTestContext();
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const warningsShownRef = useRef<Set<number>>(new Set());
 
   const {
@@ -29,7 +29,7 @@ export function useTestTimer(options: UseTestTimerOptions = {}) {
 
   const stopTimer = useCallback(() => {
     dispatch({ type: "STOP_TIMER" });
-    if (intervalRef.current) {
+    if (intervalRef.current !== null) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
@@ -83,15 +83,17 @@ export function useTestTimer(options: UseTestTimerOptions = {}) {
       }, 1000);
 
       return () => {
-        if (intervalRef.current) {
+        if (intervalRef.current !== null) {
           clearInterval(intervalRef.current);
+          intervalRef.current = null;
         }
       };
     }
 
     return () => {
-      if (intervalRef.current) {
+      if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, [state.isTimerActive, state.timeRemaining, dispatch]);
@@ -123,8 +125,9 @@ export function useTestTimer(options: UseTestTimerOptions = {}) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
+      if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, []);
