@@ -217,6 +217,41 @@ export function TestInterface() {
     setEditTextValue("");
   };
 
+  const handleClearAnswer = async (questionId: string) => {
+    if (!state.currentAttempt?.id) return;
+
+    const question = state.questions.find((q) => q.id === questionId);
+    if (!question) return;
+
+    const clearedAnswer: string | string[] =
+      question.type === "multiple_choice_multiple" ? [] : "";
+
+    dispatch({
+      type: "SET_ANSWER",
+      payload: { questionId, answer: clearedAnswer },
+    });
+    setEditTextValue("");
+    setIsEditing(false);
+
+    setIsSavingAnswer(true);
+    setSaveStatus("idle");
+
+    try {
+      await testAttemptService.saveSingleStudentAnswer(
+        state.currentAttempt.id,
+        question,
+        clearedAnswer
+      );
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (err) {
+      console.error("Failed to clear answer:", err);
+      setSaveStatus("error");
+    } finally {
+      setIsSavingAnswer(false);
+    }
+  };
+
   const handleMarkForReview = (questionId: string) => {
     dispatch({
       type: "TOGGLE_MARK_FOR_REVIEW",
@@ -291,6 +326,17 @@ export function TestInterface() {
                   <LatexRenderer content={option || ""} className="flex-1" />
                 </label>
               ))}
+              {!!currentAnswer && (
+                <div className="mt-2 flex justify-end">
+                  <button
+                    onClick={() => handleClearAnswer(question.id)}
+                    disabled={isSavingAnswer}
+                    className="rounded border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              )}
               {/* Saving Indicator for MCQ */}
               {isSavingAnswer && (
                 <div className="mt-2 flex justify-end text-xs text-gray-500">
@@ -325,6 +371,17 @@ export function TestInterface() {
                   <LatexRenderer content={option || ""} className="flex-1" />
                 </label>
               ))}
+              {(currentAnswer as string[]).length > 0 && (
+                <div className="mt-2 flex justify-end">
+                  <button
+                    onClick={() => handleClearAnswer(question.id)}
+                    disabled={isSavingAnswer}
+                    className="rounded border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              )}
               {isSavingAnswer && (
                 <div className="mt-2 flex justify-end text-xs text-gray-500">
                   <span className="flex items-center gap-1">
@@ -353,6 +410,14 @@ export function TestInterface() {
                       <Edit2 className="h-4 w-4" />
                       Edit
                     </button>
+                    <button
+                      onClick={() => handleClearAnswer(question.id)}
+                      disabled={isSavingAnswer}
+                      className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 disabled:opacity-50"
+                    >
+                      <X className="h-4 w-4" />
+                      Clear
+                    </button>
                   </div>
                   <p className="whitespace-pre-wrap text-gray-900">
                     {currentAnswer as string}
@@ -379,10 +444,7 @@ export function TestInterface() {
 
                     <button
                       onClick={() => handleTextSave(question.id)}
-                      disabled={
-                        isSavingAnswer ||
-                        (editTextValue.trim() === "" && !!currentAnswer)
-                      } // Prevent saving empty over existing?, actually allow saving empty to clear? No, typically not desired.
+                      disabled={isSavingAnswer}
                       className="flex items-center gap-1 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
                     >
                       {isSavingAnswer ? (

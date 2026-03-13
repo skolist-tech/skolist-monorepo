@@ -283,6 +283,29 @@ export async function saveSingleStudentAnswer(
   const client = getSupabaseClient();
   const questionId = question.id;
   const questionPosition = question.position_in_draft || 0;
+  const isMcqQuestion =
+    question.type === "multiple_choice_single" ||
+    question.question_type?.toLowerCase().includes("mcq") ||
+    isTrueFalseType(question.question_type);
+
+  const shouldDelete = Array.isArray(answerValue)
+    ? answerValue.length === 0
+    : answerValue.trim() === "";
+
+  if (shouldDelete) {
+    const { error } = await client
+      .from("test_answers")
+      .delete()
+      .eq("test_attempt_id", attemptId)
+      .eq("gen_question_id", questionId);
+
+    if (error) {
+      console.error("Failed to clear test answer:", error);
+      throw new Error(error.message || "Failed to clear answer");
+    }
+
+    return;
+  }
 
   // Ensure we have options list for mapping indices
   const optionsList =
@@ -320,12 +343,7 @@ export async function saveSingleStudentAnswer(
     };
   } else {
     // Single Answer Case
-    const isMcq =
-      question.type === "multiple_choice_single" ||
-      question.question_type?.toLowerCase().includes("mcq") ||
-      isTrueFalseType(question.question_type);
-
-    if (isMcq) {
+    if (isMcqQuestion) {
       const idx = optionsList.indexOf(answerValue);
       payload = {
         ...baseAnswer,
