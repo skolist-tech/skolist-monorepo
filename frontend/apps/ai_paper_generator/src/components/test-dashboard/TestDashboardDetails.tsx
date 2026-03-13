@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getOnlineTestById } from "../../services/onlineTestService";
-import {
-  getTestAttemptsByTestId,
-  TestAttemptDetails,
-} from "../../services/testAttemptService";
+import { getTestAttemptsByTestId } from "../../services/testAttemptService";
+import type { TestAttemptDetails } from "../../services/testAttemptService";
 import {
   Button,
   Card,

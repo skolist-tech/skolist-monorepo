@@ -3,14 +3,9 @@
  * Manages test state across the test platform components
  */
 
-import {
-  createContext,
-  useContext,
-  useReducer,
-  useCallback,
-  ReactNode,
-} from "react";
-import {
+import { createContext, useContext, useReducer, useCallback } from "react";
+import type { ReactNode } from "react";
+import type {
   OnlineTest,
   TestAttempt,
   TestQuestion,

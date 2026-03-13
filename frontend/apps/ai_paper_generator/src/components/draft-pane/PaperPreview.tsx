@@ -11,8 +11,8 @@ import {
   createOnlineTestFromDraft,
   getTestShareUrl,
   getOnlineTestByDraftId,
-  CreateOnlineTestResult,
 } from "../../services/onlineTestService";
+import type { CreateOnlineTestResult } from "../../services/onlineTestService";
 import { AnswerItem } from "./preview/AnswerItem";
 import { QuestionItem } from "./preview/QuestionItem";
 import { PaperHeader } from "./preview/PaperHeader";
@@ -208,7 +208,7 @@ export function PaperPreview() {
           description: "An online test already exists for this paper.",
         });
       }
-    } catch (error) {
+    } catch {
       // If no existing test found, that's fine - we'll show create dialog
       console.log("No existing test found, will show create dialog");
     } finally {
