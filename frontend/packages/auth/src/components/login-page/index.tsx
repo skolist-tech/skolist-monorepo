@@ -45,9 +45,12 @@ interface LoginPageProps {
   logoUrl?: string;
   apiUrl?: string;
   isPhoneAvailable?: boolean;
+  defaultToSignIn?: boolean;
+  hideSignUpToggle?: boolean;
 }
 
 export function LoginPage({
+  title,
   onSuccess,
   className,
   enabledMethods = ["phone", "google", "email"],
@@ -57,6 +60,8 @@ export function LoginPage({
   logoUrl,
   apiUrl = "http://localhost:8080",
   isPhoneAvailable = false,
+  defaultToSignIn = false,
+  hideSignUpToggle = false,
 }: LoginPageProps) {
   const {
     signInWithOAuth,
@@ -71,8 +76,11 @@ export function LoginPage({
   const [error, setError] = useState<string | null>(null);
 
   // Auth state management
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [isSignUp, setIsSignUp] = useState(!defaultToSignIn);
   const [authMethod, setAuthMethod] = useState<"phone" | "email">(() => {
+    if (defaultToSignIn) {
+      return "email";
+    }
     return isPhoneAvailable ? "phone" : "email";
   });
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
@@ -300,19 +308,24 @@ export function LoginPage({
 
           {/* Header */}
           <div className="login-right-panel__header">
+            {title && (
+              <p className="login-right-panel__subtitle text-4xl">{title}</p>
+            )}
             <h2 className="login-right-panel__title">
               {isSignUp ? "Sign Up Now" : "Welcome Back"}
             </h2>
             <p className="login-right-panel__subtitle">{productTagline}</p>
-            <div className="login-right-panel__toggle">
-              {isSignUp ? "Already have an account? " : "New to QGEN? "}
-              <span
-                className="login-right-panel__toggle-link"
-                onClick={handleToggleSignUp}
-              >
-                {isSignUp ? "Sign In" : "Sign Up"}
-              </span>
-            </div>
+            {!hideSignUpToggle && (
+              <div className="login-right-panel__toggle">
+                {isSignUp ? "Already have an account? " : "New to QGEN? "}
+                <span
+                  className="login-right-panel__toggle-link"
+                  onClick={handleToggleSignUp}
+                >
+                  {isSignUp ? "Sign In" : "Sign Up"}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Form Card */}

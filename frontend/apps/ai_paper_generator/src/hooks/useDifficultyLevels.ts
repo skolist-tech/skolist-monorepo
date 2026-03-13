@@ -21,7 +21,7 @@ export function useDifficultyLevels(
 
     const subjectConfig = SUBJECT_DIFFICULTY_CONFIG[subjectName];
 
-    let baseLevels: DifficultyDistribution = subjectConfig
+    const baseLevels: DifficultyDistribution = subjectConfig
       ? { ...subjectConfig }
       : { ...DEFAULT_DIFFICULTY_LEVELS };
 

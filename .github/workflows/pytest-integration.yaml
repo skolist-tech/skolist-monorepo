@@ -55,11 +55,11 @@ jobs:
           echo "anon_key=$(supabase status --output json | jq -r '.ANON_KEY')" >> $GITHUB_OUTPUT
           echo "service_key=$(supabase status --output json | jq -r '.SERVICE_ROLE_KEY')" >> $GITHUB_OUTPUT
 
-      - name: Seed test users
+      - name: Seed test data
         working-directory: skolist-db
         run: |
-          pip install -r requirements.txt
-          python seed_users.py
+          python -m pip install --root-user-action=ignore -r requirements.txt
+          python seed.py
         env:
           SUPABASE_URL: ${{ steps.supabase.outputs.url }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase.outputs.service_key }}

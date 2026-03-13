@@ -2,9 +2,17 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useToast } from "@skolist/ui";
 
+import { OnlineTestDialog } from "../shared/OnlineTestDialog";
+
 import { useDraftContext } from "../../context/DraftContext";
 import { useQuestionsContext } from "../../context/QuestionsContext";
 import { fastApiService } from "../../services/fastApiService";
+import {
+  createOnlineTestFromDraft,
+  getTestShareUrl,
+  getOnlineTestByDraftId,
+} from "../../services/onlineTestService";
+import type { CreateOnlineTestResult } from "../../services/onlineTestService";
 import { AnswerItem } from "./preview/AnswerItem";
 import { QuestionItem } from "./preview/QuestionItem";
 import { PaperHeader } from "./preview/PaperHeader";
@@ -34,6 +42,12 @@ export function PaperPreview() {
   const [previewMode, setPreviewMode] = useState<"paper" | "answer">("paper");
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
+  const [isOnlineTestDialogOpen, setIsOnlineTestDialogOpen] = useState(false);
+  const [isCreatingOnlineTest, setIsCreatingOnlineTest] = useState(false);
+  const [onlineTestError, setOnlineTestError] = useState<string | null>(null);
+  const [onlineTestResult, setOnlineTestResult] =
+    useState<CreateOnlineTestResult | null>(null);
+  const [isCheckingExistingTest, setIsCheckingExistingTest] = useState(false);
 
   const measureRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -163,6 +177,80 @@ export function PaperPreview() {
     }
   };
 
+  const handleOpenOnlineTestDialog = async () => {
+    if (!draft) return;
+
+    // Reset state when opening dialog
+    setOnlineTestError(null);
+    setOnlineTestResult(null);
+    setIsCheckingExistingTest(true);
+    setIsOnlineTestDialogOpen(true);
+
+    try {
+      // Check if an online test already exists for this draft
+      const existingTest = await getOnlineTestByDraftId(draft.id);
+
+      if (existingTest) {
+        // Convert existing test to CreateOnlineTestResult format
+        const testResult: CreateOnlineTestResult = {
+          id: existingTest.id,
+          share_code: existingTest.share_code,
+          status: existingTest.status,
+          title: existingTest.title,
+          duration_minutes: existingTest.duration_minutes,
+          created_at: existingTest.created_at,
+          already_exists: true,
+        };
+
+        setOnlineTestResult(testResult);
+        toast({
+          title: "Online Test Found",
+          description: "An online test already exists for this paper.",
+        });
+      }
+    } catch {
+      // If no existing test found, that's fine - we'll show create dialog
+      console.log("No existing test found, will show create dialog");
+    } finally {
+      setIsCheckingExistingTest(false);
+    }
+  };
+
+  const handleCreateOnlineTest = async () => {
+    if (!draft) return;
+
+    setIsCreatingOnlineTest(true);
+    setOnlineTestError(null);
+
+    try {
+      const result = await createOnlineTestFromDraft(draft.id);
+      setOnlineTestResult(result);
+
+      if (result.already_exists) {
+        toast({
+          title: "Online Test Exists",
+          description: "An online test already exists for this paper.",
+        });
+      } else {
+        toast({
+          title: "Online Test Created",
+          description: "Your online test is ready to share with students.",
+        });
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to create online test";
+      setOnlineTestError(message);
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingOnlineTest(false);
+    }
+  };
+
   if (!draft) return null;
 
   return (
@@ -183,6 +271,7 @@ export function PaperPreview() {
         onDownloadPdf={handleDownloadPdf}
         onDownloadDocx={handleDownloadDocx}
         onPrint={() => handlePrint()}
+        onOnlineTest={handleOpenOnlineTestDialog}
       />
 
       {/* Preview Area */}
@@ -307,6 +396,23 @@ export function PaperPreview() {
           </div>
         </div>
       </div>
+
+      {/* Online Test Dialog */}
+      <OnlineTestDialog
+        open={isOnlineTestDialogOpen}
+        onOpenChange={setIsOnlineTestDialogOpen}
+        isLoading={isCreatingOnlineTest || isCheckingExistingTest}
+        error={onlineTestError}
+        shareCode={onlineTestResult?.share_code ?? null}
+        shareUrl={
+          onlineTestResult?.share_code
+            ? getTestShareUrl(onlineTestResult.share_code)
+            : null
+        }
+        testTitle={onlineTestResult?.title ?? null}
+        alreadyExists={onlineTestResult?.already_exists ?? false}
+        onCreateTest={handleCreateOnlineTest}
+      />
 
       {/* Hidden Measure Layer */}
       <div
