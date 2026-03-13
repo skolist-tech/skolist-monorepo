@@ -301,10 +301,12 @@ export function LoginPage({
       <div className="login-right-panel">
         <div className="login-right-panel__content">
           {/* Mobile Marketing Header */}
-          <div className="login-mobile-marketing">
-            <LeftPanelHeadline />
-            <LeftPanelBranding productName={productName} />
-          </div>
+          {showLeftPanel && (
+            <div className="login-mobile-marketing">
+              <LeftPanelHeadline />
+              <LeftPanelBranding productName={productName} />
+            </div>
+          )}
 
           {/* Header */}
           <div className="login-right-panel__header">
@@ -405,17 +407,19 @@ export function LoginPage({
           <TrustBadges />
 
           {/* Mobile Footer Marketing */}
-          <div className="login-mobile-footer">
-            <LeftPanelFeatures />
-            <LeftPanelCTA productName={productName} />
-            <LeftPanelBanner />
-            <LeftPanelContact
-              contactInfo={{
-                email: "info@skolist.com",
-                phone: "+91 7667366098",
-              }}
-            />
-          </div>
+          {showLeftPanel && (
+            <div className="login-mobile-footer">
+              <LeftPanelFeatures />
+              <LeftPanelCTA productName={productName} />
+              <LeftPanelBanner />
+              <LeftPanelContact
+                contactInfo={{
+                  email: "info@skolist.com",
+                  phone: "+91 7667366098",
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
