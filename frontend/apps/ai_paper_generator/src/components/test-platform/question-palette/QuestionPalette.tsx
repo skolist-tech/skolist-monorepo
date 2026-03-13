@@ -4,7 +4,6 @@
  * Similar to NTA Abhyas style interface
  */
 
-import { Check, Flag, Eye, Circle } from "lucide-react";
 import { useTestContext } from "../../../context/TestContext";
 import { useQuestionNavigation } from "../../../hooks/test-platform";
 
@@ -15,23 +14,6 @@ export function QuestionPalette() {
 
   const questionStats = getQuestionsByStatus();
   const sections = getSections();
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "answered":
-        return <Check className="h-4 w-4" />;
-      case "answered-marked":
-        return <Check className="h-4 w-4" />;
-      case "marked":
-        return <Flag className="h-4 w-4" />;
-      case "visited":
-        return <Eye className="h-4 w-4" />;
-      case "not-visited":
-        return <Circle className="h-4 w-4" />;
-      default:
-        return <Circle className="h-4 w-4" />;
-    }
-  };
 
   const getStatusColor = (status: string, isCurrent: boolean) => {
     if (isCurrent) {
@@ -59,31 +41,26 @@ export function QuestionPalette() {
       status: "answered",
       color: "bg-green-500",
       label: "Answered",
-      icon: Check,
     },
     {
       status: "answered-marked",
       color: "bg-purple-500",
       label: "Answered & Marked",
-      icon: Check,
     },
     {
       status: "marked",
       color: "bg-orange-500",
       label: "Marked for Review",
-      icon: Flag,
     },
     {
       status: "visited",
       color: "bg-red-300",
       label: "Not Answered",
-      icon: Eye,
     },
     {
       status: "not-visited",
       color: "bg-gray-300",
       label: "Not Visited",
-      icon: Circle,
     },
   ];
 
@@ -146,7 +123,7 @@ export function QuestionPalette() {
                       className={`flex h-8 w-8 items-center justify-center rounded border text-xs font-medium transition-colors duration-150 ${getStatusColor(status, isCurrent)} `}
                       title={`Question ${questionNumber} - ${status.replace("-", " ")}`}
                     >
-                      {isCurrent ? questionNumber : getStatusIcon(status)}
+                      {questionNumber}
                     </button>
                   );
                 })}
@@ -175,7 +152,7 @@ export function QuestionPalette() {
                   className={`flex h-8 w-8 items-center justify-center rounded border text-xs font-medium transition-colors duration-150 ${getStatusColor(status, isCurrent)} `}
                   title={`Question ${questionNumber} - ${status.replace("-", " ")}`}
                 >
-                  {isCurrent ? questionNumber : getStatusIcon(status)}
+                  {questionNumber}
                 </button>
               );
             })}
@@ -188,63 +165,17 @@ export function QuestionPalette() {
         <h4 className="mb-3 text-sm font-medium text-gray-800">Legend</h4>
         <div className="space-y-2">
           {legendItems.map((item) => {
-            const IconComponent = item.icon;
             return (
               <div
                 key={item.status}
                 className="flex items-center gap-2 text-xs"
               >
-                <div
-                  className={`h-4 w-4 ${item.color} flex items-center justify-center rounded`}
-                >
-                  <IconComponent className="h-2.5 w-2.5 text-white" />
-                </div>
+                <div className={`h-4 w-4 ${item.color} rounded`} />
                 <span className="text-gray-700">{item.label}</span>
               </div>
             );
           })}
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="mt-4 space-y-2 border-t pt-4">
-        <h4 className="mb-3 text-sm font-medium text-gray-800">
-          Quick Actions
-        </h4>
-
-        <button
-          onClick={() => {
-            const firstUnanswered = state.questions.find(
-              (q) =>
-                !state.answers[q.id] ||
-                (Array.isArray(state.answers[q.id]) &&
-                  (state.answers[q.id] as string[]).length === 0)
-            );
-            if (firstUnanswered) {
-              goToQuestion(firstUnanswered.id);
-            }
-          }}
-          className="w-full rounded bg-blue-50 py-2 text-xs text-blue-700 transition-colors hover:bg-blue-100"
-          disabled={questionStats.notAnswered.length === 0}
-        >
-          Go to First Unanswered
-        </button>
-
-        {questionStats.markedForReview.length > 0 && (
-          <button
-            onClick={() => {
-              const firstMarked = state.questions.find(
-                (q) => state.markedForReview[q.id]
-              );
-              if (firstMarked) {
-                goToQuestion(firstMarked.id);
-              }
-            }}
-            className="w-full rounded bg-orange-50 py-2 text-xs text-orange-700 transition-colors hover:bg-orange-100"
-          >
-            Go to First Marked
-          </button>
-        )}
       </div>
     </div>
   );

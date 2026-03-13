@@ -12,8 +12,8 @@ export function TestCompletedPage() {
   const isAutoSubmit = location.state?.isAutoSubmit || false;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-md">
+    <div className="min-h-screen bg-white px-4 py-8">
+      <div className="mx-auto w-full max-w-md text-center">
         {/* Success Icon */}
         <div className="mb-6">
           <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
@@ -37,17 +37,7 @@ export function TestCompletedPage() {
                 zero.
               </p>
             </div>
-          ) : (
-            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4">
-              <div className="mb-2 flex items-center gap-2 text-green-800">
-                <CheckCircle className="h-5 w-5" />
-                <span className="font-medium">Submitted Successfully</span>
-              </div>
-              <p className="text-sm text-green-700">
-                You have successfully submitted your test.
-              </p>
-            </div>
-          )}
+          ) : null}
 
           <p className="text-gray-600">
             Thank you for taking the test. Your responses have been recorded and
@@ -63,7 +53,6 @@ export function TestCompletedPage() {
           </div>
           <ul className="space-y-1 text-left text-sm text-blue-700">
             <li>• Your instructor will review your responses</li>
-            <li>• Results will be available within 2-3 days</li>
             <li>• You'll receive detailed feedback on your performance</li>
             <li>• Check your dashboard for updates</li>
           </ul>
@@ -76,20 +65,6 @@ export function TestCompletedPage() {
             className="w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700"
           >
             View My Attempts
-          </button>
-
-          <button
-            onClick={() => navigate("/")}
-            className="w-full rounded-md bg-slate-100 px-4 py-2 font-medium text-slate-700 transition-colors hover:bg-slate-200"
-          >
-            Go to Dashboard
-          </button>
-
-          <button
-            onClick={() => window.close()}
-            className="w-full rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
-          >
-            Close Window
           </button>
         </div>
 

@@ -6,7 +6,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Clock,
   Flag,
   CheckCircle,
   AlertTriangle,
@@ -22,6 +21,7 @@ import {
 } from "../../../hooks/test-platform";
 import { testAttemptService } from "../../../services/testAttemptService";
 import { QuestionPalette } from "../question-palette";
+import { TestInterfaceHeader } from "./TestInterfaceHeader";
 
 export function TestInterface() {
   const { shareCode } = useParams<{ shareCode: string }>();
@@ -239,33 +239,23 @@ export function TestInterface() {
     return (
       <div className="rounded-lg bg-white p-6 shadow-md">
         {/* Question Header */}
-        <div className="mb-4 flex items-start justify-between">
-          <div className="flex-1">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="rounded bg-blue-100 px-2 py-1 text-sm font-medium text-blue-800">
-                Question {getCurrentQuestionIndex() + 1} of{" "}
-                {state.questions.length}
-              </span>
-              {question.section && (
-                <span className="rounded bg-gray-100 px-2 py-1 text-sm text-gray-700">
-                  {question.section}
-                </span>
-              )}
-              <span className="rounded bg-green-100 px-2 py-1 text-sm text-green-800">
-                {question.marks} Mark{question.marks !== 1 ? "s" : ""}
-              </span>
-            </div>
-          </div>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="inline-flex h-8 items-center rounded bg-blue-100 px-2 text-sm font-medium leading-none text-blue-800">
+            Q{getCurrentQuestionIndex() + 1}
+          </span>
+          <span className="inline-flex h-8 items-center rounded bg-green-100 px-2 text-sm leading-none text-green-800">
+            {question.marks} Mark{question.marks !== 1 ? "s" : ""}
+          </span>
 
           <button
             onClick={() => handleMarkForReview(question.id)}
-            className={`flex items-center gap-1 rounded px-3 py-1.5 transition-colors ${
+            className={`inline-flex h-8 items-center gap-1 rounded px-2 text-sm leading-none transition-colors ${
               isMarked
                 ? "bg-orange-100 text-orange-800 hover:bg-orange-200"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
-            <Flag className="h-4 w-4" />
+            <Flag className="h-3.5 w-3.5" />
             {isMarked ? "Unmark" : "Mark for Review"}
           </button>
         </div>
@@ -452,58 +442,18 @@ export function TestInterface() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="border-b bg-white shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                {state.test?.title}
-              </h1>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span>
-                  Question {getCurrentQuestionIndex() + 1} of{" "}
-                  {state.questions.length}
-                </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  {questionStats.answered.length} Answered
-                </span>
-                {isSavingAnswer && (
-                  <span className="flex items-center gap-1 text-sm text-blue-600">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Saving...
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {/* Timer */}
-              <div
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${
-                  isInWarning
-                    ? "border-red-200 bg-red-50"
-                    : "border-gray-200 bg-gray-50"
-                }`}
-              >
-                <Clock className={`h-5 w-5 ${timerColor}`} />
-                <span className={`font-mono font-semibold ${timerColor}`}>
-                  {formattedTime}
-                </span>
-              </div>
-
-              {/* Submit Test Button */}
-              <button
-                onClick={() => setShowSubmitConfirm(true)}
-                disabled={isSubmitting}
-                className="rounded-md bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-              >
-                {isSubmitting ? "Submitting..." : "Submit Test"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <TestInterfaceHeader
+        fullTestTitle={state.test?.title ?? "Untitled Test"}
+        currentQuestionIndex={getCurrentQuestionIndex()}
+        totalQuestions={state.questions.length}
+        answeredCount={questionStats.answered.length}
+        formattedTime={formattedTime}
+        timerColor={timerColor}
+        isInWarning={isInWarning}
+        isSavingAnswer={isSavingAnswer}
+        isSubmitting={isSubmitting}
+        onSubmitClick={() => setShowSubmitConfirm(true)}
+      />
 
       <div className="mx-auto max-w-7xl px-4 py-6">
         <div className="grid gap-6 lg:grid-cols-4">
