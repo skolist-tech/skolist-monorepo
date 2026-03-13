@@ -321,7 +321,7 @@ class TestDeletedVersions:
     ):
         """Test that if all versions are deleted, no result is returned."""
         q1_id = await create_test_question(auth_supabase_client, test_activity)
-        await create_version(auth_supabase_client, q1_id, version_index=0, is_active=True, is_deleted=True)
+        await create_version(auth_supabase_client, q1_id, version_index=0, is_active=False, is_deleted=True)
         await create_version(auth_supabase_client, q1_id, version_index=1, is_active=False, is_deleted=True)
         
         result = await auth_supabase_client.rpc(
