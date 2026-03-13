@@ -22,6 +22,7 @@ import {
 import { testAttemptService } from "../../../services/testAttemptService";
 import { QuestionPalette } from "../question-palette";
 import { TestInterfaceHeader } from "./TestInterfaceHeader";
+import { LatexHtmlRenderer, LatexRenderer } from "../../shared/LatexRenderer";
 
 export function TestInterface() {
   const { shareCode } = useParams<{ shareCode: string }>();
@@ -262,9 +263,9 @@ export function TestInterface() {
 
         {/* Question Content */}
         <div className="mb-6">
-          <div
+          <LatexHtmlRenderer
+            content={question.question_text || ""}
             className="prose max-w-none text-gray-900"
-            dangerouslySetInnerHTML={{ __html: question.question_text }}
           />
         </div>
 
@@ -287,7 +288,7 @@ export function TestInterface() {
                     }
                     className="mt-1 text-blue-600"
                   />
-                  <span className="flex-1">{option}</span>
+                  <LatexRenderer content={option || ""} className="flex-1" />
                 </label>
               ))}
               {/* Saving Indicator for MCQ */}
@@ -321,7 +322,7 @@ export function TestInterface() {
                     }}
                     className="mt-1 text-blue-600"
                   />
-                  <span className="flex-1">{option}</span>
+                  <LatexRenderer content={option || ""} className="flex-1" />
                 </label>
               ))}
               {isSavingAnswer && (

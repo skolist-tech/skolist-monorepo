@@ -13,6 +13,7 @@ import {
   studentAttemptApiService,
   type StudentAttemptDetailResponse,
 } from "../../services/studentAttemptApiService";
+import { LatexHtmlRenderer, LatexRenderer } from "../shared/LatexRenderer";
 
 type ViewMode = "live" | "list";
 
@@ -312,19 +313,18 @@ export function StudentAttemptView() {
             <CardContent className="space-y-4">
               {currentQuestion ? (
                 <>
-                  <div
+                  <LatexHtmlRenderer
+                    content={currentQuestion.question_text || ""}
                     className="prose max-w-none text-sm"
-                    dangerouslySetInnerHTML={{
-                      __html: currentQuestion.question_text,
-                    }}
                   />
                   <div className="rounded-md border bg-muted/30 p-3">
                     <p className="mb-1 text-xs font-medium text-muted-foreground">
                       Student Answer
                     </p>
-                    <p className="whitespace-pre-wrap text-sm">
-                      {getAnswerDisplay(currentQuestion, currentAnswer)}
-                    </p>
+                    <LatexRenderer
+                      content={getAnswerDisplay(currentQuestion, currentAnswer)}
+                      className="whitespace-pre-wrap text-sm"
+                    />
                   </div>
                 </>
               ) : (
@@ -390,17 +390,18 @@ export function StudentAttemptView() {
                         Marks: {Number(answer?.marks_obtained ?? 0)} / {q.marks}
                       </span>
                     </div>
-                    <div
+                    <LatexHtmlRenderer
+                      content={q.question_text || ""}
                       className="prose mb-3 max-w-none text-sm"
-                      dangerouslySetInnerHTML={{ __html: q.question_text }}
                     />
                     <div className="rounded-md border bg-muted/30 p-3">
                       <p className="mb-1 text-xs font-medium text-muted-foreground">
                         Student Answer
                       </p>
-                      <p className="whitespace-pre-wrap text-sm">
-                        {getAnswerDisplay(q, answer)}
-                      </p>
+                      <LatexRenderer
+                        content={getAnswerDisplay(q, answer)}
+                        className="whitespace-pre-wrap text-sm"
+                      />
                     </div>
 
                     {isWeakConceptMode && (

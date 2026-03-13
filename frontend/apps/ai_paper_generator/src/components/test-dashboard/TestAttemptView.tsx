@@ -25,6 +25,7 @@ import {
   type TestAttemptDetails,
   type TestQuestion,
 } from "../../services/testAttemptService";
+import { LatexHtmlRenderer, LatexRenderer } from "../shared/LatexRenderer";
 
 type ViewMode = "live" | "list";
 
@@ -260,22 +261,21 @@ export function TestAttemptView() {
             <CardContent className="space-y-4">
               {currentQuestion ? (
                 <>
-                  <div
+                  <LatexHtmlRenderer
+                    content={currentQuestion.question_text || ""}
                     className="prose max-w-none text-sm"
-                    dangerouslySetInnerHTML={{
-                      __html: currentQuestion.question_text,
-                    }}
                   />
                   <div className="rounded-md border bg-muted/30 p-3">
                     <p className="mb-1 text-xs font-medium text-muted-foreground">
                       Student Answer
                     </p>
-                    <p className="whitespace-pre-wrap text-sm">
-                      {getAnswerDisplay(
+                    <LatexRenderer
+                      content={getAnswerDisplay(
                         currentQuestion,
                         answersByQuestionId[currentQuestion.id]
                       )}
-                    </p>
+                      className="whitespace-pre-wrap text-sm"
+                    />
                   </div>
                 </>
               ) : (
@@ -330,17 +330,18 @@ export function TestAttemptView() {
                     {q.marks}
                   </span>
                 </div>
-                <div
+                <LatexHtmlRenderer
+                  content={q.question_text || ""}
                   className="prose mb-3 max-w-none text-sm"
-                  dangerouslySetInnerHTML={{ __html: q.question_text }}
                 />
                 <div className="rounded-md border bg-muted/30 p-3">
                   <p className="mb-1 text-xs font-medium text-muted-foreground">
                     Student Answer
                   </p>
-                  <p className="whitespace-pre-wrap text-sm">
-                    {getAnswerDisplay(q, answersByQuestionId[q.id])}
-                  </p>
+                  <LatexRenderer
+                    content={getAnswerDisplay(q, answersByQuestionId[q.id])}
+                    className="whitespace-pre-wrap text-sm"
+                  />
                 </div>
               </div>
             ))}
