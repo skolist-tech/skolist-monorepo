@@ -46,6 +46,7 @@ export interface StudentAttemptDetailResponse {
     option4?: string;
     options?: Array<string | null | undefined>;
     position_in_draft?: number;
+    concept_names?: string[];
   }>;
   answers: Array<{
     id: string;

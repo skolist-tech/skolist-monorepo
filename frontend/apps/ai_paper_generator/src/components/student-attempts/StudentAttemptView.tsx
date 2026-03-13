@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  List,
-  Loader2,
-  Monitor,
-} from "lucide-react";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { ArrowLeft, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import {
   Badge,
   Button,
@@ -25,6 +18,57 @@ type ViewMode = "live" | "list";
 
 type AnswerRow = StudentAttemptDetailResponse["answers"][number];
 type QuestionRow = StudentAttemptDetailResponse["questions"][number];
+
+function getQuestionConcepts(question: QuestionRow): string[] {
+  const q = question as QuestionRow & {
+    concept_names?: string[];
+    concepts?: Array<string | { name?: string; title?: string }>;
+    tags?: string[];
+    topics?: string[];
+    chapter?: string;
+    subject?: string;
+  };
+
+  const conceptsFromObjects = (q.concepts || [])
+    .map((item) => {
+      if (typeof item === "string") return item;
+      return item.name || item.title || "";
+    })
+    .filter(Boolean);
+
+  const conceptValues = [
+    ...(q.concept_names || []),
+    ...conceptsFromObjects,
+    ...(q.tags || []),
+    ...(q.topics || []),
+    ...(q.chapter ? [q.chapter] : []),
+    ...(q.subject ? [q.subject] : []),
+  ]
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  return [...new Set(conceptValues)];
+}
+
+function isWeakQuestion(question: QuestionRow, answer?: AnswerRow): boolean {
+  const totalMarks = Number(question.marks || 0);
+  const marksObtained =
+    answer?.marks_obtained !== null && answer?.marks_obtained !== undefined
+      ? Number(answer.marks_obtained)
+      : undefined;
+
+  const unanswered = getAnswerDisplay(question, answer) === "Not answered";
+  const incorrect =
+    answer?.is_correct === false ||
+    (marksObtained !== undefined && marksObtained <= 0);
+  const partiallyCorrect =
+    marksObtained !== undefined &&
+    marksObtained > 0 &&
+    totalMarks > 0 &&
+    marksObtained < totalMarks;
+
+  return unanswered || incorrect || partiallyCorrect;
+}
 
 function getQuestionResultStyle(answer?: AnswerRow) {
   if (
@@ -81,7 +125,9 @@ function getAnswerDisplay(question: QuestionRow, answer?: AnswerRow): string {
 
 export function StudentAttemptView() {
   const { attemptId } = useParams();
-  const [viewMode, setViewMode] = useState<ViewMode>("live");
+  const location = useLocation();
+  const [viewMode] = useState<ViewMode>("list");
+  const [showTitleTooltip, setShowTitleTooltip] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,12 +166,26 @@ export function StudentAttemptView() {
   const questions = detail?.questions || [];
   const attempt = detail?.attempt;
   const test = detail?.test;
+  const isWeakConceptMode =
+    new URLSearchParams(location.search).get("tab") === "weak-concepts";
+  const displayedQuestions = useMemo(
+    () =>
+      isWeakConceptMode
+        ? questions.filter((q) => isWeakQuestion(q, answersByQuestionId[q.id]))
+        : questions,
+    [answersByQuestionId, isWeakConceptMode, questions]
+  );
 
   const currentQuestion = questions[currentIndex];
   const currentAnswer = currentQuestion
     ? answersByQuestionId[currentQuestion.id]
     : undefined;
   const currentStyle = getQuestionResultStyle(currentAnswer);
+  const fullTestTitle = test?.title ?? "Untitled Test";
+  const isTitleTruncated = fullTestTitle.length > 15;
+  const displayTestTitle = isTitleTruncated
+    ? `${fullTestTitle.slice(0, 15)}...`
+    : fullTestTitle;
 
   if (isLoading) {
     return (
@@ -151,39 +211,42 @@ export function StudentAttemptView() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center gap-4">
         <div className="flex items-center gap-4">
           <Link to="/my-attempts">
             <Button variant="outline" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">{test.title}</h2>
-            <p className="text-sm text-muted-foreground">
+          <div className="relative min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (isTitleTruncated) {
+                  setShowTitleTooltip((prev) => !prev);
+                }
+              }}
+              title={fullTestTitle}
+              className="text-left text-lg font-bold tracking-tight"
+            >
+              {displayTestTitle}
+            </button>
+            {showTitleTooltip && isTitleTruncated && (
+              <div className="absolute left-0 top-full z-20 mt-1 max-w-[80vw] rounded-md bg-gray-900 px-3 py-2 text-xs text-white shadow-lg">
+                {fullTestTitle}
+              </div>
+            )}
+            <p className="mt-1 text-sm text-muted-foreground">
               Attempt #{attempt.attempt_number} •{" "}
-              {new Date(attempt.started_at).toLocaleString()}
+              {new Date(attempt.started_at).toLocaleString([], {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === "live" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("live")}
-          >
-            <Monitor className="mr-2 h-4 w-4" />
-            Live View
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("list")}
-          >
-            <List className="mr-2 h-4 w-4" />
-            List View
-          </Button>
         </div>
       </div>
 
@@ -191,7 +254,7 @@ export function StudentAttemptView() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Attempt Summary</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-4">
+        <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <p className="text-xs text-muted-foreground">Status</p>
             <Badge
@@ -297,39 +360,76 @@ export function StudentAttemptView() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              All Questions (List View)
+              {isWeakConceptMode ? "Weak Concepts Review" : "All Questions"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {questions.map((q, i) => (
-              <div
-                key={q.id}
-                className={`rounded-md border p-4 ${getQuestionResultStyle(answersByQuestionId[q.id]).card}`}
-              >
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold">Question {i + 1}</p>
-                  <span
-                    className={`text-sm font-semibold ${getQuestionResultStyle(answersByQuestionId[q.id]).label}`}
-                  >
-                    Marks:{" "}
-                    {Number(answersByQuestionId[q.id]?.marks_obtained ?? 0)} /{" "}
-                    {q.marks}
-                  </span>
-                </div>
-                <div
-                  className="prose mb-3 max-w-none text-sm"
-                  dangerouslySetInnerHTML={{ __html: q.question_text }}
-                />
-                <div className="rounded-md border bg-muted/30 p-3">
-                  <p className="mb-1 text-xs font-medium text-muted-foreground">
-                    Student Answer
-                  </p>
-                  <p className="whitespace-pre-wrap text-sm">
-                    {getAnswerDisplay(q, answersByQuestionId[q.id])}
-                  </p>
-                </div>
+            {displayedQuestions.length === 0 ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                No weak questions found in this attempt.
               </div>
-            ))}
+            ) : (
+              displayedQuestions.map((q) => {
+                const answer = answersByQuestionId[q.id];
+                const concepts = getQuestionConcepts(q);
+                const questionNumber =
+                  questions.findIndex((item) => item.id === q.id) + 1;
+
+                return (
+                  <div
+                    key={q.id}
+                    className={`rounded-md border p-4 ${getQuestionResultStyle(answer).card}`}
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold">
+                        Question {questionNumber}
+                      </p>
+                      <span
+                        className={`text-sm font-semibold ${getQuestionResultStyle(answer).label}`}
+                      >
+                        Marks: {Number(answer?.marks_obtained ?? 0)} / {q.marks}
+                      </span>
+                    </div>
+                    <div
+                      className="prose mb-3 max-w-none text-sm"
+                      dangerouslySetInnerHTML={{ __html: q.question_text }}
+                    />
+                    <div className="rounded-md border bg-muted/30 p-3">
+                      <p className="mb-1 text-xs font-medium text-muted-foreground">
+                        Student Answer
+                      </p>
+                      <p className="whitespace-pre-wrap text-sm">
+                        {getAnswerDisplay(q, answer)}
+                      </p>
+                    </div>
+
+                    {isWeakConceptMode && (
+                      <div className="mt-3 rounded-md border border-amber-200 bg-amber-50/60 p-3">
+                        <p className="mb-2 text-xs font-medium text-amber-800">
+                          Related Concepts
+                        </p>
+                        {concepts.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {concepts.map((concept) => (
+                              <span
+                                key={`${q.id}-${concept}`}
+                                className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-900"
+                              >
+                                {concept}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-amber-700">
+                            Concept mapping not available for this question.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </CardContent>
         </Card>
       )}

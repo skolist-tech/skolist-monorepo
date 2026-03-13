@@ -189,6 +189,54 @@ def get_student_attempt_detail(
         )
 
         questions = questions_res.data or []
+
+        question_ids = [q.get("id") for q in questions if q.get("id")]
+        question_concepts_map: dict[str, list[str]] = {}
+
+        if question_ids:
+            mappings_res = (
+                supabase.table("gen_questions_concepts_maps")
+                .select("gen_question_id,concept_id")
+                .in_("gen_question_id", question_ids)
+                .execute()
+            )
+            mappings = mappings_res.data or []
+
+            concept_ids = list(
+                {
+                    m.get("concept_id")
+                    for m in mappings
+                    if m.get("concept_id")
+                }
+            )
+
+            concept_name_map: dict[str, str] = {}
+            if concept_ids:
+                concepts_res = (
+                    supabase.table("concepts")
+                    .select("id,name")
+                    .in_("id", concept_ids)
+                    .execute()
+                )
+                for concept in concepts_res.data or []:
+                    concept_name_map[concept["id"]] = concept.get("name") or ""
+
+            for mapping in mappings:
+                qid = mapping.get("gen_question_id")
+                cid = mapping.get("concept_id")
+                if not qid or not cid:
+                    continue
+
+                concept_name = concept_name_map.get(cid)
+                if not concept_name:
+                    continue
+
+                if qid not in question_concepts_map:
+                    question_concepts_map[qid] = []
+
+                if concept_name not in question_concepts_map[qid]:
+                    question_concepts_map[qid].append(concept_name)
+
         normalized_questions = []
         for q in questions:
             q_type = (q.get("question_type") or "").lower()
@@ -204,6 +252,7 @@ def get_student_attempt_detail(
                     **q,
                     "type": normalized,
                     "options": [q.get("option1"), q.get("option2"), q.get("option3"), q.get("option4")],
+                    "concept_names": question_concepts_map.get(q.get("id"), []),
                 }
             )
 
