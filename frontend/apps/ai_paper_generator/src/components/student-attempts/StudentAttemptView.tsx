@@ -251,46 +251,48 @@ export function StudentAttemptView() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Attempt Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div>
-            <p className="text-xs text-muted-foreground">Status</p>
-            <Badge
-              variant={attempt.status === "graded" ? "secondary" : "default"}
-            >
-              {attempt.status}
-            </Badge>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Score</p>
-            <p className="font-semibold">
-              {attempt.total_marks_obtained ?? "Pending"}
-              {attempt.total_marks_possible
-                ? ` / ${attempt.total_marks_possible}`
-                : ""}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Questions</p>
-            <p className="font-semibold">{questions.length}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Answered</p>
-            <p className="font-semibold">
-              {
-                questions.filter(
-                  (q) =>
-                    getAnswerDisplay(q, answersByQuestionId[q.id]) !==
-                    "Not answered"
-                ).length
-              }
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {!isWeakConceptMode && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Attempt Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Status</p>
+              <Badge
+                variant={attempt.status === "graded" ? "secondary" : "default"}
+              >
+                {attempt.status}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Score</p>
+              <p className="font-semibold">
+                {attempt.total_marks_obtained ?? "Pending"}
+                {attempt.total_marks_possible
+                  ? ` / ${attempt.total_marks_possible}`
+                  : ""}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Questions</p>
+              <p className="font-semibold">{questions.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Answered</p>
+              <p className="font-semibold">
+                {
+                  questions.filter(
+                    (q) =>
+                      getAnswerDisplay(q, answersByQuestionId[q.id]) !==
+                      "Not answered"
+                  ).length
+                }
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {viewMode === "live" ? (
         <>
