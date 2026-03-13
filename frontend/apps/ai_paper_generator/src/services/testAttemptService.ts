@@ -7,6 +7,11 @@ import { getSupabaseClient } from "@skolist/auth";
 
 const API_URL = import.meta.env.VITE_FASTAPI_URL;
 
+const isTrueFalseType = (questionType?: string): boolean => {
+  const t = (questionType || "").toLowerCase();
+  return t.includes("true_false") || t.includes("true_or_false");
+};
+
 async function getAuthToken(): Promise<string> {
   const {
     data: { session },
@@ -231,7 +236,7 @@ export async function getTestQuestions(
   const normalizeType = (questionType: string): string => {
     const t = (questionType || "").toLowerCase();
     if (t.includes("msq")) return "multiple_choice_multiple";
-    if (t.includes("mcq") || t.includes("true_false"))
+    if (t.includes("mcq") || isTrueFalseType(t))
       return "multiple_choice_single";
     return "text_input";
   };
@@ -300,7 +305,7 @@ export async function saveSingleStudentAnswer(
     const isMcq =
       question.type === "multiple_choice_single" ||
       question.question_type?.toLowerCase().includes("mcq") ||
-      question.question_type?.toLowerCase().includes("true_false");
+      isTrueFalseType(question.question_type);
 
     if (isMcq) {
       const idx = optionsList.indexOf(answerValue);
@@ -417,7 +422,7 @@ export async function saveTestAnswers(
         const isMcq =
           question.type === "multiple_choice_single" ||
           question.question_type?.toLowerCase().includes("mcq") ||
-          question.question_type?.toLowerCase().includes("true_false");
+          isTrueFalseType(question.question_type);
 
         if (isMcq) {
           const idx = optionsList.indexOf(answerValue);

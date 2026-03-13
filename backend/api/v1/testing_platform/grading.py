@@ -45,7 +45,7 @@ def grade_attempt_backend(
         q_type = str(question_row.get("question_type") or "").lower()
         marks = float(question_row.get("marks") or 0)
 
-        if q_type in ("mcq4", "true_false"):
+        if q_type in ("mcq4", "true_false", "true_or_false"):
             selected = answer_row.get("selected_mcq_option") if answer_row else None
             correct = question_row.get("correct_mcq_option")
             is_correct = selected is not None and selected == correct
@@ -113,6 +113,13 @@ def grade_attempt_backend(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Test attempt not found",
+            )
+
+        attempt_status = str(attempt.get("status") or "")
+        if attempt_status not in ("submitted", "timed_out"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only submitted or timed-out attempts can be graded",
             )
 
         test_res = (
@@ -213,7 +220,13 @@ def grade_attempt_backend(
                 .execute()
             )
 
-        objective_types = {"mcq4", "true_false", "msq4", "match_the_following"}
+        objective_types = {
+            "mcq4",
+            "true_false",
+            "true_or_false",
+            "msq4",
+            "match_the_following",
+        }
         total_possible = sum(float(q.get("marks") or 0) for q in questions)
 
         total_obtained = 0.0
@@ -236,11 +249,7 @@ def grade_attempt_backend(
         rounded_obtained = round(total_obtained, 2)
         rounded_possible = round(total_possible, 2)
 
-        next_status = (
-            "graded"
-            if attempt.get("status") in ("submitted", "timed_out")
-            else attempt.get("status")
-        )
+        next_status = "graded"
 
         (
             supabase.table("test_attempts")

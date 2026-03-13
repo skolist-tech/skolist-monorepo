@@ -227,7 +227,7 @@ def get_student_attempt_detail(
             q_type = (question.get("question_type") or "").lower()
             if "msq" in q_type:
                 normalized = "multiple_choice_multiple"
-            elif "mcq" in q_type or "true_false" in q_type:
+            elif "mcq" in q_type or "true_false" in q_type or "true_or_false" in q_type:
                 normalized = "multiple_choice_single"
             else:
                 normalized = "text_input"
