@@ -14,6 +14,19 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _normalize_true_false_value(value: Any) -> bool | None:
+    """Normalize loose true/false text values to bool."""
+    if value is None:
+        return None
+
+    text = str(value).strip().lower()
+    if text in {"true", "t", "1", "yes", "y"}:
+        return True
+    if text in {"false", "f", "0", "no", "n"}:
+        return False
+    return None
+
+
 @router.post("/{attempt_id}/grade")
 def grade_attempt_backend(
     attempt_id: str,
@@ -45,10 +58,24 @@ def grade_attempt_backend(
         q_type = str(question_row.get("question_type") or "").lower()
         marks = float(question_row.get("marks") or 0)
 
-        if q_type in ("mcq4", "true_false", "true_or_false"):
+        if q_type == "mcq4":
             selected = answer_row.get("selected_mcq_option") if answer_row else None
             correct = question_row.get("correct_mcq_option")
             is_correct = selected is not None and selected == correct
+            return (marks if is_correct else 0.0, bool(is_correct))
+
+        if q_type in ("true_false", "true_or_false"):
+            # Source of truth for True/False correctness is answer_text.
+            correct_bool = _normalize_true_false_value(question_row.get("answer_text"))
+
+            if correct_bool is None:
+                return (0.0, False)
+
+            selected_index = answer_row.get("selected_mcq_option") if answer_row else None
+            # True/False selection is represented by selected_mcq_option index.
+            selected_bool: bool | None = True if selected_index == 1 else False if selected_index == 2 else None
+
+            is_correct = selected_bool is not None and selected_bool == correct_bool
             return (marks if is_correct else 0.0, bool(is_correct))
 
         if q_type == "msq4":
@@ -173,7 +200,7 @@ def grade_attempt_backend(
         questions_res = (
             supabase.table("gen_questions")
             .select(
-                "id,marks,question_type,correct_mcq_option,msq_option1_answer,msq_option2_answer,msq_option3_answer,msq_option4_answer,match_the_following_columns"
+                "id,marks,question_type,answer_text,correct_mcq_option,msq_option1_answer,msq_option2_answer,msq_option3_answer,msq_option4_answer,match_the_following_columns"
             )
             .eq("activity_id", draft["activity_id"])
             .eq("is_in_draft", True)

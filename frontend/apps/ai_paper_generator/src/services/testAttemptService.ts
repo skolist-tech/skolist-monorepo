@@ -12,6 +12,26 @@ const isTrueFalseType = (questionType?: string): boolean => {
   return t.includes("true_false") || t.includes("true_or_false");
 };
 
+const getQuestionOptions = (question: TestQuestion): string[] => {
+  const parsedOptions = [
+    question.option1,
+    question.option2,
+    question.option3,
+    question.option4,
+  ].filter((opt): opt is string => Boolean(opt));
+
+  if (parsedOptions.length > 0) {
+    return parsedOptions;
+  }
+
+  // Some true/false questions are sent without option1/option2 populated.
+  if (isTrueFalseType(question.question_type)) {
+    return ["True", "False"];
+  }
+
+  return [];
+};
+
 async function getAuthToken(): Promise<string> {
   const {
     data: { session },
@@ -246,9 +266,7 @@ export async function getTestQuestions(
   return rows.map((q: TestQuestion) => ({
     ...q,
     type: normalizeType(q.question_type),
-    options: [q.option1, q.option2, q.option3, q.option4].filter(
-      (opt): opt is string => Boolean(opt)
-    ),
+    options: getQuestionOptions(q),
     section: q.qgen_draft_section_id || undefined,
   }));
 }
