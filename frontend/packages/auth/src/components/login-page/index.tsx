@@ -387,16 +387,14 @@ export function LoginPage({
                 )}
 
                 {/* Social Divider */}
-                {!otpSent && (
+                {!otpSent && showGoogle && (
                   <>
                     <div className="login-right-panel__divider">Or</div>
 
-                    {showGoogle && (
-                      <GoogleSignInButton
-                        isLoading={isLoading}
-                        onClick={handleGoogleSignIn}
-                      />
-                    )}
+                    <GoogleSignInButton
+                      isLoading={isLoading}
+                      onClick={handleGoogleSignIn}
+                    />
                   </>
                 )}
               </>

@@ -22,6 +22,10 @@ export function LoginPage() {
       ? `${fromState.pathname}${fromState.search || ""}${fromState.hash || ""}`
       : "/");
   const isTestLoginMode = mode === "test";
+  const isPhoneAvailable =
+    !isTestLoginMode &&
+    (import.meta.env.VITE_PHONE_SMS_AVAILABLE || "false").toLowerCase() ===
+      "true";
 
   // Redirect to intended page if already authenticated
   useEffect(() => {
@@ -34,10 +38,10 @@ export function LoginPage() {
     <AuthLoginPage
       onSuccess={() => navigate(from, { replace: true })}
       apiUrl={import.meta.env.VITE_FASTAPI_URL}
-      isPhoneAvailable={
-        (import.meta.env.VITE_PHONE_SMS_AVAILABLE || "false").toLowerCase() ===
-        "true"
+      enabledMethods={
+        isTestLoginMode ? ["email"] : ["phone", "google", "email"]
       }
+      isPhoneAvailable={isPhoneAvailable}
       showLeftPanel={!isTestLoginMode}
       title={isTestLoginMode ? "Student Portal" : undefined}
       productTagline={
