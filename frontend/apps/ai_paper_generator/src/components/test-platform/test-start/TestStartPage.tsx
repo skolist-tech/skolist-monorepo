@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Clock, Users, AlertCircle, FileText, CheckCircle } from "lucide-react";
+import { Clock, Award, AlertCircle, FileText, CheckCircle } from "lucide-react";
 import { useTestContext } from "../../../context/TestContext";
 import { testAttemptService } from "../../../services/testAttemptService";
 import type { OnlineTest } from "../../../services/testAttemptService";
@@ -131,7 +131,7 @@ export function TestStartPage() {
                   <span>{formatDuration(test.duration_minutes)}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
+                  <Award className="h-4 w-4" />
                   <span>{test.total_marks} Marks</span>
                 </div>
               </div>
