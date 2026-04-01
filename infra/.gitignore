@@ -1,0 +1,16 @@
+.terraform/
+
+# Terraform state and local lock artifacts
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+
+# Per-user/apply-time variable files (often contain secrets)
+*.tfvars
+*.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Terraform crash logs
+crash.log
+crash.*.log
