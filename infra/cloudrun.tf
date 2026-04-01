@@ -5,14 +5,19 @@ resource "google_cloud_run_v2_service" "prod" {
   ingress  = "INGRESS_TRAFFIC_ALL"
   invoker_iam_disabled = true
 
+  scaling {
+    min_instance_count = 1
+    max_instance_count = 10
+  }
+
   deletion_protection = false
 
   template {
     service_account = google_service_account.cloud_run_sa.email
 
     scaling {
-      min_instance_count = 0
-      max_instance_count = 2
+      min_instance_count = 1
+      max_instance_count = 10
     }
 
     containers {
@@ -124,14 +129,19 @@ resource "google_cloud_run_v2_service" "stage" {
   ingress  = "INGRESS_TRAFFIC_ALL"
   invoker_iam_disabled = true
 
+  scaling {
+    min_instance_count = 1
+    max_instance_count = 5
+  }
+
   deletion_protection = false
 
   template {
     service_account = google_service_account.cloud_run_sa.email
 
     scaling {
-      min_instance_count = 0
-      max_instance_count = 1    # stage doesn't need to scale as high
+      min_instance_count = 1
+      max_instance_count = 5    # stage doesn't need to scale as high
     }
 
     containers {
