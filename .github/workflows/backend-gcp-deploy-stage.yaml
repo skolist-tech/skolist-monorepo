@@ -10,8 +10,8 @@ on:
 
 env:
   SERVICE_NAME: "backend-stage"
-  REGION: "us-central1"
-  IMAGE: "us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-app/backend"
+  REGION: "asia-south1"
+  IMAGE: "asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-app/backend"
 
 jobs:
   deploy:
@@ -35,7 +35,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+        run: gcloud auth configure-docker asia-south1-docker.pkg.dev
 
       - name: Build and Push Image
         run: |
