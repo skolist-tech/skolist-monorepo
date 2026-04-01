@@ -10,6 +10,8 @@ on:
 
 env:
   SERVICE_NAME: "backend-main"
+  REGION: "us-central1"
+  IMAGE: "us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-app/backend"
 
 jobs:
   deploy:
@@ -29,28 +31,21 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_SA_EMAIL }}
 
-      - name: Deploy to Cloud Run
-        id: deploy
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push Image
+        run: |
+          docker build -t ${{ env.IMAGE }}:${{ github.sha }} ./backend
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Deploy new image to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.SERVICE_NAME }}
-          region: ${{ secrets.GCP_REGION }}
+          region: ${{ env.REGION }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          source: "./backend"
-          flags: |
-            --allow-unauthenticated
-            --memory=1Gi
-            --set-secrets=SUPABASE_URL=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_URL:latest
-            --set-secrets=SUPABASE_SERVICE_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_SERVICE_KEY:latest
-            --set-secrets=SUPABASE_ANON_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_ANON_KEY:latest
-            --set-secrets=GEMINI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/GEMINI_API_KEY:latest
-            --set-secrets=OPENAI_API_KEY=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/OPENAI_API_KEY:latest
-            --set-secrets=SMS_HOOK_SECRET=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/SUPABASE_SMS_HOOK_SECRET:latest
-            --set-env-vars=FIREBASE_CREDENTIALS=projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/FIREBASE_CREDENTIALS:latest
-            --set-env-vars=LOGGING_LEVEL=INFO
-            --set-env-vars=DEPLOYMENT_ENV=PRODUCTION
-            --set-env-vars=PING=TRUE
-            --set-env-vars=LOG_IMAGES=FALSE
-
-      - name: Output Deployment URL
-        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
+          image: ${{ env.IMAGE }}:${{ github.sha }}   # ← only updates the image, nothing else
