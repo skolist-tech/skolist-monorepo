@@ -39,8 +39,12 @@ jobs:
 
       - name: Build and Push Image
         run: |
-          docker build -t ${{ env.IMAGE }}:stage-${{ github.sha }} ./backend
+          docker build \
+            -t ${{ env.IMAGE }}:stage-${{ github.sha }} \
+            -t ${{ env.IMAGE }}:stage-latest \
+            ./backend
           docker push ${{ env.IMAGE }}:stage-${{ github.sha }}
+          docker push ${{ env.IMAGE }}:stage-latest
 
       - name: Deploy new image to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
