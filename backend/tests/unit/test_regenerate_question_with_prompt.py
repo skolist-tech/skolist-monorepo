@@ -9,7 +9,6 @@ These tests validate the new refactored architecture:
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import google.genai as genai
 import pytest
 
 from api.v1.qgen.models import MCQ4
@@ -100,11 +99,9 @@ class TestRegenerateWithPromptService:
     @pytest.mark.asyncio
     async def test_process_question_returns_response(
         self,
-        gemini_client: genai.Client,
         mock_mcq4_question: dict,
     ):
         result = await RegenerateWithPromptService.process_question(
-            gemini_client=gemini_client,
             gen_question_data=mock_mcq4_question,
             retry_idx=1,
         )
@@ -113,17 +110,6 @@ class TestRegenerateWithPromptService:
     @pytest.mark.asyncio
     async def test_regenerate_question_flow(self, mock_mcq4_question: dict, mock_browser, mock_supabase):
         # Mock generic Gemini client
-        mock_gemini = MagicMock()
-        mock_gemini.aio.models.generate_content = AsyncMock()
-
-        # Mock successful response
-        mock_response = MagicMock()
-        mock_mcq = MCQ4(**mock_mcq4_question)
-        mock_mcq.question_text = "Regenerated Text"
-
-        mock_response.parsed.question = mock_mcq
-        mock_gemini.aio.models.generate_content.return_value = mock_response
-
         # Patch screenshot utils to avoid actual browser/file ops if needed,
         # but since we pass mock_browser, generate_screenshot will use it.
         with (
@@ -146,7 +132,6 @@ class TestRegenerateWithPromptService:
                 gen_question_id=mock_mcq4_question["id"],
                 supabase_client=mock_supabase,
                 browser_service=mock_browser,
-                gemini_client=mock_gemini,
                 custom_prompt="test prompt",
             )
 

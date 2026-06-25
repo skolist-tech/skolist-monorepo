@@ -8,11 +8,11 @@ Architecture:
 """
 
 import logging
-import os
 
-from google import genai
 from pydantic import BaseModel, Field
 from supabase import AsyncClient
+
+from ..llm import get_async_client, get_model
 
 from api.v1.qgen.models import AllQuestions
 from api.v1.qgen.prompts import regenerate_question_prompt
@@ -70,15 +70,14 @@ def _log_prefix(retry_idx: int = None) -> str:
 class RegenerateService:
     @staticmethod
     async def process_question(
-        gemini_client: genai.Client,
         gen_question_data: dict,
         retry_idx: int = None,
-    ) -> dict:
+    ) -> RegeneratedQuestion:
         """
-        Process a question by calling Gemini API once.
+        Process a question by calling the LLM once.
         This function makes a single API call without any retry logic.
         """
-        _log_prefix(retry_idx)  # For consistent logging format
+        _log_prefix(retry_idx)
 
         logger.debug(
             "Processing regenerate for question",
@@ -88,32 +87,26 @@ class RegenerateService:
         prompt = regenerate_question_prompt(gen_question_data)
 
         logger.debug(
-            "Making Gemini API call",
+            "Making LLM API call",
             extra={"retry_idx": retry_idx},
         )
 
-        response = await gemini_client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": RegeneratedQuestion,
-            },
+        client = get_async_client()
+        result = await client.chat.completions.create(
+            model=get_model(),
+            messages=[{"role": "user", "content": prompt}],
+            response_model=RegeneratedQuestion,
         )
 
         logger.debug(
-            "Gemini API call completed",
-            extra={
-                "retry_idx": retry_idx,
-                "status": "success",
-            },
+            "LLM API call completed",
+            extra={"retry_idx": retry_idx, "status": "success"},
         )
 
-        return response
+        return result
 
     @staticmethod
     async def process_and_validate(
-        gemini_client: genai.Client,
         gen_question_data: dict,
         retry_idx: int = None,
     ) -> AllQuestions:
@@ -121,22 +114,22 @@ class RegenerateService:
         Process and validate a question.
         Calls process_question() and then validates the response.
         """
-        _log_prefix(retry_idx)  # For consistent logging format
+        _log_prefix(retry_idx)
 
         logger.debug(
             "Starting regenerate processing and validation",
             extra={"retry_idx": retry_idx},
         )
 
-        response = await RegenerateService.process_question(gemini_client, gen_question_data, retry_idx)
+        result = await RegenerateService.process_question(gen_question_data, retry_idx)
 
         logger.debug(
-            "Parsing Gemini response",
+            "Parsing LLM response",
             extra={"retry_idx": retry_idx},
         )
 
         try:
-            regenerated_question = response.parsed.question
+            regenerated_question = result.question
             logger.debug(
                 "Successfully parsed regenerated question",
                 extra={"retry_idx": retry_idx},
@@ -144,10 +137,7 @@ class RegenerateService:
         except Exception as parse_error:
             logger.warning(
                 "Failed to parse response",
-                extra={
-                    "retry_idx": retry_idx,
-                    "error": str(parse_error),
-                },
+                extra={"retry_idx": retry_idx, "error": str(parse_error)},
             )
             raise QuestionValidationError(f"Failed to parse response: {parse_error}") from parse_error
 
@@ -175,8 +165,6 @@ class RegenerateService:
         """
         Attempt to process question with retry logic and update Supabase.
         """
-        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
         logger.debug(
             "Starting regenerate retry wrapper",
             extra={"max_retries": max_retries},
@@ -198,7 +186,7 @@ class RegenerateService:
                 )
 
                 regenerated_question = await RegenerateService.process_and_validate(
-                    gemini_client, gen_question_data, retry_idx
+                    gen_question_data, retry_idx
                 )
 
                 logger.debug(

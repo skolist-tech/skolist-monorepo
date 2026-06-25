@@ -3,12 +3,11 @@ Service layer for extracting questions from files.
 """
 
 import logging
-import os
 
 from fastapi import UploadFile
-from google import genai
-from google.genai import types
 from supabase import AsyncClient
+
+from ..llm import get_async_client, get_model, to_image_block, to_text_block
 
 from api.v1.qgen.models import QUESTION_TYPE_TO_ENUM, ExtractedQuestionsList
 from api.v1.qgen.prompts import extract_questions_prompt
@@ -34,15 +33,15 @@ class ExtractionValidationError(Exception):
     pass
 
 
-async def process_uploaded_file(file: UploadFile) -> types.Part:
+async def process_uploaded_file(file: UploadFile) -> dict:
     """
-    Process an uploaded file and convert it to a Gemini Part object.
+    Process an uploaded file and return a provider-agnostic content block.
 
     Args:
         file: The uploaded file (image or PDF)
 
     Returns:
-        Gemini Part object
+        Content block dict compatible with LiteLLM messages
     """
     if not file.filename or not file.size or file.size == 0:
         raise ExtractionValidationError("Empty or invalid file uploaded")
@@ -50,7 +49,6 @@ async def process_uploaded_file(file: UploadFile) -> types.Part:
     content = await file.read()
     content_type = file.content_type or "application/octet-stream"
 
-    # Validate file type
     allowed_types = [
         "image/png",
         "image/jpeg",
@@ -66,7 +64,7 @@ async def process_uploaded_file(file: UploadFile) -> types.Part:
         )
 
     await file.seek(0)
-    return types.Part.from_bytes(data=content, mime_type=content_type)
+    return to_image_block(content, content_type)
 
 
 class ExtractQuestionsService:
@@ -74,17 +72,15 @@ class ExtractQuestionsService:
 
     @staticmethod
     async def process_extraction(
-        gemini_client: genai.Client,
-        file_part: types.Part,
+        file_block: dict,
         custom_prompt: str | None = None,
         retry_idx: int = None,
     ) -> ExtractedQuestionsList:
         """
-        Process file and extract questions using Gemini.
+        Process file and extract questions using the configured LLM.
 
         Args:
-            gemini_client: Gemini API client
-            file_part: File as Gemini Part object
+            file_block: File as a provider-agnostic content block
             custom_prompt: Optional user instructions
             retry_idx: Retry attempt number for logging
 
@@ -92,20 +88,15 @@ class ExtractQuestionsService:
             ExtractedQuestionsList with parsed questions
         """
         prompt_text = extract_questions_prompt(custom_prompt)
+        content_blocks = [file_block, to_text_block(prompt_text)]
 
-        contents = [file_part, types.Part.from_text(text=prompt_text)]
-
-        response = await gemini_client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": ExtractedQuestionsList,
-            },
-        )
-
+        client = get_async_client()
         try:
-            return response.parsed
+            return await client.chat.completions.create(
+                model=get_model(),
+                messages=[{"role": "user", "content": content_blocks}],
+                response_model=ExtractedQuestionsList,
+            )
         except Exception as e:
             raise ExtractionValidationError(f"Failed to parse LLM response: {e}") from e
 
@@ -134,12 +125,9 @@ class ExtractQuestionsService:
         """
         # 1. Process file
         logger.info(f"Processing file for extraction: {file.filename}")
-        file_part = await process_uploaded_file(file)
+        file_block = await process_uploaded_file(file)
 
-        # 2. Initialize Gemini client
-        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
-        # 3. Call LLM with retry
+        # 2. Call LLM with retry
         max_retries = 5
         last_exception = None
         extracted_result = None
@@ -147,7 +135,7 @@ class ExtractQuestionsService:
         for attempt in range(max_retries):
             try:
                 extracted_result = await ExtractQuestionsService.process_extraction(
-                    gemini_client, file_part, custom_prompt, attempt + 1
+                    file_block, custom_prompt, attempt + 1
                 )
                 break
             except Exception as e:

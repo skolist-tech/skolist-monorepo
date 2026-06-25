@@ -1,9 +1,7 @@
 import logging
-import os
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import Response
-from google import genai
 from supabase import AsyncClient
 
 from api.v1.auth import get_async_supabase_client, require_supabase_user
@@ -84,16 +82,12 @@ async def regenerate_question_with_prompt(
         if not browser_service:
             raise HTTPException(status_code=503, detail="Browser service unavailable")
 
-        # Initialize Gemini Client
-        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
         # Process
         await RegenerateWithPromptService.regenerate_question(
             gen_question_data=gen_question_data,
             gen_question_id=gen_question_id,
             supabase_client=supabase_client,
             browser_service=browser_service,
-            gemini_client=gemini_client,
             custom_prompt=prompt,
             files=files,
             is_camera_capture=is_camera_capture,

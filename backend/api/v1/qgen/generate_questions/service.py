@@ -7,8 +7,10 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from google import genai
+import litellm
 from supabase import AsyncClient
+
+from ..llm import get_async_client, get_model
 
 from supabase_dir import (
     GenImagesInsert,
@@ -32,7 +34,6 @@ logger = logging.getLogger(__name__)
 class BatchProcessingContext:
     """Holds all contextual data needed for processing batches."""
 
-    gemini_client: genai.Client
     supabase_client: AsyncClient
     concepts_dict: dict[str, str]  # concept_name -> description
     concepts_name_to_id: dict[str, str]  # concept_name -> concept_id
@@ -145,20 +146,12 @@ async def process_batch_generation(
     old_questions_text = json.dumps(sampled_old_questions)
     
     try:
-        concepts_token_response = await ctx.gemini_client.aio.models.count_tokens(
-            model="gemini-2.5-flash",
-            contents=concepts_text,
-        )
-        concepts_token_count = concepts_token_response.total_tokens
+        concepts_token_count = litellm.token_counter(model=get_model(), text=concepts_text)
     except Exception:
         concepts_token_count = 0
-    
+
     try:
-        old_questions_token_response = await ctx.gemini_client.aio.models.count_tokens(
-            model="gemini-2.5-flash",
-            contents=old_questions_text,
-        )
-        old_questions_token_count = old_questions_token_response.total_tokens
+        old_questions_token_count = litellm.token_counter(model=get_model(), text=old_questions_text)
     except Exception:
         old_questions_token_count = 0
     
@@ -174,12 +167,7 @@ async def process_batch_generation(
 
     # LOG: Count actual tokens in the prompt before sending
     try:
-        token_count_response = await ctx.gemini_client.aio.models.count_tokens(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        )
-        prompt_token_estimate = token_count_response.total_tokens
-        
+        prompt_token_estimate = litellm.token_counter(model=get_model(), text=prompt)
         logger.info(
             f"{prefix}BATCH_INPUT | type={batch.question_type} n={batch.n_questions} "
             f"difficulty={batch.difficulty} | concepts={len(unique_concepts)} "
@@ -190,21 +178,19 @@ async def process_batch_generation(
         logger.warning(f"{prefix}Could not count tokens: {token_count_error}")
         prompt_token_estimate = 0
 
-    response = await ctx.gemini_client.aio.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config={
-            "response_mime_type": "application/json",
-            "response_schema": question_schema,
-        },
+    client = get_async_client()
+    result, completion = await client.chat.completions.create_with_completion(
+        model=get_model(),
+        messages=[{"role": "user", "content": prompt}],
+        response_model=question_schema,
     )
 
     # LOG: Extract and log token usage from response
     try:
-        usage_metadata = response.usage_metadata
-        prompt_tokens = usage_metadata.prompt_token_count if usage_metadata else 0
-        response_tokens = usage_metadata.candidates_token_count if usage_metadata else 0
-        total_tokens = usage_metadata.total_token_count if usage_metadata else 0
+        usage = completion.usage
+        prompt_tokens = usage.prompt_tokens if usage else 0
+        response_tokens = usage.completion_tokens if usage else 0
+        total_tokens = usage.total_tokens if usage else 0
         
         # Update context token counters
         ctx.total_prompt_tokens += prompt_tokens
@@ -239,7 +225,7 @@ async def process_batch_generation(
     ctx.batch_metrics.append(batch_metrics)
 
     return {
-        "response": response,
+        "result": result,
         "batch": batch,
     }
 
@@ -275,7 +261,7 @@ async def process_batch_generation_and_validate(
         return res
 
     generation_result = await process_batch_generation(batch, ctx, batch_idx, retry_idx)
-    response = generation_result["response"]
+    result = generation_result["result"]
 
     question_schema = QUESTION_TYPE_TO_SCHEMA_WITH_CONCEPTS.get(batch.question_type)
     question_type_enum = QUESTION_TYPE_TO_ENUM.get(batch.question_type)
@@ -289,12 +275,7 @@ async def process_batch_generation_and_validate(
     }
     hardness_level = difficulty_mapping.get(batch.difficulty, PublicHardnessLevelEnumEnum.MEDIUM)
 
-    try:
-        questions_list = response.parsed.questions
-    except Exception:
-        raw_text = response.text
-        raw_data = json.loads(raw_text)
-        questions_list = raw_data.get("questions", [])
+    questions_list = result.questions
 
     validated_questions = []
 

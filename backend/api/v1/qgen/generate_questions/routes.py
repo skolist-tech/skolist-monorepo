@@ -1,14 +1,15 @@
 import asyncio
 import json
 import logging
-import os
 import uuid
 from typing import Literal
 
+import litellm
 from fastapi import Depends, status
 from fastapi.responses import Response
-from google import genai
 from pydantic import BaseModel, Field, model_validator
+
+from ..llm import get_async_client, get_model
 
 from api.v1.auth import get_async_supabase_client, require_supabase_user
 
@@ -220,22 +221,17 @@ async def generate_questions(
                 f"This may cause token limit issues. Consider limiting historical questions."
             )
         
-        # Estimate token count for old_questions using Gemini's count_tokens
-        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        # Estimate token count for old_questions
         try:
             old_questions_text = json.dumps(old_questions[:50])  # Sample first 50 for estimation
-            token_count_response = await gemini_client.aio.models.count_tokens(
-                model="gemini-2.5-flash",
-                contents=old_questions_text,
-            )
-            sample_tokens = token_count_response.total_tokens
+            sample_tokens = litellm.token_counter(model=get_model(), text=old_questions_text)
             estimated_total_tokens = (sample_tokens * len(old_questions)) // min(50, len(old_questions)) if old_questions else 0
-            
+
             logger.info(
                 f"OLD_QUESTIONS_TOKENS | sample_size={min(50, len(old_questions))} "
                 f"sample_tokens={sample_tokens} estimated_total_tokens={estimated_total_tokens}"
             )
-            
+
             if estimated_total_tokens > 50000:
                 logger.warning(
                     f"⚠️  HIGH_TOKEN_ESTIMATE_FOR_OLD_QUESTIONS | estimated={estimated_total_tokens} | "
@@ -260,10 +256,7 @@ async def generate_questions(
         )
 
         # Initialize context
-        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
         ctx = BatchProcessingContext(
-            gemini_client=gemini_client,
             supabase_client=supabase_client,
             concepts_dict=concepts_dict,
             concepts_name_to_id=concepts_name_to_id,

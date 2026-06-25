@@ -1,13 +1,18 @@
 """
 Shared fixtures for unit tests.
 
-Provides a mock/live Gemini client based on --gemini-live flag.
+Provides:
+- mock_llm_client (autouse): patches api.v1.qgen.llm.get_async_client for all
+  active service tests (generate_questions, regenerate, auto_correct, etc.)
+- gemini_client: legacy fixture for tests that still exercise regenerate_question.py
+  (the old dead-code path that still uses genai.Client directly).
+
 The --gemini-live option is defined in tests/conftest.py.
 """
 
 import os
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import google.genai as genai
 import pytest
@@ -192,8 +197,172 @@ class MockGeminiClient:
 
 
 # ============================================================================
+# MOCK INSTRUCTOR CLIENT (for active service tests)
+# ============================================================================
+
+
+def _messages_to_str(messages: list) -> str:
+    parts = []
+    for m in messages:
+        content = m.get("content", "")
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    parts.append(block.get("text", ""))
+        else:
+            parts.append(str(content))
+    return " ".join(parts).lower()
+
+
+def _pick_question(content_str: str):
+    if "short_answer" in content_str or "long_answer" in content_str:
+        return create_mock_short_answer()
+    if "true_false" in content_str:
+        return create_mock_true_false()
+    if "fill_in_the_blank" in content_str:
+        return create_mock_fill_in_blank()
+    return create_mock_mcq4()
+
+
+def _build_mock_response(response_model, messages: list):
+    from api.v1.qgen.models import (
+        AutoCorrectedQuestion,
+        ExtractedQuestion,
+        ExtractedQuestionsList,
+        FeedbackItem,
+        FeedbackList,
+    )
+
+    content_str = _messages_to_str(messages)
+    name = getattr(response_model, "__name__", "")
+
+    if name == "AutoCorrectedQuestion":
+        return AutoCorrectedQuestion(question=_pick_question(content_str))
+
+    if name == "RegeneratedQuestion":
+        from api.v1.qgen.regenerate.service import RegeneratedQuestion
+        return RegeneratedQuestion(question=_pick_question(content_str))
+
+    if name == "FeedbackList":
+        return FeedbackList(
+            feedbacks=[
+                FeedbackItem(message="Add more variety in difficulty.", priority=7),
+                FeedbackItem(message="Clearer wording needed.", priority=5),
+            ]
+        )
+
+    if name == "ExtractedQuestionsList":
+        return ExtractedQuestionsList(
+            questions=[
+                ExtractedQuestion(
+                    question_type="mcq4",
+                    question_text="What is kinetic energy?",
+                    option1="KE = mv²",
+                    option2="KE = ½mv²",
+                    option3="KE = mgh",
+                    option4="KE = Fd",
+                    correct_mcq_option=2,
+                    answer_text="KE = ½mv²",
+                )
+            ]
+        )
+
+    if "questions" in getattr(response_model, "model_fields", {}):
+        from api.v1.qgen.generate_questions.models import (
+            FillInTheBlankWithConcepts,
+            IntegerAnswerWithConcepts,
+            MCQ4WithConcepts,
+            NumericalAnswerWithConcepts,
+            ShortAnswerWithConcepts,
+            TrueFalseWithConcepts,
+        )
+        n = response_model.__name__
+        if "TrueFalse" in n:
+            q = TrueFalseWithConcepts(question_text="KE depends on v².", answer_text="True", concepts=["Kinetic Energy"])
+        elif "FillInTheBlank" in n:
+            q = FillInTheBlankWithConcepts(question_text="KE = ½ * m * ___", answer_text="v²", concepts=["Kinetic Energy"])
+        elif "ShortAnswer" in n or "LongAnswer" in n:
+            q = ShortAnswerWithConcepts(question_text="Explain Newton's first law.", answer_text="Objects stay in motion.", concepts=["Newton's Laws"])
+        elif "Numerical" in n:
+            q = NumericalAnswerWithConcepts(question_text="KE of 2kg at 3m/s?", answer_text=9.0, concepts=["Kinetic Energy"])
+        elif "Integer" in n:
+            q = IntegerAnswerWithConcepts(question_text="How many Newton's laws?", answer_text=3, concepts=["Newton's Laws"])
+        else:
+            q = MCQ4WithConcepts(
+                question_text="What is kinetic energy?",
+                option1="KE = mv²", option2="KE = ½mv²", option3="KE = mgh", option4="KE = Fd",
+                correct_mcq_option=2, answer_text="KE = ½mv²", concepts=["Kinetic Energy"],
+            )
+        return response_model(questions=[q])
+
+    return MagicMock()
+
+
+class _MockUsage:
+    prompt_tokens = 50
+    completion_tokens = 25
+    total_tokens = 75
+
+
+class _MockCompletion:
+    usage = _MockUsage()
+
+
+class _MockInstructorCompletions:
+    async def create(self, model, messages, response_model, **kwargs):
+        return _build_mock_response(response_model, messages)
+
+    async def create_with_completion(self, model, messages, response_model, **kwargs):
+        result = _build_mock_response(response_model, messages)
+        return result, _MockCompletion()
+
+
+class _MockInstructorChat:
+    def __init__(self):
+        self.completions = _MockInstructorCompletions()
+
+
+class MockInstructorClient:
+    """Mock instructor.AsyncInstructor for unit tests."""
+
+    def __init__(self):
+        self.chat = _MockInstructorChat()
+
+
+async def _mock_svg_acompletion(model, messages, **kwargs):
+    mock = MagicMock()
+    mock.choices = [MagicMock()]
+    mock.choices[0].message.content = '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40"/></svg>'
+    return mock
+
+
+# ============================================================================
 # FIXTURES
 # ============================================================================
+
+
+@pytest.fixture(autouse=True)
+def mock_llm_client(use_live_gemini):
+    """
+    Patch the LLM layer for all unit tests unless --gemini-live is used.
+    Patches api.v1.qgen.llm.get_async_client so active service code
+    gets a mock instructor client without real API calls.
+    """
+    if use_live_gemini:
+        yield
+    else:
+        # Patch each service module's own reference — `from ..llm import get_async_client`
+        # creates a local copy per module, so we must patch where the name is USED, not defined.
+        with (
+            patch("api.v1.qgen.generate_questions.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.regenerate.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.auto_correct.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.extract_questions.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.regenerate_with_prompt.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.get_feedback.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.edit_svg.service.litellm.acompletion", new=_mock_svg_acompletion),
+        ):
+            yield
 
 
 @pytest.fixture(scope="session")

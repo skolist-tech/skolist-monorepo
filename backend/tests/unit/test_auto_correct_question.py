@@ -69,20 +69,17 @@ def mock_supabase():
 class TestAutoCorrectService:
     @pytest.mark.asyncio
     async def test_correct_question_flow(self, mock_mcq4_question: dict, mock_browser_service, mock_supabase):
-        # Mock generic Gemini client for this specific test to avoid real calls
-        mock_gemini = MagicMock()
-        mock_gemini.aio.models.generate_content = AsyncMock()
+        from api.v1.qgen.models import AutoCorrectedQuestion
 
-        # Mock successful response
-        mock_response = MagicMock()
-        # Mock the parsed response structure: response.parsed.question -> MCQ4 object
-        mock_mcq = MCQ4(**mock_mcq4_question)
-        mock_mcq.question_text = "Corrected Text"  # Change something to verify
+        # Build a mock instructor client that returns a corrected question
+        mock_corrected_q = MCQ4(**mock_mcq4_question)
+        mock_corrected_q.question_text = "Corrected Text"
+        mock_result = AutoCorrectedQuestion(question=mock_corrected_q)
 
-        mock_response.parsed.question = mock_mcq
-        mock_gemini.aio.models.generate_content.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=mock_result)
 
-        with patch("api.v1.qgen.auto_correct.service.genai.Client", return_value=mock_gemini):
+        with patch("api.v1.qgen.auto_correct.service.get_async_client", return_value=mock_client):
             success = await AutoCorrectService.correct_question(
                 gen_question_data=mock_mcq4_question,
                 gen_question_id=mock_mcq4_question["id"],

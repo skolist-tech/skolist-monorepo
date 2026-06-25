@@ -89,171 +89,218 @@ def create_mock_fill_in_blank(question_text: str | None = None) -> FillInTheBlan
 
 
 # ============================================================================
-# MOCK GEMINI CLIENT (for integration tests)
+# MOCK LLM CLIENT (instructor + litellm, for integration tests)
 # ============================================================================
 
 
-class MockParsedResponse:
-    """Mock for Gemini API response with both .parsed and .text attributes."""
-
-    def __init__(self, parsed_obj: Any, text: str = ""):
-        self._parsed = parsed_obj
-        self._text = text
-
-    @property
-    def parsed(self):
-        return self._parsed
-
-    @property
-    def text(self):
-        return self._text
-
-
-class MockQuestionsResponse:
-    """Mock for questions response with .questions attribute."""
-
-    def __init__(self, questions: list):
-        self.questions = questions
-
-
-class MockGeminiModels:
-    """Mock for gemini_client.aio.models."""
-
-    async def generate_content(
-        self,
-        model: str,
-        contents: Any,
-        config: dict,
-    ) -> MockParsedResponse:
-        """Mock generate_content that returns appropriate responses based on schema."""
-        schema = config.get("response_schema")
-        schema_name = getattr(schema, "__name__", str(schema)) if schema else ""
-
-        # Convert contents to string for pattern matching
-        # Handle both string and list of Part objects
-        if isinstance(contents, list):
-            contents_str = " ".join(str(c) for c in contents).lower()
+def _messages_to_str(messages: list) -> str:
+    """Extract text content from messages for pattern matching."""
+    parts = []
+    for m in messages:
+        content = m.get("content", "")
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    parts.append(block.get("text", ""))
         else:
-            contents_str = str(contents).lower()
-
-        # Handle edit_svg endpoint (unstructured response - no schema, uses .text)
-        # This endpoint doesn't use response_schema and expects raw text response
-        if "response_schema" not in config and (
-            "svg" in contents_str or "edit" in contents_str or "circle" in contents_str
-        ):
-            mock_svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-    <circle cx="100" cy="100" r="75" fill="blue"/>
-    <text x="100" y="100" text-anchor="middle">r = 75</text>
-</svg>"""
-            return MockParsedResponse(None, text=mock_svg)
-
-        # Handle auto-correct endpoint (returns wrapper with .question)
-        if "AutoCorrected" in schema_name:
-            if "short_answer" in contents_str:
-
-                class QuestionWrapper:
-                    question = create_mock_short_answer("What is Newton's first law of motion?")
-
-                return MockParsedResponse(QuestionWrapper())
-            else:
-
-                class QuestionWrapper:
-                    question = create_mock_mcq4("What is the formula for kinetic energy?")
-
-                return MockParsedResponse(QuestionWrapper())
-
-        # Handle regenerate endpoints (returns wrapper with .question)
-        if "Regenerated" in schema_name:
-            if "short_answer" in contents_str:
-
-                class QuestionWrapper:
-                    question = create_mock_short_answer("Describe the principle of conservation of momentum.")
-
-                return MockParsedResponse(QuestionWrapper())
-            else:
-
-                class QuestionWrapper:
-                    question = create_mock_mcq4("Calculate the kinetic energy of a 5kg object moving at 10 m/s.")
-
-                return MockParsedResponse(QuestionWrapper())
-
-        # Handle get_feedback endpoint (returns FeedbackList with .feedbacks)
-        if "FeedbackList" in schema_name or "feedback" in contents_str.lower():
-            from api.v1.qgen.models import FeedbackItem, FeedbackList
-
-            feedback_list = FeedbackList(
-                feedbacks=[
-                    FeedbackItem(
-                        message="Consider adding more variety in question difficulty levels.",
-                        priority=7,
-                    ),
-                    FeedbackItem(message="Some questions could benefit from clearer wording.", priority=5),
-                ]
-            )
-            return MockParsedResponse(feedback_list)
-
-        # Handle question generation schemas (returns wrapper with .questions list)
-        if "mcq4" in contents_str:
-            questions = MockQuestionsResponse([create_mock_mcq4()])
-            return MockParsedResponse(questions)
-
-        if "true_false" in contents_str:
-            questions = MockQuestionsResponse([create_mock_true_false()])
-            return MockParsedResponse(questions)
-
-        if "fill_in_the_blank" in contents_str:
-            questions = MockQuestionsResponse([create_mock_fill_in_blank()])
-            return MockParsedResponse(questions)
-
-        if "short_answer" in contents_str:
-            questions = MockQuestionsResponse([create_mock_short_answer()])
-            return MockParsedResponse(questions)
-
-        # Default: return MCQ4 questions list
-        questions = MockQuestionsResponse([create_mock_mcq4()])
-        return MockParsedResponse(questions)
+            parts.append(str(content))
+    return " ".join(parts).lower()
 
 
-class MockAioNamespace:
-    """Mock for gemini_client.aio namespace."""
+def _pick_question(content_str: str):
+    """Pick an appropriate mock question based on prompt content."""
+    if "short_answer" in content_str or "long_answer" in content_str:
+        return create_mock_short_answer("Describe Newton's first law of motion.")
+    if "true_false" in content_str:
+        return create_mock_true_false()
+    if "fill_in_the_blank" in content_str:
+        return create_mock_fill_in_blank()
+    return create_mock_mcq4()
+
+
+def _build_questions_list_response(response_model, content_str: str):
+    """Build a mock list-of-questions response for generation schemas."""
+    from api.v1.qgen.generate_questions.models import (
+        FillInTheBlankWithConcepts,
+        IntegerAnswerWithConcepts,
+        MCQ4WithConcepts,
+        NumericalAnswerWithConcepts,
+        ShortAnswerWithConcepts,
+        TrueFalseWithConcepts,
+    )
+
+    name = response_model.__name__
+
+    if "TrueFalse" in name:
+        q = TrueFalseWithConcepts(
+            question_text="Kinetic energy depends on velocity squared.",
+            answer_text="True",
+            concepts=["Kinetic Energy"],
+        )
+    elif "FillInTheBlank" in name:
+        q = FillInTheBlankWithConcepts(
+            question_text="The formula for KE is KE = ½ * m * ___",
+            answer_text="v²",
+            concepts=["Kinetic Energy"],
+        )
+    elif "ShortAnswer" in name or "LongAnswer" in name:
+        q = ShortAnswerWithConcepts(
+            question_text="Explain Newton's first law of motion.",
+            answer_text="An object in motion stays in motion unless acted upon.",
+            concepts=["Newton's Laws"],
+        )
+    elif "Numerical" in name:
+        q = NumericalAnswerWithConcepts(
+            question_text="Calculate KE of a 2 kg object moving at 3 m/s.",
+            answer_text=9.0,
+            concepts=["Kinetic Energy"],
+        )
+    elif "Integer" in name:
+        q = IntegerAnswerWithConcepts(
+            question_text="How many laws did Newton formulate?",
+            answer_text=3,
+            concepts=["Newton's Laws"],
+        )
+    else:
+        # MCQ4, MSQ4, MatchTheFollowing — default to MCQ4
+        q = MCQ4WithConcepts(
+            question_text="What is the formula for kinetic energy?",
+            option1="KE = mv²",
+            option2="KE = ½mv²",
+            option3="KE = mgh",
+            option4="KE = Fd",
+            correct_mcq_option=2,
+            answer_text="KE = ½mv²",
+            concepts=["Kinetic Energy"],
+        )
+
+    return response_model(questions=[q])
+
+
+def _build_mock_response(response_model, messages: list):
+    """Return a validated instance of response_model populated with mock data."""
+    from api.v1.qgen.models import (
+        AutoCorrectedQuestion,
+        ExtractedQuestion,
+        ExtractedQuestionsList,
+        FeedbackItem,
+        FeedbackList,
+    )
+
+    content_str = _messages_to_str(messages)
+    name = getattr(response_model, "__name__", "")
+
+    if name == "AutoCorrectedQuestion":
+        return AutoCorrectedQuestion(question=_pick_question(content_str))
+
+    if name == "RegeneratedQuestion":
+        from api.v1.qgen.regenerate.service import RegeneratedQuestion
+        return RegeneratedQuestion(question=_pick_question(content_str))
+
+    if name == "FeedbackList":
+        return FeedbackList(
+            feedbacks=[
+                FeedbackItem(message="Consider adding more variety in difficulty levels.", priority=7),
+                FeedbackItem(message="Some questions could benefit from clearer wording.", priority=5),
+            ]
+        )
+
+    if name == "ExtractedQuestionsList":
+        return ExtractedQuestionsList(
+            questions=[
+                ExtractedQuestion(
+                    question_type="mcq4",
+                    question_text="What is the formula for kinetic energy?",
+                    option1="KE = mv²",
+                    option2="KE = ½mv²",
+                    option3="KE = mgh",
+                    option4="KE = Fd",
+                    correct_mcq_option=2,
+                    answer_text="KE = ½mv²",
+                )
+            ]
+        )
+
+    # Question generation schemas (MCQ4WithConceptsList, ShortAnswerWithConceptsList, …)
+    if "questions" in getattr(response_model, "model_fields", {}):
+        return _build_questions_list_response(response_model, content_str)
+
+    from unittest.mock import MagicMock
+    return MagicMock()
+
+
+class _MockUsage:
+    prompt_tokens = 100
+    completion_tokens = 50
+    total_tokens = 150
+
+
+class _MockCompletion:
+    usage = _MockUsage()
+
+
+class _MockInstructorCompletions:
+    async def create(self, model, messages, response_model, **kwargs):
+        return _build_mock_response(response_model, messages)
+
+    async def create_with_completion(self, model, messages, response_model, **kwargs):
+        result = _build_mock_response(response_model, messages)
+        return result, _MockCompletion()
+
+
+class _MockInstructorChat:
+    def __init__(self):
+        self.completions = _MockInstructorCompletions()
+
+
+class MockInstructorClient:
+    """Mock instructor.AsyncInstructor that returns provider-agnostic Pydantic instances."""
 
     def __init__(self):
-        self.models = MockGeminiModels()
+        self.chat = _MockInstructorChat()
 
 
-class MockGeminiClient:
-    """Mock Gemini client that mimics real client interface."""
-
-    def __init__(self, *args, **kwargs):
-        # Accept any arguments (like api_key) but ignore them
-        self.aio = MockAioNamespace()
+async def _mock_svg_acompletion(model, messages, **kwargs):
+    """Mock for litellm.acompletion used by edit_svg service."""
+    from unittest.mock import MagicMock
+    mock = MagicMock()
+    mock.choices = [MagicMock()]
+    mock.choices[0].message.content = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">'
+        '<circle cx="100" cy="100" r="75" fill="blue"/>'
+        '<text x="100" y="100" text-anchor="middle">r = 75</text>'
+        "</svg>"
+    )
+    return mock
 
 
 # ============================================================================
-# GEMINI MOCK FIXTURE (auto-applied unless --gemini-live)
+# LLM MOCK FIXTURE (auto-applied unless --gemini-live)
 # ============================================================================
 
 
 @pytest.fixture(autouse=True)
-def mock_gemini_client(use_live_gemini):
+def mock_llm_client(use_live_gemini):
     """
-    Automatically patch genai.Client for all integration tests unless --gemini-live is used.
+    Patch the LLM layer for all integration tests unless --gemini-live is used.
 
-    This patches at the module level where genai.Client is instantiated.
+    Patches a single entry point (api.v1.qgen.llm.get_async_client) so all
+    structured-output services get a mock instructor client, plus patches
+    litellm.acompletion in edit_svg which uses free-form text output.
     """
     if use_live_gemini:
-        # Use real Gemini API
         yield
     else:
-        # Patch genai.Client in all modules that use it
+        # Patch each service module's own reference — `from ..llm import get_async_client`
+        # creates a local copy per module, so we must patch where the name is USED, not defined.
         with (
-            patch("api.v1.qgen.generate_questions.routes.genai.Client", MockGeminiClient),
-            patch("api.v1.qgen.auto_correct.service.genai.Client", MockGeminiClient),
-            patch("api.v1.qgen.regenerate_question.genai.Client", MockGeminiClient),
-            patch("api.v1.qgen.regenerate_with_prompt.routes.genai.Client", MockGeminiClient),
-            patch("api.v1.qgen.get_feedback.genai.Client", MockGeminiClient),
-            patch("api.v1.qgen.edit_svg.service.genai.Client", MockGeminiClient),
-            patch("api.v1.bank.router.genai.Client", MockGeminiClient),
+            patch("api.v1.qgen.generate_questions.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.regenerate.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.auto_correct.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.extract_questions.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.regenerate_with_prompt.service.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.get_feedback.get_async_client", return_value=MockInstructorClient()),
+            patch("api.v1.qgen.edit_svg.service.litellm.acompletion", new=_mock_svg_acompletion),
         ):
             yield
 
@@ -323,9 +370,9 @@ def env(request) -> dict[str, str]:
         ("SUPABASE_SERVICE_KEY", supabase_service_key),
     ]
 
-    # GEMINI_API_KEY only required with --gemini-live
-    if use_live_gemini:
-        required_vars.append(("GEMINI_API_KEY", gemini_api_key))
+    # LLM API key only required with --gemini-live (provider determined by QGEN_MODEL env var)
+    if use_live_gemini and not gemini_api_key:
+        pytest.skip("GEMINI_API_KEY not set — required for --gemini-live with Gemini models")
 
     missing = [name for name, value in required_vars if not value]
     if missing:

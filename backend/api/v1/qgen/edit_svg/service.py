@@ -1,9 +1,9 @@
 import logging
-import os
 
-from google import genai
-from google.genai import types
+import litellm
 from supabase import AsyncClient
+
+from ..llm import get_model
 
 logger = logging.getLogger(__name__)
 
@@ -71,26 +71,22 @@ class EditSVGService:
         if not current_svg:
             raise SVGEditError("Image does not have an SVG string to edit")
 
-        # 2. Generate prompt and call Gemini
+        # 2. Generate prompt and call LLM
         prompt = edit_svg_prompt(current_svg, instruction)
-
-        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
         max_retries = 3
         last_exception = None
 
         for attempt in range(max_retries):
             try:
-                response = await gemini_client.aio.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=[types.Part.from_text(text=prompt)],
-                    config={
-                        "temperature": 0.2,  # Lower temperature for more precise edits
-                    },
+                response = await litellm.acompletion(
+                    model=get_model(),
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.2,
                 )
 
                 # Extract SVG from response
-                new_svg = response.text.strip()
+                new_svg = response.choices[0].message.content.strip()
 
                 # Clean up response if it has markdown code blocks
                 if new_svg.startswith("```"):

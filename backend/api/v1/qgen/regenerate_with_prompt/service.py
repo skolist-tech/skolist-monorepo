@@ -1,9 +1,9 @@
 import logging
 
 from fastapi import UploadFile
-from google import genai
-from google.genai import types
 from supabase import AsyncClient
+
+from ..llm import get_async_client, get_model, to_image_block, to_text_block
 
 from api.v1.qgen.models import AllQuestions
 from api.v1.qgen.prompts import regenerate_question_with_prompt_prompt
@@ -28,17 +28,16 @@ def _log_prefix(retry_idx: int = None) -> str:
     return ""
 
 
-async def process_uploaded_files(files: list[UploadFile], gen_question_id: str = None) -> list[types.Part]:
+async def process_uploaded_files(files: list[UploadFile], gen_question_id: str = None) -> list[dict]:
     """
-    Process uploaded files and convert them to Gemini Part objects.
+    Process uploaded files and return provider-agnostic content blocks.
     """
-    parts = []
+    blocks = []
     for file in files:
         if file.filename and file.size and file.size > 0:
             content = await file.read()
             content_type = file.content_type or "application/octet-stream"
 
-            # Log image files if logging is enabled
             if content_type.startswith("image/") and gen_question_id:
                 try:
                     await save_image_for_debug(content, gen_question_id, content_type)
@@ -46,94 +45,64 @@ async def process_uploaded_files(files: list[UploadFile], gen_question_id: str =
                     logger.warning(f"Failed to log uploaded image {file.filename}: {e}")
 
             if content_type.startswith("image/") or content_type == "application/pdf":
-                parts.append(types.Part.from_bytes(data=content, mime_type=content_type))
+                blocks.append(to_image_block(content, content_type))
             elif content_type.startswith("text/") or content_type in [
                 "application/json",
                 "application/xml",
             ]:
                 try:
                     text_content = content.decode("utf-8")
-                    parts.append(types.Part.from_text(text=f"File: {file.filename}\n\n{text_content}"))
+                    blocks.append(to_text_block(f"File: {file.filename}\n\n{text_content}"))
                 except UnicodeDecodeError:
-                    parts.append(types.Part.from_bytes(data=content, mime_type=content_type))
+                    blocks.append(to_image_block(content, content_type))
             else:
-                parts.append(types.Part.from_bytes(data=content, mime_type=content_type))
+                blocks.append(to_image_block(content, content_type))
 
             await file.seek(0)
-    return parts
+    return blocks
 
 
 class RegenerateWithPromptService:
     @staticmethod
     async def process_question(
-        gemini_client: genai.Client,
         gen_question_data: dict,
         custom_prompt: str | None = None,
-        file_parts: list[types.Part] | None = None,
+        content_blocks: list[dict] | None = None,
         retry_idx: int = None,
-    ) -> dict:
+    ) -> "AutoCorrectedQuestion":
         prefix = _log_prefix(retry_idx)
         logger.debug(f"{prefix}Processing regenerate with prompt for question")
+
+        from api.v1.qgen.models import AutoCorrectedQuestion
 
         prompt_text = regenerate_question_with_prompt_prompt(
             gen_question=gen_question_data,
             custom_prompt=custom_prompt,
         )
 
-        contents = []
-        if file_parts:
-            contents.extend(file_parts)
-        contents.append(types.Part.from_text(text=prompt_text))
+        msg_blocks = list(content_blocks or [])
+        msg_blocks.append(to_text_block(prompt_text))
 
-        # We need to define schema for regeneration result
-        # Assuming AllQuestions structure wrapper similar to auto-correct
-        # But wait, original code used RegeneratedQuestionWithPrompt local model.
-        # We should create/use a shared model or just define schema inline if simple wrapper.
-        # Let's check models.py again.
-        # Ideally we should use the same pattern as AutoCorrectedQuestion.
-        # I will reuse AutoCorrectedQuestion if it fits (question: AllQuestions)
-        # or create a NEW one in models.py if needed.
-        # RegeneratedQuestionWithPrompt had `question: AllQuestions`.
-        # Exact same structure.
-        # So I will reuse AutoCorrectedQuestion or better,
-        # alias/create generic wrapper.
-        # For now, to be consistent with previous code, let's use the same
-        # wrapper structure.
-        # I will assume we can reuse AutoCorrectedQuestion or I'll just use
-        # the same Schema inline.
-        # Actually, let's just use AutoCorrectedQuestion for now as it is
-        # generic "question wrapper", OR add RegeneratedQuestion to models.py.
-        # To be clean, I will use AutoCorrectedQuestion but maybe rename it
-        # later to "QuestionResponse" to be generic.
-        # For this refactor, I will reuse models.AutoCorrectedQuestion as the
-        # schema structure is identical.
-
-        from api.v1.qgen.models import AutoCorrectedQuestion
-
-        response = await gemini_client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": AutoCorrectedQuestion,
-            },
+        client = get_async_client()
+        return await client.chat.completions.create(
+            model=get_model(),
+            messages=[{"role": "user", "content": msg_blocks}],
+            response_model=AutoCorrectedQuestion,
         )
-        return response
 
     @staticmethod
     async def process_and_validate(
-        gemini_client: genai.Client,
         gen_question_data: dict,
         custom_prompt: str | None = None,
-        file_parts: list[types.Part] | None = None,
+        content_blocks: list[dict] | None = None,
         retry_idx: int = None,
     ) -> AllQuestions:
-        response = await RegenerateWithPromptService.process_question(
-            gemini_client, gen_question_data, custom_prompt, file_parts, retry_idx
+        result = await RegenerateWithPromptService.process_question(
+            gen_question_data, custom_prompt, content_blocks, retry_idx
         )
 
         try:
-            regenerated_question = response.parsed.question
+            regenerated_question = result.question
         except Exception as parse_error:
             raise QuestionValidationError(f"Failed to parse response: {parse_error}") from parse_error
 
@@ -148,7 +117,6 @@ class RegenerateWithPromptService:
         gen_question_id: str,
         supabase_client: AsyncClient,
         browser_service,
-        gemini_client: genai.Client,
         custom_prompt: str | None = None,
         files: list[UploadFile] | None = None,
         is_camera_capture: bool = False,
@@ -167,9 +135,7 @@ class RegenerateWithPromptService:
                 image_bytes = await generate_screenshot(gen_question_data, browser_service)
                 await save_image_for_debug(image_bytes, gen_question_id, "image/png")
 
-                # Create image part
-                screenshot_part = types.Part.from_bytes(data=image_bytes, mime_type="image/png")
-                all_parts.append(screenshot_part)
+                all_parts.append(to_image_block(image_bytes, "image/png"))
             except Exception as e:
                 logger.warning(f"Failed to generate screenshot: {e}")
         else:
@@ -186,7 +152,7 @@ class RegenerateWithPromptService:
         for attempt in range(max_retries):
             try:
                 regenerated_question = await RegenerateWithPromptService.process_and_validate(
-                    gemini_client, gen_question_data, custom_prompt, all_parts, attempt + 1
+                    gen_question_data, custom_prompt, all_parts, attempt + 1
                 )
 
                 # 4. Update DB

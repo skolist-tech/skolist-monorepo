@@ -23,6 +23,8 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# LiteLLM model string for qgen — e.g. "gemini/gemini-2.5-flash", "gpt-4o", "claude-sonnet-4-6"
+QGEN_MODEL = os.getenv("QGEN_MODEL", "gemini/gemini-2.5-flash")
 SMS_HOOK_SECRET = os.getenv("SMS_HOOK_SECRET")
 # MSG91_AUTH_KEY = os.getenv("MSG91_AUTH_KEY")
 # MSG91_TEMPLATE_ID = os.getenv("MSG91_TEMPLATE_ID")
@@ -85,8 +87,12 @@ if not DEPLOYMENT_ENV or DEPLOYMENT_ENV not in {"PRODUCTION", "STAGE", "LOCAL"}:
     DEPLOYMENT_ENV = "LOCAL"
 
 if PING == "TRUE":
-    check_gemini_api_key(GEMINI_API_KEY)
-    check_openai_api_key(OPENAI_API_KEY)
+    if GEMINI_API_KEY:
+        logger.info("Pinging Gemini API Key")
+        check_gemini_api_key(GEMINI_API_KEY)
+    if OPENAI_API_KEY:
+        logger.info("Pinging OpenAI API Key")
+        check_openai_api_key(OPENAI_API_KEY)
     check_supabase_connection(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     check_supabase_service_key(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 else:

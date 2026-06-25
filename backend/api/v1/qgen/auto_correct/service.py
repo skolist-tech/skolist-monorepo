@@ -1,9 +1,8 @@
 import logging
-import os
 
-from google import genai
-from google.genai import types
 from supabase import AsyncClient
+
+from ..llm import get_async_client, get_model, to_image_block, to_text_block
 
 from api.v1.qgen.models import AllQuestions, AutoCorrectedQuestion
 from api.v1.qgen.prompts import auto_correct_questions_prompt
@@ -31,58 +30,44 @@ def _log_prefix(retry_idx: int = None) -> str:
 class AutoCorrectService:
     @staticmethod
     async def process_question(
-        gemini_client: genai.Client,
         gen_question_data: dict,
-        image_part: types.Part | None = None,
-        retry_idx: int = None,
-    ) -> dict:
+        image_bytes: bytes | None = None,
+        retry_idx: int | None = None,
+    ) -> AutoCorrectedQuestion:
         prompt = auto_correct_questions_prompt(gen_question_data)
-        contents = []
-        if image_part:
-            contents.append(image_part)
-        contents.append(types.Part.from_text(text=prompt))
+        content_blocks = []
+        if image_bytes:
+            content_blocks.append(to_image_block(image_bytes, "image/png"))
+        content_blocks.append(to_text_block(prompt))
 
-        response = await gemini_client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config={
-                "response_mime_type": "application/json",
-                # Note: We need to define schema or import it.
-                # For simplicity, we are using the one from models if available or simple dict
-                # The prompt implies a structure.
-                "response_schema": {
-                    "type": "OBJECT",
-                    "properties": {"question": {"type": "OBJECT"}},
-                },
-            },
+        client = get_async_client()
+        return await client.chat.completions.create(
+            model=get_model(),
+            messages=[{"role": "user", "content": content_blocks}],
+            response_model=AutoCorrectedQuestion,
         )
-        return response
 
     @staticmethod
     async def process_and_validate(
-        gemini_client: genai.Client,
         gen_question_data: dict,
-        image_part: types.Part | None = None,
-        retry_idx: int = None,
+        image_bytes: bytes | None = None,
+        retry_idx: int | None = None,
     ) -> AllQuestions:
-        # Refined call with proper schema
         prompt = auto_correct_questions_prompt(gen_question_data)
-        contents = []
-        if image_part:
-            contents.append(image_part)
-        contents.append(types.Part.from_text(text=prompt))
+        content_blocks = []
+        if image_bytes:
+            content_blocks.append(to_image_block(image_bytes, "image/png"))
+        content_blocks.append(to_text_block(prompt))
 
-        response = await gemini_client.aio.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config={
-                "response_mime_type": "application/json",
-                "response_schema": AutoCorrectedQuestion,
-            },
+        client = get_async_client()
+        result = await client.chat.completions.create(
+            model=get_model(),
+            messages=[{"role": "user", "content": content_blocks}],
+            response_model=AutoCorrectedQuestion,
         )
 
         try:
-            corrected_question = response.parsed.question
+            corrected_question = result.question
         except Exception as e:
             raise QuestionValidationError(f"Failed to parse response: {e}") from e
 
@@ -105,17 +90,14 @@ class AutoCorrectService:
         # Log/Save image
         await save_image_for_debug(image_bytes, gen_question_id, "image/png")
 
-        image_part = types.Part.from_bytes(data=image_bytes, mime_type="image/png")
-
-        # 2. Call Gemini with Retry
-        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        # 2. Call LLM with Retry
         max_retries = 5
 
         last_exception = None
         for attempt in range(max_retries):
             try:
                 corrected_question = await AutoCorrectService.process_and_validate(
-                    gemini_client, gen_question_data, image_part, attempt + 1
+                    gen_question_data, image_bytes, attempt + 1
                 )
 
                 # 3. Update DB

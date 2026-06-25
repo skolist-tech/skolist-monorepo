@@ -5,12 +5,12 @@ Provides AI-generated feedback on question drafts.
 """
 
 import logging
-import os
 
 from fastapi import Depends, HTTPException
-from google import genai
 from pydantic import BaseModel
 from supabase import AsyncClient
+
+from .llm import get_async_client, get_model
 
 from api.v1.auth import get_async_supabase_client
 
@@ -129,9 +129,9 @@ async def get_feedback(
         )
         raise HTTPException(status_code=500, detail="Internal Server Error") from e
 
-    # Generate AI feedback using Gemini
+    # Generate AI feedback
     try:
-        gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        llm_client = get_async_client()
 
         # Prepare analysis data
         question_types = {}
@@ -202,19 +202,17 @@ Each feedback should focus on:
 
 Prioritize feedback items from 1-10 (10 being most critical).
 """
+        feedback_list = None
         for i in range(3):
             try:
                 logger.debug(
                     "Generating AI feedback",
                     extra={"draft_id": request.draft_id, "retry": i + 1},
                 )
-                response = await gemini_client.aio.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt,
-                    config={
-                        "response_mime_type": "application/json",
-                        "response_schema": FeedbackList,
-                    },
+                feedback_list = await llm_client.chat.completions.create(
+                    model=get_model(),
+                    messages=[{"role": "user", "content": prompt}],
+                    response_model=FeedbackList,
                 )
                 break
             except Exception as e:
@@ -232,8 +230,6 @@ Prioritize feedback items from 1-10 (10 being most critical).
                         status_code=500,
                         detail="Failed to generate feedback after multiple attempts",
                     ) from e
-
-        feedback_list = response.parsed
         logger.info(
             "Feedback generated successfully",
             extra={

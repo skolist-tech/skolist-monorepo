@@ -549,7 +549,6 @@ class TestBatchProcessingContext:
 
     def test_creates_context_with_required_fields(
         self,
-        gemini_client: genai.Client,
         mock_concepts_dict: dict[str, str],
         mock_concepts_name_to_id: dict[str, str],
         mock_old_questions: list[dict],
@@ -559,7 +558,6 @@ class TestBatchProcessingContext:
     ):
         """Test that BatchProcessingContext is created correctly."""
         ctx = BatchProcessingContext(
-            gemini_client=gemini_client,
             concepts_dict=mock_concepts_dict,
             concepts_name_to_id=mock_concepts_name_to_id,
             old_questions=mock_old_questions,
@@ -568,7 +566,6 @@ class TestBatchProcessingContext:
             supabase_client=mock_supabase_client,
         )
 
-        assert ctx.gemini_client == gemini_client
         assert ctx.concepts_dict == mock_concepts_dict
         assert ctx.concepts_name_to_id == mock_concepts_name_to_id
         assert ctx.old_questions == mock_old_questions
@@ -577,7 +574,6 @@ class TestBatchProcessingContext:
 
     def test_creates_context_with_custom_marks(
         self,
-        gemini_client: genai.Client,
         mock_concepts_dict: dict[str, str],
         mock_concepts_name_to_id: dict[str, str],
         mock_old_questions: list[dict],
@@ -587,7 +583,6 @@ class TestBatchProcessingContext:
     ):
         """Test that BatchProcessingContext accepts custom marks."""
         ctx = BatchProcessingContext(
-            gemini_client=gemini_client,
             concepts_dict=mock_concepts_dict,
             concepts_name_to_id=mock_concepts_name_to_id,
             old_questions=mock_old_questions,
@@ -622,7 +617,6 @@ class TestProcessBatchGeneration:
     @pytest.fixture
     def batch_ctx(
         self,
-        gemini_client: genai.Client,
         mock_concepts_dict: dict[str, str],
         mock_concepts_name_to_id: dict[str, str],
         mock_old_questions: list[dict],
@@ -632,7 +626,6 @@ class TestProcessBatchGeneration:
     ) -> BatchProcessingContext:
         """Create a BatchProcessingContext for testing."""
         return BatchProcessingContext(
-            gemini_client=gemini_client,
             concepts_dict=mock_concepts_dict,
             concepts_name_to_id=mock_concepts_name_to_id,
             old_questions=mock_old_questions,
@@ -656,7 +649,7 @@ class TestProcessBatchGeneration:
         )
 
         assert isinstance(result, dict)
-        assert "response" in result
+        assert "result" in result
         assert "batch" in result
 
 
@@ -682,7 +675,6 @@ class TestProcessBatchGenerationAndValidate:
     @pytest.fixture
     def batch_ctx(
         self,
-        gemini_client: genai.Client,
         mock_concepts_dict: dict[str, str],
         mock_concepts_name_to_id: dict[str, str],
         mock_old_questions: list[dict],
@@ -692,7 +684,6 @@ class TestProcessBatchGenerationAndValidate:
     ) -> BatchProcessingContext:
         """Create a BatchProcessingContext for testing."""
         return BatchProcessingContext(
-            gemini_client=gemini_client,
             concepts_dict=mock_concepts_dict,
             concepts_name_to_id=mock_concepts_name_to_id,
             old_questions=mock_old_questions,
@@ -817,7 +808,6 @@ class TestTryRetryBatch:
     @pytest.fixture
     def batch_ctx(
         self,
-        gemini_client: genai.Client,
         mock_concepts_dict: dict[str, str],
         mock_concepts_name_to_id: dict[str, str],
         mock_old_questions: list[dict],
@@ -827,7 +817,6 @@ class TestTryRetryBatch:
     ) -> BatchProcessingContext:
         """Create a BatchProcessingContext for testing."""
         return BatchProcessingContext(
-            gemini_client=gemini_client,
             concepts_dict=mock_concepts_dict,
             concepts_name_to_id=mock_concepts_name_to_id,
             old_questions=mock_old_questions,
