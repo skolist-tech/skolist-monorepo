@@ -54,24 +54,57 @@ interface QuestionCardActionsProps {
   cameraBtnRef: React.RefObject<HTMLButtonElement>;
 }
 
-export function QuestionCardActions({
+// DEBUG TEST 6: extracted to module scope — inline definition remounted all buttons every render
+interface ActionButtonProps {
+  actionId: ActionId;
+  mode: "icon" | "menu";
+  question: GeneratedQuestionWithConcepts;
+  onRemoveFromDraft?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onRegenerate?: (prompt: string, files: File[]) => void;
+  isAutoCorrecting: boolean;
+  isUploading: boolean;
+  isRegenerating: boolean;
+  isChatPromptAnimating: boolean;
+  isCameraCapturing: boolean;
+  slideDirection: "left" | "right" | null;
+  canUndo: boolean;
+  canRedo: boolean;
+  isUndoing: boolean;
+  isRedoing: boolean;
+  onAutoCorrect: () => void;
+  onAttachClick: () => void;
+  onRegenerateClick: () => void;
+  onRegenerateWithPromptClick: (e: React.MouseEvent) => void;
+  onCameraClick: () => void;
+  onEditClick: () => void;
+  onMoveToDraft: () => void;
+  onRemoveFromDraftClick: () => void;
+  onDeleteClick: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  autoCorrectBtnRef: React.RefObject<HTMLButtonElement>;
+  regenerateBtnRef: React.RefObject<HTMLButtonElement>;
+  cameraBtnRef: React.RefObject<HTMLButtonElement>;
+}
+
+function ActionButton({
+  actionId,
+  mode,
   question,
   onRemoveFromDraft,
   onDelete,
   onRegenerate,
-
   isAutoCorrecting,
   isUploading,
   isRegenerating,
   isChatPromptAnimating,
   isCameraCapturing,
   slideDirection,
-
   canUndo,
   canRedo,
   isUndoing,
   isRedoing,
-
   onAutoCorrect,
   onAttachClick,
   onRegenerateClick,
@@ -83,107 +116,162 @@ export function QuestionCardActions({
   onDeleteClick,
   onUndo,
   onRedo,
-
   autoCorrectBtnRef,
   regenerateBtnRef,
   cameraBtnRef,
-}: QuestionCardActionsProps) {
-  const ActionButton = ({
-    actionId,
-    mode,
-  }: {
-    actionId: ActionId;
-    mode: "icon" | "menu";
-  }) => {
-    switch (actionId) {
-      case "undo":
-        return (
-          <UndoButton
-            mode={mode}
-            canUndo={canUndo}
-            isUndoing={isUndoing}
-            onUndo={onUndo}
-          />
-        );
-      case "redo":
-        return (
-          <RedoButton
-            mode={mode}
-            canRedo={canRedo}
-            isRedoing={isRedoing}
-            onRedo={onRedo}
-          />
-        );
-      case "auto_correct":
-        return (
-          <AutoCorrectButton
-            mode={mode}
-            isAutoCorrecting={isAutoCorrecting}
-            onAutoCorrect={onAutoCorrect}
-            btnRef={autoCorrectBtnRef}
-          />
-        );
-      case "attachment":
-        return (
-          <AttachmentButton
-            mode={mode}
-            isUploading={isUploading}
-            onAttachClick={onAttachClick}
-          />
-        );
-      case "regenerate":
-        return (
-          <RegenerateButton
-            mode={mode}
-            isRegenerating={isRegenerating}
-            onRegenerateClick={onRegenerateClick}
-            btnRef={regenerateBtnRef}
-          />
-        );
-      case "regenerate_with_prompt":
-        return (
-          <RegenerateWithPromptButton
-            mode={mode}
-            isChatPromptAnimating={isChatPromptAnimating}
-            onRegenerateWithPromptClick={onRegenerateWithPromptClick}
-            hasOnRegenerate={!!onRegenerate}
-          />
-        );
-      case "camera_capture":
-        return (
-          <CameraCaptureButton
-            mode={mode}
-            isChatPromptAnimating={isChatPromptAnimating}
-            isCameraCapturing={isCameraCapturing}
-            onCameraClick={onCameraClick}
-            hasOnRegenerate={!!onRegenerate}
-            btnRef={cameraBtnRef}
-          />
-        );
-      case "edit":
-        return <EditButton mode={mode} onEditClick={onEditClick} />;
-      case "move":
-        return (
-          <MoveButton
-            mode={mode}
-            isInDraft={question.is_in_draft}
-            hasOnRemoveFromDraft={!!onRemoveFromDraft}
-            slideDirection={slideDirection}
-            onMoveToDraft={onMoveToDraft}
-            onRemoveFromDraftClick={onRemoveFromDraftClick}
-          />
-        );
-      case "delete":
-        return (
-          <DeleteButton
-            mode={mode}
-            hasOnDelete={!!onDelete}
-            onDeleteClick={onDeleteClick}
-          />
-        );
-      default:
-        return null;
-    }
+}: ActionButtonProps) {
+  switch (actionId) {
+    case "undo":
+      return (
+        <UndoButton
+          mode={mode}
+          canUndo={canUndo}
+          isUndoing={isUndoing}
+          onUndo={onUndo}
+        />
+      );
+    case "redo":
+      return (
+        <RedoButton
+          mode={mode}
+          canRedo={canRedo}
+          isRedoing={isRedoing}
+          onRedo={onRedo}
+        />
+      );
+    case "auto_correct":
+      return (
+        <AutoCorrectButton
+          mode={mode}
+          isAutoCorrecting={isAutoCorrecting}
+          onAutoCorrect={onAutoCorrect}
+          btnRef={autoCorrectBtnRef}
+        />
+      );
+    case "attachment":
+      return (
+        <AttachmentButton
+          mode={mode}
+          isUploading={isUploading}
+          onAttachClick={onAttachClick}
+        />
+      );
+    case "regenerate":
+      return (
+        <RegenerateButton
+          mode={mode}
+          isRegenerating={isRegenerating}
+          onRegenerateClick={onRegenerateClick}
+          btnRef={regenerateBtnRef}
+        />
+      );
+    case "regenerate_with_prompt":
+      return (
+        <RegenerateWithPromptButton
+          mode={mode}
+          isChatPromptAnimating={isChatPromptAnimating}
+          onRegenerateWithPromptClick={onRegenerateWithPromptClick}
+          hasOnRegenerate={!!onRegenerate}
+        />
+      );
+    case "camera_capture":
+      return (
+        <CameraCaptureButton
+          mode={mode}
+          isChatPromptAnimating={isChatPromptAnimating}
+          isCameraCapturing={isCameraCapturing}
+          onCameraClick={onCameraClick}
+          hasOnRegenerate={!!onRegenerate}
+          btnRef={cameraBtnRef}
+        />
+      );
+    case "edit":
+      return <EditButton mode={mode} onEditClick={onEditClick} />;
+    case "move":
+      return (
+        <MoveButton
+          mode={mode}
+          isInDraft={question.is_in_draft}
+          hasOnRemoveFromDraft={!!onRemoveFromDraft}
+          slideDirection={slideDirection}
+          onMoveToDraft={onMoveToDraft}
+          onRemoveFromDraftClick={onRemoveFromDraftClick}
+        />
+      );
+    case "delete":
+      return (
+        <DeleteButton
+          mode={mode}
+          hasOnDelete={!!onDelete}
+          onDeleteClick={onDeleteClick}
+        />
+      );
+    default:
+      return null;
+  }
+}
+
+export function QuestionCardActions(props: QuestionCardActionsProps) {
+  const {
+    question,
+    onRemoveFromDraft,
+    onDelete,
+    onRegenerate,
+    isAutoCorrecting,
+    isUploading,
+    isRegenerating,
+    isChatPromptAnimating,
+    isCameraCapturing,
+    slideDirection,
+    canUndo,
+    canRedo,
+    isUndoing,
+    isRedoing,
+    onAutoCorrect,
+    onAttachClick,
+    onRegenerateClick,
+    onRegenerateWithPromptClick,
+    onCameraClick,
+    onEditClick,
+    onMoveToDraft,
+    onRemoveFromDraftClick,
+    onDeleteClick,
+    onUndo,
+    onRedo,
+    autoCorrectBtnRef,
+    regenerateBtnRef,
+    cameraBtnRef,
+  } = props;
+
+  const actionButtonProps: Omit<ActionButtonProps, "actionId" | "mode"> = {
+    question,
+    onRemoveFromDraft,
+    onDelete,
+    onRegenerate,
+    isAutoCorrecting,
+    isUploading,
+    isRegenerating,
+    isChatPromptAnimating,
+    isCameraCapturing,
+    slideDirection,
+    canUndo,
+    canRedo,
+    isUndoing,
+    isRedoing,
+    onAutoCorrect,
+    onAttachClick,
+    onRegenerateClick,
+    onRegenerateWithPromptClick,
+    onCameraClick,
+    onEditClick,
+    onMoveToDraft,
+    onRemoveFromDraftClick,
+    onDeleteClick,
+    onUndo,
+    onRedo,
+    autoCorrectBtnRef,
+    regenerateBtnRef,
+    cameraBtnRef,
   };
 
   const desktopActions = [...CARD_ACTIONS_CONFIG]
@@ -205,7 +293,12 @@ export function QuestionCardActions({
         {/* DESKTOP VIEW */}
         <div className="hidden items-center md:flex">
           {desktopActions.map((action) => (
-            <ActionButton key={action.id} actionId={action.id} mode="icon" />
+            <ActionButton
+              key={action.id}
+              actionId={action.id}
+              mode="icon"
+              {...actionButtonProps}
+            />
           ))}
         </div>
 
@@ -213,7 +306,12 @@ export function QuestionCardActions({
         <div className="flex items-center md:hidden">
           {/* Mobile Card Actions */}
           {mobileCardActions.map((action) => (
-            <ActionButton key={action.id} actionId={action.id} mode="icon" />
+            <ActionButton
+              key={action.id}
+              actionId={action.id}
+              mode="icon"
+              {...actionButtonProps}
+            />
           ))}
 
           {/* Mobile Menu Actions */}
@@ -235,6 +333,7 @@ export function QuestionCardActions({
                       key={action.id}
                       actionId={action.id}
                       mode="menu"
+                      {...actionButtonProps}
                     />
                   ))}
                 </div>

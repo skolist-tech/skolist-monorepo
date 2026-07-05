@@ -5,66 +5,101 @@ export function useLayoutScale(
   mobileTargetWidth = 600,
   breakpoint = 1024
 ) {
-  // Indicates whether layout should behave as desktop
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth > breakpoint);
-  // Store initial height to prevent virtual keyboard from affecting layout
+  const [isDesktop, setIsDesktop] = useState(
+    () => window.innerWidth > breakpoint
+  );
+
   const stableHeightRef = useRef<number | null>(null);
   const lastOrientationRef = useRef<"portrait" | "landscape">(
     window.innerWidth > window.innerHeight ? "landscape" : "portrait"
   );
 
-  useLayoutEffect(() => {
-    let frameId: number;
+  // Prevent unnecessary DOM updates
+  const lastValuesRef = useRef({
+    scale: -1,
+    width: -1,
+    height: -1,
+    isDesktop: window.innerWidth > breakpoint,
+  });
 
-    // Calculates scale and updates CSS variables
+  useLayoutEffect(() => {
+    let frameId = 0;
+
     const updateScale = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
+
       const currentOrientation = width > height ? "landscape" : "portrait";
 
-      const isDesktopWidth = width > breakpoint;
-      const targetWidth = isDesktopWidth
-        ? desktopTargetWidth
-        : mobileTargetWidth;
+      const desktop = width > breakpoint;
+      const targetWidth = desktop ? desktopTargetWidth : mobileTargetWidth;
+
       const scale = width / targetWidth;
 
-      // On mobile, lock the height to prevent virtual keyboard from affecting layout
-      // Only update height on initial load or orientation change
-      if (!isDesktopWidth) {
+      // Stable height for mobile keyboard
+      if (!desktop) {
         if (
           stableHeightRef.current === null ||
           currentOrientation !== lastOrientationRef.current
         ) {
-          // Use the maximum of current height and stored height to get the full viewport
-          // On initial load or orientation change, capture the full height
           stableHeightRef.current = height;
           lastOrientationRef.current = currentOrientation;
         }
       } else {
-        // On desktop, always use current height
         stableHeightRef.current = height;
       }
 
       const stableHeight = stableHeightRef.current ?? height;
 
+      // Skip if nothing changed
+      const last = lastValuesRef.current;
+
+      if (
+        last.scale === scale &&
+        last.width === targetWidth &&
+        last.height === stableHeight &&
+        last.isDesktop === desktop
+      ) {
+        return;
+      }
+
+      lastValuesRef.current = {
+        scale,
+        width: targetWidth,
+        height: stableHeight,
+        isDesktop: desktop,
+      };
+
+      cancelAnimationFrame(frameId);
+
       frameId = requestAnimationFrame(() => {
-        setIsDesktop(isDesktopWidth);
+        setIsDesktop((prev) => (prev === desktop ? prev : desktop));
+
         const root = document.documentElement;
+
         root.style.setProperty("--app-scale", scale.toString());
         root.style.setProperty("--app-width", `${targetWidth}px`);
         root.style.setProperty("--app-height", `${stableHeight / scale}px`);
       });
     };
 
-    // Observes size changes and recalculates scale
-    const observer = new ResizeObserver(updateScale);
-    observer.observe(document.body);
+    updateScale();
 
-    updateScale(); // Initial calculation
+    // Desktop resize
+    window.addEventListener("resize", updateScale, { passive: true });
+
+    // Mobile keyboard / viewport resize
+    window.visualViewport?.addEventListener("resize", updateScale);
+
+    // Orientation change
+    window.addEventListener("orientationchange", updateScale);
 
     return () => {
-      observer.disconnect();
       cancelAnimationFrame(frameId);
+
+      window.removeEventListener("resize", updateScale);
+      window.visualViewport?.removeEventListener("resize", updateScale);
+      window.removeEventListener("orientationchange", updateScale);
     };
   }, [desktopTargetWidth, mobileTargetWidth, breakpoint]);
 
