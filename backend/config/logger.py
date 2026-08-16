@@ -117,8 +117,8 @@ class ColoredConsoleFormatter(logging.Formatter):
         # Format timestamp
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Build base message
-        base_msg = f"{record.levelname}: {timestamp} | {record.name} | {record.getMessage()}"
+        # Build base message (module name + line number)
+        base_msg = f"{record.levelname}: {timestamp} | {record.name}:{record.lineno} | {record.getMessage()}"
 
         # Append extra fields if present (excluding standard LogRecord attributes)
         standard_attrs = {
