@@ -7,10 +7,13 @@ import functools
 import logging
 import time
 
+import litellm
 import requests
 from google import genai
 from openai import OpenAI
 from supabase import create_client
+
+from api.v1.qgen.llm import get_model
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +170,37 @@ def check_supabase_service_key(supabase_url, service_key) -> bool:
             "Supabase service key check failed",
             extra={
                 "status": "failure",
+                "error": str(e),
+            },
+        )
+        raise
+
+@with_retries(retries=5)
+def check_qgen_model() -> bool:
+    """To check if QGEN_MODEL works"""
+    model = get_model()
+    try:
+        response = litellm.completion(
+            model=model,
+            messages=[{"role": "user", "content": "Hello, how are you?"}],
+        )
+        preview = response.choices[0].message.content if response.choices else None
+        logger.info(
+            "QGEN model check passed",
+            extra={
+                "status": "success",
+                "model": model,
+                "response_preview": preview[:10] if preview else None,
+            },
+        )
+        return True
+
+    except Exception as e:
+        logger.error(
+            "QGEN model check failed",
+            extra={
+                "status": "failure",
+                "model": model,
                 "error": str(e),
             },
         )

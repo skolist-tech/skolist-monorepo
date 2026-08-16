@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from .pings import (
     check_gemini_api_key,
     check_openai_api_key,
+    check_qgen_model,
     check_supabase_connection,
     check_supabase_service_key,
 )
@@ -93,6 +94,8 @@ if PING == "TRUE":
     if OPENAI_API_KEY:
         logger.info("Pinging OpenAI API Key")
         check_openai_api_key(OPENAI_API_KEY)
+    logger.info("Pinging QGEN model")
+    check_qgen_model()
     check_supabase_connection(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     check_supabase_service_key(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 else:
