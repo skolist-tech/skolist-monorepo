@@ -13,8 +13,6 @@ from google import genai
 from openai import OpenAI
 from supabase import create_client
 
-from api.v1.qgen.llm import get_model
-
 logger = logging.getLogger(__name__)
 
 
@@ -176,12 +174,11 @@ def check_supabase_service_key(supabase_url, service_key) -> bool:
         raise
 
 @with_retries(retries=5)
-def check_qgen_model() -> bool:
+def check_qgen_model(qgen_model: str) -> bool:
     """To check if QGEN_MODEL works"""
-    model = get_model()
     try:
         response = litellm.completion(
-            model=model,
+            model=qgen_model,
             messages=[{"role": "user", "content": "Hello, how are you?"}],
         )
         preview = response.choices[0].message.content if response.choices else None
@@ -189,7 +186,7 @@ def check_qgen_model() -> bool:
             "QGEN model check passed",
             extra={
                 "status": "success",
-                "model": model,
+                "model": qgen_model,
                 "response_preview": preview[:10] if preview else None,
             },
         )

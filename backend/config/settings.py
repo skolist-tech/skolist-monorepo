@@ -25,7 +25,7 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # LiteLLM model string for qgen — e.g. "gemini/gemini-2.5-flash", "gpt-4o", "claude-sonnet-4-6"
-QGEN_MODEL = os.getenv("QGEN_MODEL", "gemini/gemini-2.5-flash")
+QGEN_MODEL = os.getenv("QGEN_MODEL")
 SMS_HOOK_SECRET = os.getenv("SMS_HOOK_SECRET")
 # MSG91_AUTH_KEY = os.getenv("MSG91_AUTH_KEY")
 # MSG91_TEMPLATE_ID = os.getenv("MSG91_TEMPLATE_ID")
@@ -53,6 +53,16 @@ if not SUPABASE_SERVICE_KEY:
         "Environment variable not set",
         extra={"variable_name": "SUPABASE_SERVICE_KEY"},
     )
+if not QGEN_MODEL:
+    logger.warning(
+        "Environment variable not set",
+        extra={"variable_name": "QGEN_MODEL"},
+    )
+    logger.warning(
+        "Defaulting to gemini/gemini-2.5-flash",
+        extra={"variable_name": "QGEN_MODEL", "default_value": "gemini/gemini-2.5-flash"},
+    )
+    QGEN_MODEL = "gemini/gemini-2.5-flash"
 if not GEMINI_API_KEY:
     logger.warning(
         "Environment variable not set",
@@ -95,7 +105,7 @@ if PING == "TRUE":
         logger.info("Pinging OpenAI API Key")
         check_openai_api_key(OPENAI_API_KEY)
     logger.info("Pinging QGEN model")
-    check_qgen_model()
+    check_qgen_model(QGEN_MODEL)
     check_supabase_connection(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     check_supabase_service_key(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 else:
