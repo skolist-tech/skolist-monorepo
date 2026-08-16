@@ -7,7 +7,7 @@ import logging
 from fastapi import UploadFile
 from supabase import AsyncClient
 
-from ..llm import get_async_client, get_model, to_image_block, to_text_block
+from ..llm import get_async_client, get_model, to_media_block, to_text_block
 
 from api.v1.qgen.models import QUESTION_TYPE_TO_ENUM, ExtractedQuestionsList
 from api.v1.qgen.prompts import extract_questions_prompt
@@ -59,12 +59,15 @@ async def process_uploaded_file(file: UploadFile) -> dict:
     ]
 
     if content_type not in allowed_types:
-        raise ExtractionValidationError(
-            f"Unsupported file type: {content_type}. Allowed: images (png, jpeg, gif, webp) and PDF"
-        )
+        if file.filename.lower().endswith(".pdf"):
+            content_type = "application/pdf"
+        else:
+            raise ExtractionValidationError(
+                f"Unsupported file type: {content_type}. Allowed: images (png, jpeg, gif, webp) and PDF"
+            )
 
     await file.seek(0)
-    return to_image_block(content, content_type)
+    return to_media_block(content, content_type, file.filename)
 
 
 class ExtractQuestionsService:

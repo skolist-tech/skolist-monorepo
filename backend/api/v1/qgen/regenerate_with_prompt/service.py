@@ -3,7 +3,7 @@ import logging
 from fastapi import UploadFile
 from supabase import AsyncClient
 
-from ..llm import get_async_client, get_model, to_image_block, to_text_block
+from ..llm import get_async_client, get_model, to_image_block, to_media_block, to_text_block
 
 from api.v1.qgen.models import AllQuestions
 from api.v1.qgen.prompts import regenerate_question_with_prompt_prompt
@@ -45,7 +45,7 @@ async def process_uploaded_files(files: list[UploadFile], gen_question_id: str =
                     logger.warning(f"Failed to log uploaded image {file.filename}: {e}")
 
             if content_type.startswith("image/") or content_type == "application/pdf":
-                blocks.append(to_image_block(content, content_type))
+                blocks.append(to_media_block(content, content_type, file.filename))
             elif content_type.startswith("text/") or content_type in [
                 "application/json",
                 "application/xml",
@@ -54,9 +54,9 @@ async def process_uploaded_files(files: list[UploadFile], gen_question_id: str =
                     text_content = content.decode("utf-8")
                     blocks.append(to_text_block(f"File: {file.filename}\n\n{text_content}"))
                 except UnicodeDecodeError:
-                    blocks.append(to_image_block(content, content_type))
+                    blocks.append(to_media_block(content, content_type, file.filename))
             else:
-                blocks.append(to_image_block(content, content_type))
+                blocks.append(to_media_block(content, content_type, file.filename))
 
             await file.seek(0)
     return blocks
