@@ -14,7 +14,7 @@ from config.logger import setup_logging
 setup_logging()
 
 from api.v1.router import router as v1_router
-from config.settings import DEPLOYMENT_ENV
+from config.settings import DEPLOYMENT_ENV, run_pings
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from services.browser_service import BrowserService
+
+    await run_pings()
 
     # Initialize BrowserService
     browser_service = BrowserService()

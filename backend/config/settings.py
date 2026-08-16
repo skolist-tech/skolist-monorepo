@@ -4,10 +4,12 @@ Loads configuration from environment variables.
 
 import logging
 import os
+from functools import partial
 
 from dotenv import load_dotenv
 
 from .pings import (
+    PingsExecutor,
     check_gemini_api_key,
     check_openai_api_key,
     check_qgen_model,
@@ -97,16 +99,23 @@ if not DEPLOYMENT_ENV or DEPLOYMENT_ENV not in {"PRODUCTION", "STAGE", "LOCAL"}:
     )
     DEPLOYMENT_ENV = "LOCAL"
 
-if PING == "TRUE":
+
+def _build_pings() -> PingsExecutor:
+    async_functions = []
     if GEMINI_API_KEY:
-        logger.info("Pinging Gemini API Key")
-        check_gemini_api_key(GEMINI_API_KEY)
+        async_functions.append(partial(check_gemini_api_key, GEMINI_API_KEY))
     if OPENAI_API_KEY:
-        logger.info("Pinging OpenAI API Key")
-        check_openai_api_key(OPENAI_API_KEY)
-    logger.info("Pinging QGEN model")
-    check_qgen_model(QGEN_MODEL)
-    check_supabase_connection(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    check_supabase_service_key(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-else:
-    logger.info("Ping Skipped")
+        async_functions.append(partial(check_openai_api_key, OPENAI_API_KEY))
+    if QGEN_MODEL:
+        async_functions.append(partial(check_qgen_model, QGEN_MODEL))
+    if SUPABASE_URL and SUPABASE_SERVICE_KEY:
+        async_functions.append(partial(check_supabase_connection, SUPABASE_URL, SUPABASE_SERVICE_KEY))
+        async_functions.append(partial(check_supabase_service_key, SUPABASE_URL, SUPABASE_SERVICE_KEY))
+    return PingsExecutor(async_functions=async_functions)
+
+
+async def run_pings() -> None:
+    if PING != "TRUE":
+        logger.info("Ping Skipped")
+        return
+    await _build_pings().execute()

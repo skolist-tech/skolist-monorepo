@@ -43,6 +43,12 @@ def pytest_addoption(parser):
         default=False,
         help="Use real Gemini API instead of mocks",
     )
+    parser.addoption(
+        "--unit",
+        action="store_true",
+        default=False,
+        help="Run only tests in tests/unit",
+    )
 
 
 def pytest_configure(config):
@@ -84,6 +90,9 @@ def pytest_collection_modifyitems(config, items):
     - tests/unit/* -> @pytest.mark.unit
     - tests/integration/* -> @pytest.mark.integration
     """
+    run_unit_only = config.getoption("--unit")
+    selected = []
+
     for item in items:
         # Get the test file path relative to tests/
         test_path = str(item.fspath)
@@ -92,3 +101,10 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.unit)
         elif "/tests/integration/" in test_path:
             item.add_marker(pytest.mark.integration)
+
+        if run_unit_only and "/tests/unit/" not in test_path:
+            continue
+        selected.append(item)
+
+    if run_unit_only:
+        items[:] = selected
