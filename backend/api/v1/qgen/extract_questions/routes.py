@@ -52,6 +52,8 @@ async def extract_questions(
             "activity_id": activity_id,
             "qgen_draft_id": qgen_draft_id,
             "file_name": file.filename,
+            "section_name": section_name,
+            "prompt": prompt,
         },
     )
 

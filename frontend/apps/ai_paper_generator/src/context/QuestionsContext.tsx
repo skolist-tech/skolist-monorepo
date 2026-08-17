@@ -117,8 +117,12 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
           if (payload.eventType === "INSERT") {
             // Add new question and sort by created_at DESC to maintain order
             setQuestions((prev) => {
+              const incoming = payload.new as GeneratedQuestion;
+              if (prev.some((q) => q.id === incoming.id)) {
+                return prev;
+              }
               const newQuestion = {
-                ...(payload.new as GeneratedQuestion),
+                ...incoming,
                 concepts: [],
                 images: [],
               };

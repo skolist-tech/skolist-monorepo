@@ -14,12 +14,14 @@ import {
 import { Upload, FileText, Loader2 } from "lucide-react";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { useDraftContext } from "../../../context/DraftContext";
+import { useQuestionsContext } from "../../../context/QuestionsContext";
 import { fastApiService } from "../../../services/fastApiService";
 
 export function ImportBulkQuestions() {
   const { toast } = useToast();
   const { currentActivity } = useActivityContext();
   const { draft, refetchSections } = useDraftContext();
+  const { refetchQuestions } = useQuestionsContext();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -89,9 +91,9 @@ export function ImportBulkQuestions() {
           description: `Successfully extracted ${result.questions_extracted} question(s) into "${result.section_name}"`,
         });
 
-        // Refresh sections to show the new section
-        // Questions will auto-appear due to real-time subscription
-        await refetchSections();
+        // Reload sections and questions from the DB so the draft updates
+        // even if the realtime socket does not deliver the new rows.
+        await Promise.all([refetchSections(), refetchQuestions()]);
 
         handleClose();
       } else {
