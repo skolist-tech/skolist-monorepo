@@ -409,14 +409,9 @@ export const fastApiService = {
     }
   },
   /**
-   * info: Calls the FastAPI backend to extract questions from a file (image/PDF)
+   * info: Starts extracting questions from a file (image/PDF)
    * endpoint: POST /api/v1/qgen/extract_questions
-   * @param file - Image or PDF file containing questions to extract
-   * @param activity_id - UUID of the activity
-   * @param qgen_draft_id - UUID of the draft to add section to
-   * @param prompt - Optional custom instructions for extraction
-   * @param section_name - Optional name for the new section
-   * @returns Object with section_id, section_name, questions_extracted count, and question IDs
+   * Returns 202 with job_id and section_id. Poll getExtractQuestionsStatus for completion.
    */
   async extractQuestions(
     file: File,
@@ -425,10 +420,10 @@ export const fastApiService = {
     prompt?: string,
     section_name?: string
   ): Promise<{
-    section_id: string | null;
-    section_name: string | null;
-    questions_extracted: number;
-    questions: { id: string; question_type: string }[];
+    job_id: string;
+    section_id: string;
+    section_name: string;
+    status: string;
   }> {
     try {
       const {
@@ -478,5 +473,47 @@ export const fastApiService = {
       console.error("Error extracting questions:", error);
       throw error;
     }
+  },
+
+  /**
+   * info: Poll status of an extract_questions job
+   * endpoint: GET /api/v1/qgen/extract_questions/status/{job_id}
+   */
+  async getExtractQuestionsStatus(job_id: string): Promise<{
+    job_id: string;
+    request_type: string | null;
+    draft_id: string | null;
+    section_id: string | null;
+    status: "processing" | "success" | "failure";
+    error_message: string | null;
+    questions_extracted: number | null;
+  }> {
+    const {
+      data: { session },
+    } = await getSupabaseClient().auth.getSession();
+    const token = session?.access_token;
+
+    if (!token) {
+      throw new Error("User not authenticated");
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/v1/qgen/extract_questions/status/${job_id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail ||
+          `Failed to fetch extraction status: ${response.statusText}`
+      );
+    }
+
+    return await response.json();
   },
 };

@@ -2,6 +2,7 @@ import { usePaneContext } from "../../context/PaneContext";
 import { useActivityContext } from "../../context/ActivityContext";
 import { GenerationPane } from "../generation-pane/GenerationPane";
 import { DraftProvider } from "../../context/DraftContext";
+import { ExtractionJobsProvider } from "../../context/ExtractionJobsContext";
 import { DraftPane } from "../draft-pane/DraftPane";
 import { EmptyState } from "../shared/EmptyState";
 import { FileText } from "lucide-react";
@@ -35,26 +36,32 @@ export function MainArea() {
 
   return (
     <DraftProvider>
-      <div className="relative flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="relative flex-1 overflow-hidden">
-          <div
-            className={activePane === "generation" ? "h-full w-full" : "hidden"}
-          >
-            <GenerationPane />
-          </div>
-          <div className={activePane === "draft" ? "h-full w-full" : "hidden"}>
-            <DraftPane />
-          </div>
-          {activePane === "analysis" && (
-            <div className="h-full w-full">
-              <AnalysisPane />
+      <ExtractionJobsProvider>
+        <div className="relative flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="relative flex-1 overflow-hidden">
+            <div
+              className={
+                activePane === "generation" ? "h-full w-full" : "hidden"
+              }
+            >
+              <GenerationPane />
             </div>
-          )}
+            <div
+              className={activePane === "draft" ? "h-full w-full" : "hidden"}
+            >
+              <DraftPane />
+            </div>
+            {activePane === "analysis" && (
+              <div className="h-full w-full">
+                <AnalysisPane />
+              </div>
+            )}
+          </div>
+          <div className="flex justify-center border-t bg-background p-2 pb-4 md:hidden">
+            <PaneNavigationButtons />
+          </div>
         </div>
-        <div className="flex justify-center border-t bg-background p-2 pb-4 md:hidden">
-          <PaneNavigationButtons />
-        </div>
-      </div>
+      </ExtractionJobsProvider>
     </DraftProvider>
   );
 }

@@ -282,7 +282,7 @@ class TestExtractQuestionsFunctional:
         # The endpoint may return 200 with extracted questions or
         # an error if the mock doesn't handle extraction properly
         # For now, we just verify it doesn't crash
-        assert response.status_code in [200, 201, 400, 500]
+        assert response.status_code in [200, 201, 202, 400, 500]
 
     def test_accepts_optional_prompt(
         self,
@@ -307,4 +307,4 @@ class TestExtractQuestionsFunctional:
         )
 
         # Should at least accept the request (may fail later in processing)
-        assert response.status_code in [200, 201, 400, 500]
+        assert response.status_code in [200, 201, 202, 400, 500]

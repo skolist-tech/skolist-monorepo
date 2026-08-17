@@ -20,11 +20,13 @@ import {
   ChevronUp,
   ChevronDown,
   Pencil,
+  Loader2,
 } from "lucide-react";
 import { QUESTION_TYPE } from "@skolist/db";
 import { type QgenDraftSection } from "@skolist/db";
 import { useDraftContext } from "../../../context/DraftContext";
 import { useQuestionsContext } from "../../../context/QuestionsContext";
+import { useExtractionJobs } from "../../../context/ExtractionJobsContext";
 import { ConfirmDialog } from "../../shared/ConfirmDialog";
 import { usePrevious } from "../../../hooks/usePrevious";
 import { type GeneratedQuestionWithConcepts } from "../../../services/questionService";
@@ -94,6 +96,8 @@ export function SortableSection({
   };
 
   const { questions, addCustomQuestion, saveQuestion } = useQuestionsContext();
+  const { processingSectionIds } = useExtractionJobs();
+  const isExtracting = processingSectionIds.has(section.id);
 
   // Filter questions belonging to this section
   const sectionQuestions = questions
@@ -443,7 +447,12 @@ export function SortableSection({
       {isSectionExpanded && (
         <>
           <div className="min-h-[50px] space-y-3 p-3">
-            {sectionQuestions.length === 0 ? (
+            {isExtracting ? (
+              <div className="flex flex-col items-center justify-center gap-2 rounded border border-dashed py-6 text-xs text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Extracting questions...
+              </div>
+            ) : sectionQuestions.length === 0 ? (
               <div className="rounded border border-dashed py-4 text-center text-xs text-muted-foreground">
                 No questions in this section
               </div>

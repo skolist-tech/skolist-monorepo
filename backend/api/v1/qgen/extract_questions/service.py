@@ -104,33 +104,105 @@ class ExtractQuestionsService:
             raise ExtractionValidationError(f"Failed to parse LLM response: {e}") from e
 
     @staticmethod
-    async def extract_and_insert(
-        file: UploadFile,
-        activity_id: str,
-        qgen_draft_id: str,
+    async def create_draft_section(
         supabase_client: AsyncClient,
+        qgen_draft_id: str,
         section_name: str | None = None,
+    ) -> dict:
+        """Create an empty draft section so the frontend can show it immediately."""
+        existing_sections = (
+            await supabase_client.table("qgen_draft_sections")
+            .select("position_in_draft")
+            .eq("qgen_draft_id", qgen_draft_id)
+            .order("position_in_draft", desc=True)
+            .limit(1)
+            .execute()
+        )
+
+        max_position = 0
+        if existing_sections.data:
+            max_position = existing_sections.data[0].get("position_in_draft", 0) or 0
+
+        final_section_name = section_name or "Extracted Questions"
+        new_section = QgenDraftSectionsInsert(
+            qgen_draft_id=qgen_draft_id,
+            section_name=final_section_name,
+            position_in_draft=max_position + 1,
+        )
+
+        section_result = (
+            await supabase_client.table("qgen_draft_sections")
+            .insert(new_section.model_dump(mode="json", exclude_none=True))
+            .execute()
+        )
+
+        if not section_result.data:
+            raise ExtractionProcessingError("Failed to create draft section")
+
+        section_id = section_result.data[0]["id"]
+        logger.info(f"Created new section: {section_id} with name: {final_section_name}")
+        return {"section_id": section_id, "section_name": final_section_name}
+
+    @staticmethod
+    async def create_request_status(
+        supabase_client: AsyncClient,
+        user_id: str,
+        request_type: str,
+        draft_id: str | None,
+        section_id: str | None,
+    ) -> dict:
+        job_result = (
+            await supabase_client.table("request_statuses")
+            .insert(
+                {
+                    "user_id": user_id,
+                    "request_type": request_type,
+                    "draft_id": draft_id,
+                    "section_id": section_id,
+                    "status": "processing",
+                }
+            )
+            .execute()
+        )
+
+        if not job_result.data:
+            raise ExtractionProcessingError("Failed to create request status")
+
+        return job_result.data[0]
+
+    @staticmethod
+    async def update_request_status(
+        supabase_client: AsyncClient,
+        job_id: str,
+        status: str,
+        error_message: str | None = None,
+        questions_extracted: int | None = None,
+    ) -> None:
+        payload: dict = {"status": status}
+        if error_message is not None:
+            payload["error_message"] = error_message
+        if questions_extracted is not None:
+            payload["questions_extracted"] = questions_extracted
+
+        await supabase_client.table("request_statuses").update(payload).eq("job_id", job_id).execute()
+
+    @staticmethod
+    async def get_request_status(supabase_client: AsyncClient, job_id: str) -> dict | None:
+        result = await supabase_client.table("request_statuses").select("*").eq("job_id", job_id).limit(1).execute()
+        if not result.data:
+            return None
+        return result.data[0]
+
+    @staticmethod
+    async def extract_into_section(
+        file_block: dict,
+        activity_id: str,
+        section_id: str,
+        section_name: str,
+        supabase_client: AsyncClient,
         custom_prompt: str | None = None,
     ) -> dict:
-        """
-        Main extraction flow: process file, extract questions, create section, insert to DB.
-
-        Args:
-            file: Uploaded file (image/PDF)
-            activity_id: Activity UUID
-            qgen_draft_id: Draft UUID
-            supabase_client: Supabase client
-            section_name: Optional name for new section
-            custom_prompt: Optional user instructions for extraction
-
-        Returns:
-            Dict with section_id, section_name, questions_extracted count
-        """
-        # 1. Process file
-        logger.info(f"Processing file for extraction: {file.filename}")
-        file_block = await process_uploaded_file(file)
-
-        # 2. Call LLM with retry
+        """LLM extract + insert questions into an existing section."""
         max_retries = 5
         last_exception = None
         extracted_result = None
@@ -153,47 +225,13 @@ class ExtractQuestionsService:
         if not questions:
             logger.info("No questions extracted from file")
             return {
-                "section_id": None,
-                "section_name": None,
+                "section_id": section_id,
+                "section_name": section_name,
                 "questions_extracted": 0,
                 "questions": [],
             }
 
-        # 4. Get max position for new section
-        existing_sections = (
-            await supabase_client.table("qgen_draft_sections")
-            .select("position_in_draft")
-            .eq("qgen_draft_id", qgen_draft_id)
-            .order("position_in_draft", desc=True)
-            .limit(1)
-            .execute()
-        )
-
-        max_position = 0
-        if existing_sections.data:
-            max_position = existing_sections.data[0].get("position_in_draft", 0)
-
-        # 5. Create new section
-        final_section_name = section_name or "Extracted Questions"
-        new_section = QgenDraftSectionsInsert(
-            qgen_draft_id=qgen_draft_id,
-            section_name=final_section_name,
-            position_in_draft=max_position + 1,
-        )
-
-        section_result = (
-            await supabase_client.table("qgen_draft_sections")
-            .insert(new_section.model_dump(mode="json", exclude_none=True))
-            .execute()
-        )
-
-        if not section_result.data:
-            raise ExtractionProcessingError("Failed to create draft section")
-
-        section_id = section_result.data[0]["id"]
-        logger.info(f"Created new section: {section_id} with name: {final_section_name}")
-
-        # 6. Insert questions
+        # Insert questions
         inserted_questions = []
         difficulty_mapping = {
             "easy": PublicHardnessLevelEnumEnum.EASY,
@@ -303,7 +341,7 @@ class ExtractQuestionsService:
 
         return {
             "section_id": section_id,
-            "section_name": final_section_name,
+            "section_name": section_name,
             "questions_extracted": len(inserted_questions),
             "questions": inserted_questions,
         }

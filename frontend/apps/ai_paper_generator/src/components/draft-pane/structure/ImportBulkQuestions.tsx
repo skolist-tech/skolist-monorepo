@@ -14,14 +14,14 @@ import {
 import { Upload, FileText, Loader2 } from "lucide-react";
 import { useActivityContext } from "../../../context/ActivityContext";
 import { useDraftContext } from "../../../context/DraftContext";
-import { useQuestionsContext } from "../../../context/QuestionsContext";
+import { useExtractionJobs } from "../../../context/ExtractionJobsContext";
 import { fastApiService } from "../../../services/fastApiService";
 
 export function ImportBulkQuestions() {
   const { toast } = useToast();
   const { currentActivity } = useActivityContext();
   const { draft, refetchSections } = useDraftContext();
-  const { refetchQuestions } = useQuestionsContext();
+  const { startExtractionJob } = useExtractionJobs();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -85,25 +85,21 @@ export function ImportBulkQuestions() {
         sectionName || undefined
       );
 
-      if (result.questions_extracted > 0) {
+      if (!result.job_id || !result.section_id) {
         toast({
-          title: "Questions imported",
-          description: `Successfully extracted ${result.questions_extracted} question(s) into "${result.section_name}"`,
-        });
-
-        // Reload sections and questions from the DB so the draft updates
-        // even if the realtime socket does not deliver the new rows.
-        await Promise.all([refetchSections(), refetchQuestions()]);
-
-        handleClose();
-      } else {
-        toast({
-          title: "No questions found",
-          description:
-            "No questions could be extracted from the file. Try a different file or add more context in the prompt.",
+          title: "Import failed",
+          description: "The extraction job did not start correctly.",
           variant: "destructive",
         });
+        return;
       }
+
+      startExtractionJob({
+        jobId: result.job_id,
+        sectionId: result.section_id,
+      });
+      await refetchSections();
+      handleClose();
     } catch (error) {
       console.error("Failed to import questions:", error);
       toast({
