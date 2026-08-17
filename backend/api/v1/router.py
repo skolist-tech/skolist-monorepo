@@ -6,6 +6,7 @@ import logging
 
 from fastapi import APIRouter, Depends, Request
 
+from .assessment import router as assessment_router
 from .auth import require_supabase_user
 from .auth_exchange import router as auth_exchange_router
 from .bank.router import router as bank_router
@@ -28,6 +29,7 @@ router.include_router(sms_hook_router)
 router.include_router(auth_exchange_router)
 router.include_router(bank_router)
 router.include_router(test_attempts_router)
+router.include_router(assessment_router)
 
 
 @router.get("/hello", dependencies=[Depends(require_supabase_user)])
