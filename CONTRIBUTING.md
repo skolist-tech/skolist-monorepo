@@ -27,6 +27,10 @@ Work from an up-to-date `stage` (or the branch your team designates), never comm
 
 Examples: `feature/assessment-login-e2e`, `bugs/fix-navbar-overflow`, `chore/setup-docs`.
 
+## Git
+
+When renaming or moving a tracked file, always use `git mv`. Never use plain `mv` (or a filesystem rename) in this monorepo — Git then treats the change as a delete plus an add and you lose the rename.
+
 ## Pull requests
 
 1. Keep PRs focused (one concern per PR when practical).
