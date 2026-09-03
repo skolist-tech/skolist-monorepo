@@ -5,6 +5,9 @@ import path from "path";
 // Load environment variables from e2e/.env
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
+const headed = process.argv.includes("--headed");
+const serial = !!process.env.CI || headed;
+
 /**
  * Playwright configuration for Skolist E2E tests.
  *
@@ -16,14 +19,14 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
  */
 export default defineConfig({
   testDir: "./tests",
-  /* Run tests in files in parallel */
-  fullyParallel: true,
+  /* Run tests in files in parallel (disable in CI / headed so one browser window at a time) */
+  fullyParallel: !serial,
   /* Fail the build on CI if you accidentally left test.only in the source code */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI */
-  workers: process.env.CI ? 1 : undefined,
+  /* One worker in CI and headed mode */
+  workers: serial ? 1 : undefined,
   /* Reporter to use */
   reporter: process.env.CI ? "github" : "html",
   /* Shared settings for all the projects below */
