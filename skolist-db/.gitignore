@@ -9,4 +9,4 @@ supabase/.temp
 venv
 
 # cache files
-*/__pycache__/*
+__pycache__/
