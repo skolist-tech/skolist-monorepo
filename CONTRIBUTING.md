@@ -53,7 +53,7 @@ Good docs compound: leave the next person (including future you) better off than
 - Always-on agent instructions: **[AGENTS.md](./AGENTS.md)** (read the README hub before changing code or committing).
 - Project skills live under **[`.cursor/skills/`](./.cursor/skills/)** (each skill is a folder with `SKILL.md`).
 - Current skills:
-  - [`create-video-for-workflow`](./.cursor/skills/create-video-for-workflow/SKILL.md) — when asked for a video of a workflow, write a temporary e2e test, run it with `E2E_VIDEO=1`, point at `e2e/videos/`, and remind the user to delete the test if it should not stay in the suite.
+  - [`create-video-for-workflow`](./.cursor/skills/create-video-for-workflow/SKILL.md) — when asked for a video of a workflow, write a temporary e2e test, run it with `E2E_VIDEO=1` and `E2E_IMAGES=1`, point at `e2e/videos/<timestamp>/` (older runs are kept) and `images/`, and remind the user to delete the test if it should not stay in the suite.
 
 ## Quality bar (by area)
 

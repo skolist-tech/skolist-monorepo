@@ -29,7 +29,7 @@ and video will be produced , tell that to user. and remind him to delete that te
 cd e2e
 USER_PW="$HOME/.cache/ms-playwright"
 # Prefer the user cache in-place (no copy, no download):
-PLAYWRIGHT_BROWSERS_PATH="$USER_PW" E2E_VIDEO=1 npx playwright test --headed --workers=1 --project=assessments path/to/your.spec.ts
+PLAYWRIGHT_BROWSERS_PATH="$USER_PW" E2E_VIDEO=1 E2E_IMAGES=1 npx playwright test --headed --workers=1 --project=assessments path/to/your.spec.ts
 ```
 
 If a run still looks under the sandbox path, symlink instead of copying:
@@ -41,7 +41,7 @@ for d in "$HOME/.cache/ms-playwright"/*; do
 done
 ```
 
-Or the project scripts: `npm run test:assessments:headed:video` / `npm run test:headed:video` when they match (still prefix `PLAYWRIGHT_BROWSERS_PATH="$HOME/.cache/ms-playwright"` in agent runs).
+Or the project scripts: `npm run test:assessments:headed:video:images` / `npm run test:headed:video:images` when they match (still prefix `PLAYWRIGHT_BROWSERS_PATH="$HOME/.cache/ms-playwright"` in agent runs).
 
-4. Tell the user the video path under `e2e/videos/` (gitignored).
+4. Tell the user the video path under `e2e/videos/<timestamp>/…` (gitignored; older timestamp folders are kept). If `E2E_IMAGES=1`, also point at `images/` next to `video.webm` (`frame_001.jpg` …). Needs `ffmpeg` on PATH.
 5. Remind them to delete the temporary test file if it is not meant to stay as a real e2e test.
