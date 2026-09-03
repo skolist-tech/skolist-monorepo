@@ -6,6 +6,7 @@ Platform code for Skolist: database (Supabase), FastAPI backend, frontend apps, 
 
 | Doc | Purpose |
 | --- | --- |
+| [AGENTS.md](./AGENTS.md) | Instructions for AI agents working in this repo |
 | [SETUP.md](./SETUP.md) | Get a local stack running (DB → API → apps → e2e) |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Branches, PRs, and quality bar |
 
