@@ -771,3 +771,46 @@ def test_bank_questions(
     ).execute()
 
     service_supabase_client.table("bank_questions").delete().in_("id", question_ids).execute()
+
+
+# ============================================================================
+# ASSESSMENT AUTH FIXTURES
+# ============================================================================
+
+ASSESSMENT_TEACHER_EMAIL = "teacher1@seed.skolist.com"
+ASSESSMENT_STUDENT_EMAIL = "student1@seed.skolist.com"
+ASSESSMENT_PASSWORD = "password123"
+
+
+def _sign_in_session(env: dict[str, str], email: str, password: str) -> dict[str, Any]:
+    client = create_client(env["SUPABASE_URL"], env["SUPABASE_ANON_KEY"])
+    auth_response = client.auth.sign_in_with_password({"email": email, "password": password})
+    token = _get_session_access_token(auth_response)
+    user_id = _get_user_id(auth_response)
+    if not token or not user_id:
+        pytest.skip(f"Could not authenticate {email}. Run skolist-db python seeds first.")
+    return {"access_token": token, "user_id": user_id, "email": email}
+
+
+@pytest.fixture
+def teacher_auth_session(env: dict[str, str]) -> dict[str, Any]:
+    return _sign_in_session(env, ASSESSMENT_TEACHER_EMAIL, ASSESSMENT_PASSWORD)
+
+
+@pytest.fixture
+def student_auth_session(env: dict[str, str]) -> dict[str, Any]:
+    return _sign_in_session(env, ASSESSMENT_STUDENT_EMAIL, ASSESSMENT_PASSWORD)
+
+
+@pytest.fixture
+def teacher_test_client(app, teacher_auth_session: dict[str, Any]) -> TestClient:
+    client = TestClient(app)
+    client.headers["Authorization"] = f"Bearer {teacher_auth_session['access_token']}"
+    return client
+
+
+@pytest.fixture
+def student_test_client(app, student_auth_session: dict[str, Any]) -> TestClient:
+    client = TestClient(app)
+    client.headers["Authorization"] = f"Bearer {student_auth_session['access_token']}"
+    return client
