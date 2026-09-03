@@ -1,0 +1,8 @@
+{
+  "name": "Skolist Assessments",
+  "short_name": "Assessments",
+  "icons": [],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}
