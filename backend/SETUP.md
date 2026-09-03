@@ -1,0 +1,73 @@
+# Backend setup
+
+Prerequisites and monorepo order: [../SETUP.md](../SETUP.md) (start Supabase in `skolist-db` first).
+
+## Requirements
+
+- Python **3.11+**
+- Local Supabase running (see [../skolist-db/SETUP.md](../skolist-db/SETUP.md))
+- Docker (optional, for Compose)
+
+## Install
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r requirements-dev.txt
+pre-commit install          # optional; uses repo-root .pre-commit-config.yaml
+```
+
+## Environment
+
+```bash
+cp .env.example .env
+```
+
+Fill from `supabase status` (or your cloud project):
+
+| Variable | Notes |
+| --- | --- |
+| `SUPABASE_URL` | Local: `http://127.0.0.1:54321` on host; **`http://host.docker.internal:54321`** inside Compose |
+| `SUPABASE_SERVICE_KEY` | Service role — server only |
+| `SUPABASE_ANON_KEY` | Used by some tests / clients |
+| `OPENAI_API_KEY` / `GEMINI_API_KEY` | As needed for AI features |
+| `DEPLOYMENT_ENV` | `LOCAL` for local CORS / behaviour |
+
+Never commit `.env`. Never put the service key in frontend code.
+
+## Run on the host
+
+```bash
+source venv/bin/activate
+uvicorn main:app --reload --port 8080
+```
+
+Check: `GET http://127.0.0.1:8080/`
+
+## Run with Docker Compose
+
+```bash
+cd backend
+docker compose up --build
+```
+
+Compose maps `8080:8080`, loads `.env`, and mounts the tree. If Supabase is on the host, set:
+
+```env
+SUPABASE_URL=http://host.docker.internal:54321
+```
+
+(`extra_hosts` for `host.docker.internal` is already in `docker-compose.yaml`.)
+
+## Smoke auth
+
+Routes under `/api/v1/*` expect `Authorization: Bearer <Supabase JWT>`.
+
+```bash
+curl -H "Authorization: Bearer <JWT>" http://127.0.0.1:8080/api/v1/hello
+```
+
+## Tests
+
+See [tests/README.md](./tests/README.md) and [CONTRIBUTING.md](./CONTRIBUTING.md).

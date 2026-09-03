@@ -1,8 +1,14 @@
 # Supabase Database Project for Skolist
 
+Primary setup and contributing guides live one level up:
+
+- [../README.md](../README.md)
+- [../SETUP.md](../SETUP.md)
+- [../CONTRIBUTING.md](../CONTRIBUTING.md)
+
 ## 1. Introduction
 
-This repository contains the Supabase database project for Skolist. It includes the necessary SQL files to create and populate the database with the required data.
+This directory contains the Supabase CLI project for Skolist (migrations, config, SQL seeds). Python auth/product seeds live in `../python_seeds/` and are run via `../seed.py`.
 
 ## 2. Steps to run supabase locally
 
@@ -32,14 +38,17 @@ supabase db reset
 - In migrations folder, there are different sql files which are run in order to create the database schema and populate it with the required data. You can add another sql file to the migrations folder to add new tables or populate the existing tables with new data.
 - In seeds folder, there are different sql files which are run in order to populate the database with the required data. You can add another sql file to the seeds folder to populate the existing tables with new data.
 
-### 2.3 Creating Dummy Users
+### 2.3 Creating Dummy Users / Python seeds
 
-- Ensure that .env is filled with the supabase local project url and local service role key (sb-secret)
+Prefer the package setup guide: [../SETUP.md](../SETUP.md).
+
 ```bash
+cd ..   # skolist-db/
 python -m venv venv
-source venv/bin/active # for linux , activate properly as per your OS
-pip install requirements.txt
-python seed_users.py
+source venv/bin/activate   # activate properly for your OS
+pip install -r requirements.txt
+# Ensure SUPABASE_URL + service role key are available to the seed client
+python seed.py
 ```
 ### 2.4 Stopping supabase locally
 

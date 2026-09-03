@@ -2,6 +2,9 @@
 
 Browser end-to-end tests for Skolist. Specs live under `tests/`; Playwright starts the frontends (or reuses ones already running).
 
+Monorepo docs: [../README.md](../README.md) · [../SETUP.md](../SETUP.md) · [../CONTRIBUTING.md](../CONTRIBUTING.md)  
+Stack setup: [../skolist-db/SETUP.md](../skolist-db/SETUP.md) · [../backend/SETUP.md](../backend/SETUP.md) · [../frontend/SETUP.md](../frontend/SETUP.md)
+
 ## Projects
 
 | Project | App | Port | Specs |

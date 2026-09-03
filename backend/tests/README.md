@@ -45,11 +45,11 @@ Push to GitHub and let CI run tests with local Supabase automatically.
    # Edit .env.test with values from supabase start output
    ```
 
-3. **Seed test users**:
+3. **Seed test users** (see [skolist-db/SETUP.md](../../skolist-db/SETUP.md)):
    ```bash
    cd ../skolist-db
    pip install -r requirements.txt
-   python seed_users.py
+   python seed.py
    ```
 
 4. **Run integration tests**:

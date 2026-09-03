@@ -56,8 +56,8 @@ supabase start
 # - SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 # - SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# Create test users
-python seed_users.py
+# Create test users / product seeds (see skolist-db/SETUP.md)
+python seed.py
 
 # Reset database (re-runs migrations + seeds)
 supabase db reset
