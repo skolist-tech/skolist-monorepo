@@ -101,17 +101,21 @@ def run_seed_script(module_name: str, file_path: str) -> bool:
         module = importlib.import_module(module_name)
         
         # Determine the main function to call based on the module name
-        if "seed_users" in module_name:
+        if "seed_orgs" in module_name:
+            main_func = getattr(module, "seed_orgs", None)
+        elif "seed_users" in module_name:
             main_func = getattr(module, "seed_users", None)
         elif "seed_activities" in module_name:
             main_func = getattr(module, "seed_activity", None)
+        elif "seed_assessment" in module_name:
+            main_func = getattr(module, "seed_assessment", None)
         else:
             # Try to find a main function
             main_func = getattr(module, "main", None) or getattr(module, "seed", None)
         
         if not main_func:
             print_error(f"No main function found in {module_name}")
-            print_info("Expected function names: seed_users, seed_activity, main, or seed")
+            print_info("Expected function names: seed_orgs, seed_users, seed_activity, seed_assessment, main, or seed")
             return False
         
         # Run the seed function
@@ -141,7 +145,7 @@ def main():
     """Main entry point for the seed script."""
     print_header("Skolist Database Python Seed Scripts")
     
-    print_info("This script runs Python seed scripts that create auth users and patch data.")
+    print_info("This script seeds orgs, auth users, qgen activities, and assessment rows.")
     print_info("Make sure you've run 'supabase db reset' first to apply SQL seeds.\n")
     
     # Discover all seed scripts
@@ -149,7 +153,7 @@ def main():
     
     if not seed_scripts:
         print_warning("No seed scripts found in python_seeds/")
-        print_info("Create numbered scripts like: 001_seed_users.py, 002_seed_activities.py")
+        print_info("Create numbered scripts like: 001_seed_orgs.py, 002_seed_users.py")
         sys.exit(1)
     
     print(f"Found {len(seed_scripts)} seed script(s):")
