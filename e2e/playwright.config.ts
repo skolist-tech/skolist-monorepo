@@ -7,6 +7,13 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const headed = process.argv.includes("--headed");
 const serial = !!process.env.CI || headed;
+/**
+ * Opt-in video via `E2E_VIDEO=1` (Playwright has no `--video` CLI flag).
+ * npm scripts: `test:headed:video`, `test:assessments:headed:video`.
+ */
+const recordVideo = ["1", "true", "yes"].includes(
+  (process.env.E2E_VIDEO ?? "").toLowerCase()
+);
 
 const QGEN_URL = process.env.BASE_URL || "http://localhost:3001";
 const ASSESSMENTS_URL =
@@ -21,9 +28,14 @@ const ASSESSMENTS_URL =
  *   3. Assessment seeds loaded (python seed scripts on assessment_api)
  *
  * Frontends are started automatically via webServer (or reused if already up).
+ *
+ * Video: set `E2E_VIDEO=1`. Recordings land in `e2e/videos/` (gitignored).
  */
 export default defineConfig({
   testDir: "./tests",
+  // When recording, keep artifacts (including .webm) under videos/ instead of
+  // the default test-results/.
+  ...(recordVideo ? { outputDir: path.resolve(__dirname, "videos") } : {}),
   fullyParallel: !serial,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -33,6 +45,7 @@ export default defineConfig({
   use: {
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    ...(recordVideo ? { video: "on" as const } : {}),
   },
 
   projects: [

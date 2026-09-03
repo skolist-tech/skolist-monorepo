@@ -48,7 +48,9 @@ npm test                          # all projects
 npm run test:qgen                 # qgen only
 npm run test:assessments          # assessments only
 npm run test:headed               # all, headed, 1 worker
+npm run test:headed:video         # headed + record videos → videos/
 npm run test:assessments:headed   # assessments, headed, 1 worker
+npm run test:assessments:headed:video
 npm run test:ui                   # Playwright UI
 npm run codegen                   # record selectors
 ```
@@ -59,6 +61,21 @@ Run a single file:
 npx playwright test --project=assessments tests/assessment_api/teacher.spec.ts
 npx playwright test --project=qgen tests/login.spec.ts
 ```
+
+### Video recording
+
+Opt-in only (off by default). Playwright has no `--video` CLI flag, so we use `E2E_VIDEO=1`:
+
+```bash
+# npm scripts (headed + video)
+npm run test:headed:video
+npm run test:assessments:headed:video
+
+# or set the env yourself
+E2E_VIDEO=1 npx playwright test --headed --project=assessments
+```
+
+Recordings (and related run artifacts) go to `e2e/videos/` (gitignored). Each test gets a `video.webm` under a folder named after the spec.
 
 ## Layout
 
@@ -80,5 +97,6 @@ e2e/
 ## Notes
 
 - Headed mode forces **one worker** so a single browser window runs at a time.
+- Video is off unless `E2E_VIDEO=1` (see `test:*:video` scripts); files land in `videos/`.
 - Assessment specs assert against **seeded** papers (JEE / NEET titles and UUIDs in `assessment_api/seed.ts`). Re-seed if local data drifts.
 - HTML report: `npx playwright show-report` after a run (or open `playwright-report/`).
