@@ -34,3 +34,12 @@ export async function fillEmailSignIn(
   await page.getByPlaceholder("Enter password").fill(password);
   await page.getByRole("button", { name: "Sign In" }).click();
 }
+
+/** Full email sign-in and wait until /login is left. */
+export async function loginAs(page: Page, email: string, password: string) {
+  await openEmailSignIn(page);
+  await fillEmailSignIn(page, email, password);
+  await page.waitForURL((url) => !url.pathname.includes("/login"), {
+    timeout: 15_000,
+  });
+}

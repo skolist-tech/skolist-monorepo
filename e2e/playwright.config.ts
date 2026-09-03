@@ -8,59 +8,66 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 const headed = process.argv.includes("--headed");
 const serial = !!process.env.CI || headed;
 
+const QGEN_URL = process.env.BASE_URL || "http://localhost:3001";
+const ASSESSMENTS_URL =
+  process.env.ASSESSMENTS_BASE_URL || "http://localhost:3003";
+
 /**
  * Playwright configuration for Skolist E2E tests.
  *
- * Prerequisites (must be running before `pnpm test`):
+ * Prerequisites (must be running before tests):
  *   1. Supabase:  cd skolist-db && supabase start
- *   2. Backend:   cd backend && uvicorn app:app --port 8080
+ *   2. Backend:   docker compose / uvicorn on :8080
+ *   3. Assessment seeds loaded (python seed scripts on assessment_api)
  *
- * Note: Frontend is started automatically via webServer config below.
+ * Frontends are started automatically via webServer (or reused if already up).
  */
 export default defineConfig({
   testDir: "./tests",
-  /* Run tests in files in parallel (disable in CI / headed so one browser window at a time) */
   fullyParallel: !serial,
-  /* Fail the build on CI if you accidentally left test.only in the source code */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* One worker in CI and headed mode */
   workers: serial ? 1 : undefined,
-  /* Reporter to use */
   reporter: process.env.CI ? "github" : "html",
-  /* Shared settings for all the projects below */
+
   use: {
-    /* Base URL to use in actions like `await page.goto('/')` */
-    baseURL: process.env.BASE_URL || "http://localhost:3001",
-    /* Collect trace when retrying the failed test */
     trace: "on-first-retry",
-    /* Take screenshot on failure */
     screenshot: "only-on-failure",
   },
 
-  /* Configure projects for major browsers */
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: "qgen",
+      testMatch: /(?:^|\/)(smoke|login)\.spec\.ts$/,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: QGEN_URL,
+      },
     },
-    // Uncomment to add more browsers:
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
+    {
+      name: "assessments",
+      testMatch: /assessment_api\/.*\.spec\.ts$/,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: ASSESSMENTS_URL,
+      },
+    },
   ],
 
-  /* Run frontend before starting tests */
-  webServer: {
-    command: "cd ../frontend/apps/ai_paper_generator && pnpm build && pnpm preview --port 3001",
-    url: "http://localhost:3001",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  webServer: [
+    {
+      command:
+        "cd ../frontend/apps/ai_paper_generator && pnpm build && pnpm preview --port 3001",
+      url: QGEN_URL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+    {
+      command:
+        "cd ../frontend/apps/assessments && pnpm build && pnpm preview --port 3003",
+      url: ASSESSMENTS_URL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+  ],
 });

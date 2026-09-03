@@ -6,6 +6,9 @@
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed --workers=1",
+    "test:qgen": "playwright test --project=qgen",
+    "test:assessments": "playwright test --project=assessments",
+    "test:assessments:headed": "playwright test --project=assessments --headed --workers=1",
     "test:ui": "playwright test --ui",
     "codegen": "playwright codegen"
   },
