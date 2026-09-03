@@ -19,6 +19,7 @@ markers = [
     "auth: marks authentication-related tests",
     "qgen: marks question generation tests",
     "bank: marks bank management tests",
+    "assessment: marks assessment API tests",
 ]
 
 [tool.ruff]
