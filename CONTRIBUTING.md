@@ -36,13 +36,20 @@ Examples: `feature/assessment-login-e2e`, `bugs/fix-navbar-overflow`, `chore/set
 
 ## Improve the docs as you go
 
-While contributing, if you notice anything that would have made the work easier or faster — missing steps, better logging, outdated commands, unclear SETUP/CONTRIBUTING/README sections, or useful tips that only lived in someone's head — **report it**.
+While contributing, if you notice anything that would have made the work easier or faster — missing steps, better logging, outdated commands, unclear SETUP/CONTRIBUTING/README sections, a missing or outdated agent skill, or useful tips that only lived in someone's head — **report it**.
 
 - Prefer a short note in the PR description (or a follow-up docs PR / issue).
-- Point at the file that should change when you can (`SETUP.md`, package guides, e2e README, etc.).
+- Point at the file that should change when you can (`SETUP.md`, package guides, e2e README, `.cursor/skills/`, etc.).
 - Small doc fixes in the same PR are welcome when they are clearly related; larger doc rewrites can be a separate `chore/` PR.
 
 Good docs compound: leave the next person (including future you) better off than you found them.
+
+## Agent guidance (Cursor)
+
+- Always-on agent instructions: **[AGENTS.md](./AGENTS.md)** (read the README hub before changing code or committing).
+- Project skills live under **[`.cursor/skills/`](./.cursor/skills/)** (each skill is a folder with `SKILL.md`).
+- Current skills:
+  - [`create-video-for-workflow`](./.cursor/skills/create-video-for-workflow/SKILL.md) — when asked for a video of a workflow, write a temporary e2e test, run it with `E2E_VIDEO=1`, point at `e2e/videos/`, and remind the user to delete the test if it should not stay in the suite.
 
 ## Quality bar (by area)
 
