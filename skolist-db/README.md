@@ -21,7 +21,7 @@ skolist-db/
 │   ├── migrations/     # Schema + SQL changes (ordered)
 │   └── seeds/          # SQL seed files (applied on db reset)
 ├── python_seeds/       # Auth users, orgs, activities, assessment rows
-├── seed.py             # Runs python_seeds/*.py in order
+├── seed.py             # Auto-discovers python_seeds/_…_seed_….py in order
 └── unseed.py           # Wipes application tables for a clean reseed
 ```
 

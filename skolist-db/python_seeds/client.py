@@ -92,6 +92,6 @@ def require_public_user(supabase: Client, email: str, role: str) -> dict:
     if not response.data:
         raise RuntimeError(
             f"{role} {email} not found in public.users. "
-            "Run 001_seed_orgs.py and 002_seed_users.py first."
+            "Run _001_seed_orgs.py and _002_seed_users.py first."
         )
     return response.data[0]

@@ -6,7 +6,7 @@ triggers create the draft, generation pane, and default instructions.
 This script then fills pane/draft fields and upserts section, questions,
 versions, and concept maps.
 
-Idempotent. Run after 001_seed_orgs.py and 002_seed_users.py.
+Idempotent. Run after _001_seed_orgs.py and _002_seed_users.py.
 """
 
 import sys

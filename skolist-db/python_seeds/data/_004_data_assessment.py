@@ -1,4 +1,4 @@
-"""Assessment schema rows used by 004_seed_assessment.py.
+"""Assessment schema rows used by _004_seed_assessment.py.
 
 created_by / student_id / org_id / user_id are filled at seed time from
 _001_data_orgs.py and _002_data_user.py. Tests use created_by_key;

@@ -1,4 +1,4 @@
-"""Auth users created by 002_seed_users.py.
+"""Auth users created by _002_seed_users.py.
 
 Emails, password, and org membership live here. Other seed modules import
 these dicts instead of repeating credentials.

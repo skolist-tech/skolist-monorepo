@@ -57,19 +57,24 @@ pip install -r requirements.txt
 
 Put `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (or the names your seed client expects) in the env used by the scripts — often `skolist-db/.env` or the same values as backend.
 
-Run everything in order:
+Run everything in order (`seed.py` auto-discovers scripts):
 
 ```bash
 python seed.py
 ```
 
-Or individually (numerical order):
+Discovery rule: any `python_seeds/*.py` whose name **starts with `_`** and **contains `_seed_`**, sorted by filename. Examples:
+
+- `_001_seed_orgs.py`, `_002_seed_users.py`, … (committed)
+- `_local_seed_experiments.py` (gitignored — safe for local-only scratch seeds)
+
+Or run one script directly:
 
 ```bash
-python python_seeds/001_seed_orgs.py
-python python_seeds/002_seed_users.py
-python python_seeds/003_seed_activities.py
-python python_seeds/004_seed_assessment.py
+python python_seeds/_001_seed_orgs.py
+python python_seeds/_002_seed_users.py
+python python_seeds/_003_seed_activities.py
+python python_seeds/_004_seed_assessment.py
 ```
 
 Default seed password for many users is `password123` (see `python_seeds/data/_002_data_user.py`). Assessment e2e and backend fixtures expect those emails / stable UUIDs.

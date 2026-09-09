@@ -1,4 +1,4 @@
-"""Activity seed payload used by 003_seed_activities.py.
+"""Activity seed payload used by _003_seed_activities.py.
 
 Auth teacher/student come from _002_data_user.py. Inserting the activity
 fires DB triggers that create qgen_drafts, qgen_generation_panes, and

@@ -2,7 +2,7 @@
 Insert assessment tests, sections, questions, attempts, and responses.
 
 Org, teachers, and students are imported from _001_data_orgs / _002_data_user.
-Idempotent. Run after 001_seed_orgs.py and 002_seed_users.py.
+Idempotent. Run after _001_seed_orgs.py and _002_seed_users.py.
 """
 
 import copy

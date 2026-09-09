@@ -15,7 +15,18 @@ Repo-wide rules: [../CONTRIBUTING.md](../CONTRIBUTING.md). Setup: [SETUP.md](./S
 - Prefer **additive** migrations.
 - Keep seed UUIDs / emails **stable** once referenced by backend tests or `e2e/tests/assessment_api/seed.ts`.
 - Define orgs/users once in `python_seeds/data/` and import them elsewhere — avoid duplicated credentials.
+- Python seed runners live as `python_seeds/_…_seed_….py` (auto-discovered by `seed.py`).
 - Do not commit local `.env`, service keys, or `__pycache__` / `venv/`.
+
+## Local custom data (scratch seeds)
+
+If you want to **test on custom data** without changing committed seeds, write a local seeding script:
+
+1. Add `python_seeds/_local_seed_<name>.py` (must start with `_` and contain `_seed_`).
+2. Expose a callable named after the file (e.g. `seed_my_scenario` for `_local_seed_my_scenario.py`), or `main` / `seed`.
+3. Run `python seed.py` — it auto-discovers and runs after the numbered seeds (name sort).
+
+These files are **gitignored** (`python_seeds/_local_seed_*.py`). Do not commit them; keep shared fixtures in the numbered `_NNN_seed_*.py` / `data/` modules instead.
 
 ## Validation
 

@@ -1,7 +1,7 @@
 """
 Seed organisations from python_seeds/data/_001_data_orgs.py.
 
-Must run before 002_seed_users.py so auth users can FK to Seed Organisation.
+Must run before _002_seed_users.py so auth users can FK to Seed Organisation.
 """
 
 import sys

@@ -1,4 +1,4 @@
-"""Organisations created by 001_seed_orgs.py.
+"""Organisations created by _001_seed_orgs.py.
 
 The Seed Organisation id must match public.handle_auth_user_created(),
 which assigns this org_id to every new auth user.
