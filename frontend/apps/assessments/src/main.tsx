@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@skolist/auth";
 import { Toaster } from "@skolist/ui";
 import App from "./App";
+import "katex/dist/katex.min.css";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(

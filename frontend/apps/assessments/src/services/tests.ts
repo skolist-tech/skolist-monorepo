@@ -1,5 +1,8 @@
 import type {
+  Actor,
   Assignee,
+  AttemptSummary,
+  StudentResponse,
   TeacherQuestion,
   TeacherTestDetail,
   TestSummary,
@@ -7,7 +10,7 @@ import type {
 import { apiFetch } from "./api";
 
 export function getMe() {
-  return apiFetch<import("@/types/assessment").Actor>("/me");
+  return apiFetch<Actor>("/me");
 }
 
 export function listTeacherTests() {
@@ -79,15 +82,13 @@ export function removeAssignee(testId: string, userId: string) {
 }
 
 export function listTestAttempts(testId: string) {
-  return apiFetch<{ attempts: import("@/types/assessment").AttemptSummary[] }>(
-    `/tests/${testId}/attempts`
-  );
+  return apiFetch<{ attempts: AttemptSummary[] }>(`/tests/${testId}/attempts`);
 }
 
 export function getTeacherAttempt(testId: string, attemptId: string) {
   return apiFetch<{
-    attempt: import("@/types/assessment").AttemptSummary;
-    responses: import("@/types/assessment").StudentResponse[];
+    attempt: AttemptSummary;
+    responses: StudentResponse[];
     test: TeacherTestDetail;
   }>(`/tests/${testId}/attempts/${attemptId}`);
 }

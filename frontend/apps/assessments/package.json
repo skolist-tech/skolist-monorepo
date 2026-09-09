@@ -13,22 +13,24 @@
     "lint:fix": "eslint src/ --fix"
   },
   "dependencies": {
+    "@skolist/auth": "workspace:*",
+    "@skolist/ui": "workspace:*",
+    "@skolist/utils": "workspace:*",
+    "katex": "^0.16.27",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.1",
-    "@skolist/ui": "workspace:*",
-    "@skolist/auth": "workspace:*",
-    "@skolist/utils": "workspace:*"
+    "react-router-dom": "^6.28.1"
   },
   "devDependencies": {
+    "@types/katex": "^0.16.8",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.5",
-    "tailwindcss": "^3.4.17",
-    "postcss": "^8.4.49",
     "autoprefixer": "^10.4.20",
-    "tailwindcss-animate": "^1.0.7"
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
   }
 }

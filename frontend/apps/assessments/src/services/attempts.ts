@@ -2,13 +2,12 @@ import type {
   AttemptPaper,
   AttemptSummary,
   StudentResponse,
+  TestSummary,
 } from "@/types/assessment";
 import { apiFetch } from "./api";
 
 export function listAssignedTests() {
-  return apiFetch<{ tests: import("@/types/assessment").TestSummary[] }>(
-    "/assigned-tests"
-  );
+  return apiFetch<{ tests: TestSummary[] }>("/assigned-tests");
 }
 
 export function startAttempt(testId: string) {

@@ -5,6 +5,8 @@ export type Actor = {
   email: string | null;
   user_type: string;
   org_id: string | null;
+  name?: string | null;
+  avatar_url?: string | null;
   role: UserRole;
 };
 
@@ -50,6 +52,11 @@ export type StudentQuestion = {
   option4?: string | null;
   explanation?: string | null;
   answer?: string | null;
+  image_url?: string | null;
+  option1_image_url?: string | null;
+  option2_image_url?: string | null;
+  option3_image_url?: string | null;
+  option4_image_url?: string | null;
 };
 
 export type TeacherQuestion = StudentQuestion & {
@@ -89,6 +96,8 @@ export type StudentResponse = {
   answered_at?: string | null;
   is_correct?: boolean | null;
   marks_obtained?: number | null;
+  is_visited?: boolean;
+  is_marked_for_review?: boolean;
 };
 
 export type TeacherTestDetail = TestSummary & {
@@ -102,3 +111,11 @@ export type AttemptPaper = {
   sections: Section<StudentQuestion>[];
   responses: StudentResponse[];
 };
+
+/** NTA palette status derived from visit / answer / mark-for-review flags. */
+export type PaletteStatus =
+  | "not_visited"
+  | "not_answered"
+  | "answered"
+  | "marked"
+  | "answered_marked";

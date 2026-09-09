@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { LatexRenderer } from "@/components/shared/LatexRenderer";
+import { isAnswerable } from "@/lib/ntaPalette";
 import { getAttemptResult } from "@/services/attempts";
 import type { AttemptPaper } from "@/types/assessment";
 
@@ -30,21 +32,34 @@ export function ResultPage() {
       {paper.sections.map((section) => (
         <section key={section.id} className="space-y-3">
           <h2 className="text-xl font-semibold">{section.name}</h2>
-          {section.questions.map((question) => {
+          {section.questions.filter(isAnswerable).map((question) => {
             const response = paper.responses.find(
               (row) => row.question_id === question.id
             );
             return (
-              <div key={question.id} className="rounded-md border p-3">
-                <p>{question.question_text}</p>
-                <p className="mt-2 text-sm text-muted-foreground">
+              <div
+                key={question.id}
+                className="space-y-2 rounded-md border p-3"
+              >
+                <div className="text-base">
+                  <LatexRenderer content={question.question_text} />
+                </div>
+                {question.image_url ? (
+                  <img
+                    src={question.image_url}
+                    alt=""
+                    className="max-h-48 object-contain"
+                  />
+                ) : null}
+                <p className="text-sm text-muted-foreground">
                   Marks: {response?.marks_obtained ?? "—"} ·{" "}
                   {response?.is_correct ? "Correct" : "Incorrect / unanswered"}
                 </p>
                 {question.explanation ? (
-                  <p className="mt-2 text-sm">
-                    Explanation: {question.explanation}
-                  </p>
+                  <div className="text-sm">
+                    <span className="font-medium">Explanation: </span>
+                    <LatexRenderer content={question.explanation} />
+                  </div>
                 ) : null}
               </div>
             );

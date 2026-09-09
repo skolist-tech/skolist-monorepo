@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "@skolist/auth";
 import { AppLayout } from "./components/layout/AppLayout";
+import { ExamLayout } from "./components/layout/ExamLayout";
 import { RoleRoute } from "./components/layout/RoleRoute";
 import { LoginPage } from "./pages/login";
 import { HomeRedirect } from "./pages/HomeRedirect";
@@ -57,18 +58,27 @@ function App() {
           }
         />
         <Route
-          path="student/attempts/:attemptId"
-          element={
-            <RoleRoute role="student">
-              <AttemptPage />
-            </RoleRoute>
-          }
-        />
-        <Route
           path="student/attempts/:attemptId/result"
           element={
             <RoleRoute role="student">
               <ResultPage />
+            </RoleRoute>
+          }
+        />
+      </Route>
+      <Route
+        path="/student/attempts/:attemptId"
+        element={
+          <ProtectedRoute>
+            <ExamLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route
+          index
+          element={
+            <RoleRoute role="student">
+              <AttemptPage />
             </RoleRoute>
           }
         />
