@@ -1,3 +1,4 @@
+--IDEMPOTENT
 -- Make difficulty level columns use NULL defaults instead of hard-coded values
 -- This allows subject-specific configurations to properly set default difficulty distributions
 

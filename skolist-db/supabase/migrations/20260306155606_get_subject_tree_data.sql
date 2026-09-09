@@ -1,3 +1,4 @@
+--IDEMPOTENT
 -- Create RPC function to fetch complete subject tree data (chapters -> topics -> concepts)
 -- This replaces multiple client-side queries with a single optimized database call
 

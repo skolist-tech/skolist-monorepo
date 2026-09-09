@@ -1,3 +1,4 @@
+--IDEMPOTENT
 -- RPC function to batch fetch version states for multiple questions
 -- Returns canUndo and canRedo for each question in a single query
 

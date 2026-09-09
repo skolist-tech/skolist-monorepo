@@ -1,3 +1,4 @@
+--IDEMPOTENT
 -- Fix student submit flow: allow status transition in UPDATE policy
 -- Previous policy used only USING(status='in_progress'), which is applied to NEW rows too
 -- and blocked updates that set status='submitted'.

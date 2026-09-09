@@ -13,6 +13,7 @@ Repo-wide rules: [../CONTRIBUTING.md](../CONTRIBUTING.md). Setup: [SETUP.md](./S
 ## Conventions
 
 - Prefer **additive** migrations.
+- Prefer **idempotent** migrations so they can be re-applied without error (`IF NOT EXISTS`, `CREATE OR REPLACE`, `DROP … IF EXISTS`, guarded `DO` blocks). If the whole file is idempotent, put `--IDEMPOTENT` as the first line. Do not add that marker unless every statement can run twice safely.
 - Keep seed UUIDs / emails **stable** once referenced by backend tests or `e2e/tests/assessment_api/seed.ts`.
 - Define orgs/users once in `python_seeds/data/` and import them elsewhere — avoid duplicated credentials.
 - Python seed runners live as `python_seeds/_…_seed_….py` (auto-discovered by `seed.py`).

@@ -1,3 +1,4 @@
+--IDEMPOTENT
 -- Add columns (test user tag) if not exists (idempotent)
 DO $$
 BEGIN

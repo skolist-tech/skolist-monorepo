@@ -1,3 +1,4 @@
+--IDEMPOTENT
 -- Make numerical_answer_count and integer_answer_count nullable to match other question type columns
 -- This allows subject-specific configurations to properly set default values
 

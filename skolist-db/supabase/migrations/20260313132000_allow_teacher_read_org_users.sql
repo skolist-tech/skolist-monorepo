@@ -1,3 +1,4 @@
+--IDEMPOTENT
 -- Allow teachers/admin/principals to read user profiles in their own org.
 -- Required for test dashboard joins that show student names.
 
