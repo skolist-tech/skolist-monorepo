@@ -15,6 +15,17 @@ Intern-oriented walkthroughs (optional, more narrative):
 - [backend/INTERN_GUIDE.md](./backend/INTERN_GUIDE.md)
 - [frontend/INTERN_GUIDE.md](./frontend/INTERN_GUIDE.md)
 
+## Python virtualenvs
+
+Never use system / raw `python` (or `python3`) for this repo. Each Python package has its own venv — activate that one before running anything.
+
+| Work | Venv | Activate |
+| --- | --- | --- |
+| Anything **skolist-db** related (seeds, `seed.py`, `unseed.py`, seed scripts) | `skolist-db/venv` | `cd skolist-db && source venv/bin/activate` |
+| Anything **backend** related (API, pytest, ruff, pylint, uvicorn) | `backend/venv` | `cd backend && source venv/bin/activate` |
+
+Do not mix them: do not run seeds with `backend/venv`, and do not run the API or backend tests with `skolist-db/venv`. If the venv is missing, create it from that package’s [SETUP.md](./SETUP.md) (`python -m venv venv` is only for creating the venv, then use `venv/bin/python` / activate from then on).
+
 ## Branches
 
 Work from an up-to-date `stage` (or the branch your team designates), never commit directly to `main` / `stage` unless you own releases.
@@ -81,6 +92,7 @@ Run the checks for the packages you touched:
 
 ```bash
 cd backend
+source venv/bin/activate
 ruff check .
 ruff format --check .
 pylint .
@@ -103,6 +115,7 @@ Details: [frontend/CONTRIBUTING.md](./frontend/CONTRIBUTING.md).
 
 - Prefer new migrations over editing applied history.
 - Keep Python seed IDs / emails in sync with backend and e2e expectations.
+- Run Python seeds from `skolist-db/venv` (`cd skolist-db && source venv/bin/activate`), never raw `python`.
 
 Details: [skolist-db/CONTRIBUTING.md](./skolist-db/CONTRIBUTING.md).
 
