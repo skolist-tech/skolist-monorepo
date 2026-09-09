@@ -60,11 +60,26 @@ docs: document local _local_seed_*.py scratch seeds
 
 You may add notes, context, or a longer body after this block if needed, but the **one line per change** list is the important part and should always be present.
 
+### Before committing (mandatory)
+
+**Do not commit until you have run the tests / checks for every package your change touches.** Type-check alone, “it seeded”, or “it compiles” is not enough when that package has a defined test / quality bar below.
+
+| Touched | Must run before commit |
+| --- | --- |
+| `backend/` | `ruff check .`, `ruff format --check .`, `pylint .`, `pytest tests/unit` (+ integration when DB-related) — from `backend/venv` |
+| `frontend/` | `pnpm lint`, `pnpm type-check` |
+| `skolist-db/` | Apply / validate migrations as needed; smoke seed path from `skolist-db/venv` when seeds change; keep IDs in sync with backend/e2e |
+| `e2e/` or behaviour covered by Playwright | Relevant `npm run test:…` project(s) |
+
+If a check fails, **fix it and create a new commit** only after green (or update the PR description with an explicit waiver only when the team agrees). Skipping these because the change “looks fine” is not allowed.
+
+Full commands: [Quality bar (by area)](#quality-bar-by-area).
+
 ## Pull requests
 
 1. Keep PRs focused (one concern per PR when practical).
 2. Describe **why** and how to test (checklist welcome).
-3. Ensure package checks pass (see below) before requesting review.
+3. Ensure package checks pass (see below) before requesting review — same bar as **Before committing**.
 4. Do not commit secrets (`.env`, service keys, Firebase JSON, etc.).
 
 ## Improve the docs as you go
