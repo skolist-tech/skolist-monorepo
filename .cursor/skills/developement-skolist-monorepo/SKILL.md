@@ -22,3 +22,8 @@ Use the **`gh` CLI** for all GitHub work in this repo: issues, pull requests, ch
 ## After you finish
 
 If the work reveals missing or wrong docs, update the relevant README / SETUP / CONTRIBUTING (or note it for the human), per [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+
+## User Side Tips
+
+- If the user says you something related to changed in codebase, and you haven't done them, then without doing any further change just report that to the user.
