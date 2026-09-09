@@ -147,7 +147,19 @@ def save_response(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Question is not part of this test")
 
     payload = dump_unset(body)
-    payload["answered_at"] = _now_iso()
+    has_answer_fields = any(
+        key in payload
+        for key in (
+            "selected_mcq_option",
+            "selected_msq_options",
+            "numerical_answer",
+            "integer_answer",
+        )
+    )
+    if has_answer_fields:
+        payload["answered_at"] = _now_iso()
+    if "is_visited" not in payload:
+        payload["is_visited"] = True
     existing = fetch_all(
         assessment_table(supabase, RESPONSES_TABLE)
         .select("*")

@@ -28,6 +28,11 @@ def make_question(**overrides: Any) -> dict[str, Any]:
         "integer_answer": None,
         "answer": "4",
         "explanation": "Because 2+2=4",
+        "image_url": None,
+        "option1_image_url": None,
+        "option2_image_url": None,
+        "option3_image_url": None,
+        "option4_image_url": None,
     }
     question.update(overrides)
     return question
@@ -45,6 +50,8 @@ def make_response(**overrides: Any) -> dict[str, Any]:
         "is_correct": True,
         "marks_obtained": 4,
         "answered_at": "2026-08-18T05:10:00+00:00",
+        "is_visited": True,
+        "is_marked_for_review": False,
     }
     response.update(overrides)
     return response
