@@ -41,15 +41,15 @@ class TestAssessmentAuth:
         body = response.json()
         assert body["role"] == "student"
         assert body["user_type"] == "student"
+        assert body.get("name")
+        assert body.get("avatar_url")
 
     def test_private_user_cannot_list_teacher_tests(self, app, auth_session: dict):
         response = _client_with_token(app, auth_session["access_token"]).get(f"{PREFIX}/tests")
         assert response.status_code == 403
 
     def test_private_user_cannot_list_assigned_tests(self, app, auth_session: dict):
-        response = _client_with_token(app, auth_session["access_token"]).get(
-            f"{PREFIX}/assigned-tests"
-        )
+        response = _client_with_token(app, auth_session["access_token"]).get(f"{PREFIX}/assigned-tests")
         assert response.status_code == 403
 
     def test_student_cannot_read_teacher_test_detail(self, student_test_client: TestClient):

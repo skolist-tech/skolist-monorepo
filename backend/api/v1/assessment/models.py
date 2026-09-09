@@ -37,6 +37,8 @@ class AssessmentActor(BaseModel):
     email: str | None = None
     user_type: str
     org_id: str | None = None
+    name: str | None = None
+    avatar_url: str | None = None
 
     @property
     def is_teacher(self) -> bool:
@@ -64,6 +66,8 @@ class MeResponse(BaseModel):
     email: str | None = None
     user_type: str
     org_id: str | None = None
+    name: str | None = None
+    avatar_url: str | None = None
     role: Literal["teacher", "student", "other"]
 
 
@@ -129,6 +133,11 @@ class QuestionCreate(BaseModel):
     integer_answer: int | None = None
     answer: str | None = None
     explanation: str | None = None
+    image_url: str | None = None
+    option1_image_url: str | None = None
+    option2_image_url: str | None = None
+    option3_image_url: str | None = None
+    option4_image_url: str | None = None
 
 
 class QuestionUpdate(BaseModel):
@@ -152,6 +161,11 @@ class QuestionUpdate(BaseModel):
     integer_answer: int | None = None
     answer: str | None = None
     explanation: str | None = None
+    image_url: str | None = None
+    option1_image_url: str | None = None
+    option2_image_url: str | None = None
+    option3_image_url: str | None = None
+    option4_image_url: str | None = None
 
 
 class AssigneeCreate(BaseModel):
@@ -163,6 +177,8 @@ class ResponseUpsert(BaseModel):
     selected_msq_options: list[bool] | None = None
     numerical_answer: float | None = None
     integer_answer: int | None = None
+    is_visited: bool | None = None
+    is_marked_for_review: bool | None = None
 
 
 class StudentQuestion(BaseModel):
@@ -180,6 +196,11 @@ class StudentQuestion(BaseModel):
     option2: str | None = None
     option3: str | None = None
     option4: str | None = None
+    image_url: str | None = None
+    option1_image_url: str | None = None
+    option2_image_url: str | None = None
+    option3_image_url: str | None = None
+    option4_image_url: str | None = None
 
 
 class TeacherQuestion(StudentQuestion):
@@ -203,6 +224,8 @@ class StudentResponse(BaseModel):
     numerical_answer: float | None = None
     integer_answer: int | None = None
     answered_at: datetime | str | None = None
+    is_visited: bool = False
+    is_marked_for_review: bool = False
 
 
 class GradedResponse(StudentResponse):

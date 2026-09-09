@@ -64,6 +64,11 @@ def _question(**fields) -> dict:
         "updated_at": CREATED_AT,
         "hardness_level": "easy",
         "answer": None,
+        "image_url": None,
+        "option1_image_url": None,
+        "option2_image_url": None,
+        "option3_image_url": None,
+        "option4_image_url": None,
     }
     row.update(fields)
     return row

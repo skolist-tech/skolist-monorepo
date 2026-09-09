@@ -68,7 +68,7 @@ def require_assessment_actor(
     user_id = _auth_user_id(user)
     response = (
         supabase.table("users")
-        .select("id, email, user_type, org_id")
+        .select("id, email, user_type, org_id, name, avatar_url")
         .eq("id", user_id)
         .limit(1)
         .execute()
@@ -85,6 +85,8 @@ def require_assessment_actor(
         email=row.get("email"),
         user_type=row.get("user_type") or "",
         org_id=str(row["org_id"]) if row.get("org_id") else None,
+        name=row.get("name"),
+        avatar_url=row.get("avatar_url"),
     )
 
 

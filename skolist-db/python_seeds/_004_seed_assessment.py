@@ -13,10 +13,16 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from python_seeds.client import SUPABASE_URL, get_supabase_admin_client, require_public_user
+from python_seeds.client import (
+    SUPABASE_URL,
+    get_supabase_admin_client,
+    require_public_user,
+    upload_public_bytes,
+)
 from python_seeds.data import assessment as data
 from python_seeds.data import orgs as org_data
 from python_seeds.data import user as user_data
+from python_seeds.data.photos import QUESTION_FIGURES, SEED_ASSETS_BUCKET
 
 SEED_KEYS = ("created_by_key", "student_key")
 
@@ -102,6 +108,21 @@ def seed_assessment():
         assignee["user_id"] = students[assignee["student_key"]]["id"]
 
     questions = copy.deepcopy(data.QUESTIONS)
+    unique_figures = {path: builder for path, builder in QUESTION_FIGURES.values()}
+    figure_urls = {
+        object_path: upload_public_bytes(
+            supabase,
+            SEED_ASSETS_BUCKET,
+            object_path,
+            builder(),
+        )
+        for object_path, builder in unique_figures.items()
+    }
+    for question in questions:
+        figure = QUESTION_FIGURES.get(question["id"])
+        if figure:
+            question["image_url"] = figure_urls[figure[0]]
+
     parents = [q for q in questions if not q.get("parent_question_id")]
     children = [q for q in questions if q.get("parent_question_id")]
 

@@ -79,6 +79,8 @@ python python_seeds/_004_seed_assessment.py
 
 Default seed password for many users is `password123` (see `python_seeds/data/_002_data_user.py`). Assessment e2e and backend fixtures expect those emails / stable UUIDs.
 
+Seeded users also get a public avatar SVG in the `seed_assets` storage bucket (`public.users.avatar_url`). A few assessment questions get figure SVGs in the same bucket (`assessment.questions.image_url`). Re-run `_002_seed_users.py` / `_004_seed_assessment.py` (or `python seed.py`) after `supabase db reset` so those objects exist.
+
 ## Wipe and reseed
 
 ```bash

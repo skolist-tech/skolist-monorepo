@@ -23,6 +23,17 @@ Follow **[skolist-db/SETUP.md](./skolist-db/SETUP.md)**:
 
 You need API URL + anon / service keys from `supabase status` for backend and frontend `.env` files.
 
+### Seed login credentials
+
+Python seeds create shared demo users (defined in `skolist-db/python_seeds/data/_002_data_user.py`). Every seeded user uses the same password:
+
+| | |
+| --- | --- |
+| Password | `password123` (`DEFAULT_PASSWORD`) |
+| Examples | `teacher1@seed.skolist.com`, `student1@seed.skolist.com`, `student2@seed.skolist.com`, `student3@seed.skolist.com`, `test@example.com` |
+
+Emails are listed in that data file; the password is **not** repeated per user — it comes from `DEFAULT_PASSWORD`. Seeded users also get an avatar at `public.users.avatar_url` (SVG in the `seed_assets` bucket).
+
 ## 2. Backend — `backend`
 
 ```bash

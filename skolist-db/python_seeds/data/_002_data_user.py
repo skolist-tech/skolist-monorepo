@@ -2,9 +2,13 @@
 
 Emails, password, and org membership live here. Other seed modules import
 these dicts instead of repeating credentials.
+
+Avatars are generated as portrait SVGs (not name initials) and uploaded
+to the public `seed_assets` bucket by `_002_seed_users.py`.
 """
 
 from ._001_data_orgs import SEED_ORG
+from .photos import USER_AVATAR_COLORS, avatar_object_path
 
 DEFAULT_PASSWORD = "password123"
 SEED_ORG_ID = SEED_ORG["id"]
@@ -16,6 +20,8 @@ def _auth_user(*, email: str, name: str, user_type: str | None = None) -> dict:
         "password": DEFAULT_PASSWORD,
         "user_metadata": {"name": name},
         "org_id": SEED_ORG_ID,
+        "avatar_path": avatar_object_path(email),
+        "avatar_color": USER_AVATAR_COLORS.get(email, "#475569"),
     }
     if user_type:
         row["user_type"] = user_type

@@ -21,5 +21,10 @@ The Assessment database schema is as follows:
     - This table stores the details of the sections of a test.
     - A section is a part of a test that contains questions of a specific subject generally.
     - A section is linked to a test using the test_id.
-    
+
+- assessment.questions
+    - Optional NTA-style figures live on `image_url` and `optionN_image_url`.
+    - Python seeds upload a few SVG figures to the public `seed_assets` storage bucket and set those URLs.
+
+Candidate photos are **not** on the assessment schema. They are `public.users.avatar_url`. `_002_seed_users.py` uploads portrait SVGs (person + camera badge, not name initials) to `seed_assets/avatars/` and writes the public URL onto each seeded user. 
 

@@ -15,5 +15,7 @@ def get_me(actor: AssessmentActor = Depends(require_assessment_actor)) -> MeResp
         email=actor.email,
         user_type=actor.user_type,
         org_id=actor.org_id,
+        name=actor.name,
+        avatar_url=actor.avatar_url,
         role=actor.role,
     )
