@@ -31,6 +31,24 @@ Examples: `feature/assessment-login-e2e`, `bugs/fix-navbar-overflow`, `chore/set
 
 When renaming or moving a tracked file, always use `git mv`. Never use plain `mv` (or a filesystem rename) in this monorepo — Git then treats the change as a delete plus an add and you lose the rename.
 
+### Commit messages
+
+Structure the commit message so **each change in that commit** gets its own line:
+
+```
+change: one-liner description
+change: one-liner description
+```
+
+Example:
+
+```
+feat(skolist-db): auto-discover _*_seed_*.py scripts
+docs: document local _local_seed_*.py scratch seeds
+```
+
+You may add notes, context, or a longer body after this block if needed, but the **one line per change** list is the important part and should always be present.
+
 ## Pull requests
 
 1. Keep PRs focused (one concern per PR when practical).
