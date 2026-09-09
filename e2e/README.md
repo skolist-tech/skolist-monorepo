@@ -53,6 +53,7 @@ npm run test:headed:video:images  # video + distinct JPEG frames (ffmpeg)
 npm run test:assessments:headed   # assessments, headed, 1 worker
 npm run test:assessments:headed:video
 npm run test:assessments:headed:video:images
+npm run test:browser              # one headed Chromium window only (no app servers; WM / Hyprland check)
 npm run test:ui                   # Playwright UI
 npm run codegen                   # record selectors
 ```
@@ -63,6 +64,8 @@ Run a single file:
 npx playwright test --project=assessments tests/assessment_api/teacher.spec.ts
 npx playwright test --project=qgen tests/login.spec.ts
 ```
+
+`npm run test:browser` uses `playwright.browser-check.config.ts` — it does **not** start qgen/assessments. Use it to confirm the browser opens and your window manager rules (float / workspace) apply.
 
 ### Video recording
 

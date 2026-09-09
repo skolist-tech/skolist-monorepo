@@ -13,6 +13,7 @@
     "test:assessments:headed": "playwright test --project=assessments --headed --workers=1",
     "test:assessments:headed:video": "E2E_VIDEO=1 playwright test --project=assessments --headed --workers=1",
     "test:assessments:headed:video:images": "E2E_VIDEO=1 E2E_IMAGES=1 playwright test --project=assessments --headed --workers=1",
+    "test:browser": "playwright test --config=playwright.browser-check.config.ts --headed --workers=1",
     "test:ui": "playwright test --ui",
     "codegen": "playwright codegen"
   },
