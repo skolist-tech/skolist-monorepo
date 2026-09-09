@@ -67,6 +67,15 @@ npx playwright test --project=qgen tests/login.spec.ts
 
 `npm run test:browser` uses `playwright.browser-check.config.ts` — it does **not** start qgen/assessments. Use it to confirm the browser opens and your window manager rules (float / workspace) apply.
 
+## Shared-state note
+
+Assessment specs can mutate attempt state (`Start`, `Continue`, submit, mark-for-review). Prefer:
+
+- different seeded students for different workflow specs, and
+- `--workers=1` when a run intentionally exercises the same student / same test end-to-end.
+
+Playwright does not provide a clean general-purpose "run test B only if test A passed" feature inside one spec file the way a build graph would. Project-level dependencies / global setup exist, but for product e2e the better pattern is usually **independent tests + isolated seed state**, not test-on-test dependencies.
+
 ### Video recording
 
 Opt-in only (off by default). Playwright has no `--video` CLI flag, so we use `E2E_VIDEO=1`:

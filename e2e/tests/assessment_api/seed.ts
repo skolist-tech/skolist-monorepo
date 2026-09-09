@@ -32,6 +32,12 @@ export const STUDENT_2 = {
   name: "Student 2",
 };
 
+export const STUDENT_3 = {
+  email: process.env.ASSESSMENT_STUDENT_3_EMAIL ?? "student3@seed.skolist.com",
+  password: SEED_PASSWORD,
+  name: "Student 3",
+};
+
 /** Stable titles + IDs from data_assessment/tests.py / uuids_and_meta.py */
 export const TESTS = {
   jeeMain1: {
@@ -67,3 +73,22 @@ export const STUDENT_VISIBLE_PUBLISHED = [
   TESTS.neetOpen.name,
   TESTS.neetLive.name,
 ] as const;
+
+/**
+ * Local full-length NTA mocks from python_seeds/data/_local_papers/
+ * (gitignored; seeded via _local_seed_full_nta_papers.py).
+ */
+export const FULL_MOCKS = {
+  jeeMain: {
+    id: "00000000-0000-0000-0000-000000001000",
+    name: "JEE Main Full Mock (Public Archive)",
+  },
+  neet: {
+    id: "00000000-0000-0000-0000-000000002000",
+    name: "NEET UG Full Mock (Public Archive)",
+  },
+  jeeAdvanced: {
+    id: "00000000-0000-0000-0000-000000003000",
+    name: "JEE Advanced Paper-1 Full Mock (Public Archive)",
+  },
+} as const;
