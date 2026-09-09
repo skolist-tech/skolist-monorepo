@@ -1,3 +1,9 @@
+---
+name: developement-skolist-monorepo
+description: >-
+  Developement skolist monorepo
+---
+
 # Agent instructions
 
 This file applies to **every** task in this monorepo.
