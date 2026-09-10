@@ -51,6 +51,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.17.0",
     "jsdom": "^28.1.0",
     "msw": "^2.12.10",
     "postcss": "^8.4.49",
