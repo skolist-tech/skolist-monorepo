@@ -2,6 +2,8 @@
 
 Browser end-to-end tests for Skolist. Specs live under `tests/`; Playwright starts the frontends (or reuses ones already running).
 
+What each spec covers: **[TESTS.md](./TESTS.md)**.
+
 Monorepo docs: [../README.md](../README.md) · [../SETUP.md](../SETUP.md) · [../CONTRIBUTING.md](../CONTRIBUTING.md)  
 Stack setup: [../skolist-db/SETUP.md](../skolist-db/SETUP.md) · [../backend/SETUP.md](../backend/SETUP.md) · [../frontend/SETUP.md](../frontend/SETUP.md)
 
@@ -109,6 +111,8 @@ E2E_IMAGES=1 npx playwright test --headed --project=assessments
 `E2E_IMAGES=1` also turns video on. Output: `e2e/videos/<timestamp>/<test-folder>/images/frame_001.jpg`, …
 
 ## Layout
+
+What each file is for: **[TESTS.md](./TESTS.md)**.
 
 ```
 e2e/
