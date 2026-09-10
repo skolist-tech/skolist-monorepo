@@ -18,7 +18,8 @@ and video will be produced , tell that to user. and remind him to delete that te
 ### How to run it in this repo
 
 1. Put the temporary spec under `e2e/tests/` (for assessments, prefer
-   `e2e/tests/assessment_api/workflow/` with a clear name like `jee-main-complete-attempt.spec.ts`).
+   `e2e/tests/assessment_api/students/` or `e2e/tests/assessment_api/teachers/`
+   with a clear name like `jee-main-complete-attempt.spec.ts`).
 2. Reuse existing helpers (`e2e/tests/helpers/auth.ts`, assessment seeds) when the flow needs login or seed data.
 3. Record with video enabled. Cursor’s agent sandbox may set
    `PLAYWRIGHT_BROWSERS_PATH` to an empty `/tmp/cursor-sandbox-cache/.../playwright`.

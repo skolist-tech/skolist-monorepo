@@ -24,9 +24,12 @@ Start these yourself before running tests:
 
 2. **Backend** on `:8080`  
    From `backend/`, e.g. `docker compose up` or uvicorn.  
+   Compose **does not** hot-reload Python. If you added or changed API routes, `docker compose restart` in `backend/` first or e2e will hit **404** on the old process. Host `uvicorn --reload` does not need that. See [backend/SETUP.md](../backend/SETUP.md).
 
 
 Playwright will **build + preview** qgen (`3001`) and assessments (`3003`) automatically. If those servers are already up, they are reused (outside CI).
+
+The Cursor IDE browser tab often cannot open local apps (`localhost` / `127.0.0.1`). Use these Playwright commands (or `curl`) to verify UI — do not treat a blank IDE-browser tab as the app being down.
 
 ## Setup
 
@@ -61,7 +64,7 @@ npm run codegen                   # record selectors
 Run a single file:
 
 ```bash
-npx playwright test --project=assessments tests/assessment_api/teacher.spec.ts
+npx playwright test --project=assessments tests/assessment_api/teachers/teacher.spec.ts
 npx playwright test --project=qgen tests/login.spec.ts
 ```
 
@@ -117,9 +120,15 @@ e2e/
     assessment_api/
       seed.ts                 # seed emails / test names / IDs
       helpers.ts
-      auth.spec.ts
-      teacher.spec.ts
-      student.spec.ts
+      auth.spec.ts            # shared (teacher + student)
+      teachers/
+        teacher.spec.ts
+        workflow.spec.ts
+      students/
+        student.spec.ts
+        workflow.spec.ts
+        jee-main-complete-attempt.spec.ts
+        nta-jee-main-attempt.spec.ts
 ```
 
 ## Notes

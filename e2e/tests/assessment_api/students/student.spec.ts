@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { loginAs } from "../helpers/auth";
-import { testCard } from "./helpers";
-import { STUDENT_1, STUDENT_3, STUDENT_VISIBLE_PUBLISHED, TESTS } from "./seed";
+import { loginAs } from "../../helpers/auth";
+import { testCard } from "../helpers";
+import { STUDENT_1, STUDENT_3, STUDENT_VISIBLE_PUBLISHED, TESTS } from "../seed";
 
 async function openAssignedTests(page: import("@playwright/test").Page, email: string, password: string) {
   await loginAs(page, email, password);

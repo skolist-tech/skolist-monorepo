@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { loginAs } from "../helpers/auth";
-import { testCard } from "./helpers";
-import { TEACHER_1, TESTS } from "./seed";
+import { loginAs } from "../../helpers/auth";
+import { testCard } from "../helpers";
+import { TEACHER_1, TESTS } from "../seed";
 
 test.describe("Teacher assessment flows", () => {
   test.beforeEach(async ({ page }) => {
