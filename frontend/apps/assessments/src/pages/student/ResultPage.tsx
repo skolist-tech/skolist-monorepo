@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { BackLink } from "@/components/layout/BackLink";
 import { LatexRenderer } from "@/components/shared/LatexRenderer";
 import { isAnswerable } from "@/lib/ntaPalette";
 import { getAttemptResult } from "@/services/attempts";
@@ -17,17 +18,33 @@ export function ResultPage() {
       .catch((err: Error) => setError(err.message));
   }, [attemptId]);
 
-  if (error) return <p className="text-destructive">{error}</p>;
-  if (!paper) return <p className="text-muted-foreground">Loading result…</p>;
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <BackLink to="/student/tests" />
+        <p className="text-destructive">{error}</p>
+      </div>
+    );
+  }
+  if (!paper)
+    return (
+      <div className="space-y-4">
+        <BackLink to="/student/tests" />
+        <p className="text-muted-foreground">Loading result…</p>
+      </div>
+    );
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{paper.test.name}</h1>
-        <p className="text-muted-foreground">
-          Score {paper.attempt.total_marks_obtained ?? "—"} /{" "}
-          {paper.attempt.total_marks_possible ?? "—"}
-        </p>
+      <div className="space-y-3">
+        <BackLink to="/student/tests" />
+        <div>
+          <h1 className="text-3xl font-bold">{paper.test.name}</h1>
+          <p className="text-muted-foreground">
+            Score {paper.attempt.total_marks_obtained ?? "—"} /{" "}
+            {paper.attempt.total_marks_possible ?? "—"}
+          </p>
+        </div>
       </div>
       {paper.sections.map((section) => (
         <section key={section.id} className="space-y-3">

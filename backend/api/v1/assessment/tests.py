@@ -118,6 +118,14 @@ def update_test(
     return rows[0] if rows else {**test, **payload}
 
 
+@router.delete("/tests/{test_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_test(
+    test: dict = Depends(require_test_for_teacher),
+    supabase: Client = Depends(get_supabase_client),
+) -> None:
+    assessment_table(supabase, "tests").delete().eq("id", test["id"]).execute()
+
+
 @router.get("/tests/{test_id}/attempts")
 def list_test_attempts(
     test: dict = Depends(require_test_for_teacher),

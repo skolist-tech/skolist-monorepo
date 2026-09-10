@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Button, Input } from "@skolist/ui";
+import { BackLink } from "@/components/layout/BackLink";
 import { AssigneeManager } from "@/components/teacher/AssigneeManager";
 import { SectionList } from "@/components/teacher/SectionList";
 import {
@@ -37,20 +38,29 @@ export function TestEditorPage() {
   }, [testId]);
 
   if (!test) {
-    return <p className="text-muted-foreground">{error || "Loading…"}</p>;
+    return (
+      <div className="space-y-4">
+        <BackLink to="/teacher/tests" />
+        <p className="text-muted-foreground">{error || "Loading…"}</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{test.name}</h1>
-          <p className="text-muted-foreground">
-            {test.exam_type} · {test.status} · {test.duration_minutes} min
-          </p>
+        <div className="space-y-3">
+          <BackLink to="/teacher/tests" />
+          <div>
+            <h1 className="text-3xl font-bold">{test.name}</h1>
+            <p className="text-muted-foreground">
+              {test.exam_type} · {test.status} · {test.duration_minutes} min
+            </p>
+          </div>
         </div>
         {test.status === "draft" ? (
           <Button
+            type="button"
             onClick={() =>
               updateTest(test.id, { status: "published" })
                 .then(reload)
@@ -59,8 +69,10 @@ export function TestEditorPage() {
           >
             Publish
           </Button>
-        ) : (
+        ) : null}
+        {test.status === "published" ? (
           <Button
+            type="button"
             variant="outline"
             onClick={() =>
               updateTest(test.id, { status: "closed" })
@@ -68,9 +80,9 @@ export function TestEditorPage() {
                 .catch((err: Error) => setError(err.message))
             }
           >
-            Close
+            Close paper
           </Button>
-        )}
+        ) : null}
       </div>
       {error ? <p className="text-destructive">{error}</p> : null}
 

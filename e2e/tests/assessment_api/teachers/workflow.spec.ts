@@ -1,6 +1,14 @@
 import { test, expect } from "@playwright/test";
 import { loginAs } from "../../helpers/auth";
-import { createNamedDraft, uniqueDraftName } from "../helpers";
+import {
+  closePublishedPaper,
+  createNamedDraft,
+  goBackToTeacherTests,
+  openDeleteDialog,
+  publishDraft,
+  testCard,
+  uniqueDraftName,
+} from "../helpers";
 import { STUDENT_3, TEACHER_2 } from "../seed";
 
 test.describe.configure({ mode: "serial" });
@@ -74,11 +82,42 @@ test.describe("Teacher authoring workflows", () => {
   test("publishes a new draft", async ({ page }) => {
     const name = uniqueDraftName();
     await createNamedDraft(page, name);
+    await publishDraft(page);
+  });
 
-    await page.getByRole("button", { name: "Publish" }).click();
-    await expect(page.getByText(/published/i).first()).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
+  test("closes a published paper and returns to the list", async ({ page }) => {
+    const name = uniqueDraftName("Close paper");
+    await createNamedDraft(page, name);
+    await publishDraft(page);
+    await closePublishedPaper(page);
+
+    await goBackToTeacherTests(page);
+    await expect(testCard(page, name).getByText(/· closed$/)).toBeVisible();
+  });
+
+  test("cancelling delete keeps the paper on the list", async ({ page }) => {
+    const name = uniqueDraftName("Keep draft");
+    await createNamedDraft(page, name);
+    await goBackToTeacherTests(page);
+
+    const dialog = await openDeleteDialog(page, name);
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+  });
+
+  test("confirms delete and removes the paper from the list", async ({
+    page,
+  }) => {
+    const name = uniqueDraftName("Delete draft");
+    await createNamedDraft(page, name);
+    await goBackToTeacherTests(page);
+
+    const dialog = await openDeleteDialog(page, name);
+    await dialog.getByRole("button", { name: "Delete" }).click();
+    await expect(dialog).toHaveCount(0, { timeout: 15_000 });
+    await expect(
+      page.getByRole("heading", { name, exact: true })
+    ).toHaveCount(0);
   });
 });

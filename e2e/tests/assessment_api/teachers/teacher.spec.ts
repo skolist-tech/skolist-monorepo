@@ -47,6 +47,23 @@ test.describe("Teacher assessment flows", () => {
     await expect(page.getByRole("heading", { name: "Attempts" })).toBeVisible();
     // Seed: all 3 students started; student2 also has a graded retake.
     await expect(page.getByText(/in_progress|graded/).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Close paper" })).toBeVisible();
+  });
+
+  test("closed paper shows Back and no Close paper action", async ({
+    page,
+  }) => {
+    await page.goto(`/teacher/tests/${TESTS.advClosed.id}`);
+    await expect(
+      page.getByRole("heading", { name: TESTS.advClosed.name })
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/jee_advanced · closed/)).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Close paper" })).toHaveCount(
+      0
+    );
+    await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
   });
 
   test("Open link on draft card navigates to the editor", async ({ page }) => {
@@ -54,5 +71,24 @@ test.describe("Teacher assessment flows", () => {
       .getByRole("link", { name: "Open" })
       .click();
     await expect(page).toHaveURL(new RegExp(`/teacher/tests/${TESTS.advDraft.id}`));
+  });
+
+  test("Back from the editor returns to the tests list", async ({ page }) => {
+    await testCard(page, TESTS.advDraft.name)
+      .getByRole("link", { name: "Open" })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`/teacher/tests/${TESTS.advDraft.id}`)
+    );
+    await expect(
+      page.getByRole("heading", { name: TESTS.advDraft.name })
+    ).toBeVisible({ timeout: 15_000 });
+
+    await page.getByRole("link", { name: "Back" }).click();
+    await expect(page).toHaveURL(/\/teacher\/tests$/);
+    await expect(page.getByRole("heading", { name: "Tests" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: TESTS.advDraft.name })
+    ).toBeVisible();
   });
 });

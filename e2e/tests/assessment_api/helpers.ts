@@ -126,8 +126,34 @@ export async function assignStudentByName(page: Page, studentName: string) {
 
 export async function publishDraft(page: Page) {
   await page.getByRole("button", { name: "Publish" }).click();
-  await expect(page.getByText(/published/i).first()).toBeVisible({
+  await expect(page.getByText(/· published ·/i)).toBeVisible({
     timeout: 15_000,
   });
   await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Close paper" })).toBeVisible();
+}
+
+export async function closePublishedPaper(page: Page) {
+  await page.getByRole("button", { name: "Close paper" }).click();
+  await expect(page.getByText(/· closed ·/i)).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByRole("button", { name: "Close paper" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
+}
+
+export async function goBackToTeacherTests(page: Page) {
+  await page.getByRole("link", { name: "Back" }).click();
+  await expect(page).toHaveURL(/\/teacher\/tests$/);
+  await expect(page.getByRole("heading", { name: "Tests" })).toBeVisible();
+}
+
+export async function openDeleteDialog(page: Page, title: string) {
+  await testCard(page, title).getByRole("button", { name: "Delete" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog.getByRole("heading", { name: "Delete this paper?" })
+  ).toBeVisible();
+  return dialog;
 }

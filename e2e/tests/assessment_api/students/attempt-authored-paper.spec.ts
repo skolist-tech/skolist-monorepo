@@ -58,6 +58,11 @@ test("teacher authors and publishes a paper, then a student sits it and the teac
     timeout: 15_000,
   });
   await expect(page.getByText(/Score 8\s*\/\s*8/)).toBeVisible();
+  await page.getByRole("link", { name: "Back" }).click();
+  await expect(page).toHaveURL(/\/student\/tests$/);
+  await expect(
+    page.getByRole("heading", { name: "Assigned tests" })
+  ).toBeVisible();
 
   await logOut(page);
   await loginAs(page, TEACHER_2.email, TEACHER_2.password);
@@ -73,4 +78,7 @@ test("teacher authors and publishes a paper, then a student sits it and the teac
   await expect(page.getByText(/score\s+8\s*\/\s*8/i)).toBeVisible({
     timeout: 15_000,
   });
+  await page.getByRole("link", { name: "Back" }).click();
+  await expect(page).toHaveURL(/\/teacher\/tests\/[0-9a-f-]{36}$/i);
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
 });

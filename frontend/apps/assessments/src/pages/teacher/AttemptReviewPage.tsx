@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { BackLink } from "@/components/layout/BackLink";
 import { getTeacherAttempt } from "@/services/tests";
 import type {
   AttemptSummary,
@@ -25,19 +26,34 @@ export function AttemptReviewPage() {
       .catch((err: Error) => setError(err.message));
   }, [testId, attemptId]);
 
-  if (error) return <p className="text-destructive">{error}</p>;
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <BackLink to={testId ? `/teacher/tests/${testId}` : "/teacher/tests"} />
+        <p className="text-destructive">{error}</p>
+      </div>
+    );
+  }
   if (!attempt || !test)
-    return <p className="text-muted-foreground">Loading…</p>;
+    return (
+      <div className="space-y-4">
+        <BackLink to={testId ? `/teacher/tests/${testId}` : "/teacher/tests"} />
+        <p className="text-muted-foreground">Loading…</p>
+      </div>
+    );
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{test.name}</h1>
-        <p className="text-muted-foreground">
-          Attempt {attempt.attempt_number} · {attempt.status} · score{" "}
-          {attempt.total_marks_obtained ?? "—"} /{" "}
-          {attempt.total_marks_possible ?? "—"}
-        </p>
+      <div className="space-y-3">
+        <BackLink to={`/teacher/tests/${test.id}`} />
+        <div>
+          <h1 className="text-3xl font-bold">{test.name}</h1>
+          <p className="text-muted-foreground">
+            Attempt {attempt.attempt_number} · {attempt.status} · score{" "}
+            {attempt.total_marks_obtained ?? "—"} /{" "}
+            {attempt.total_marks_possible ?? "—"}
+          </p>
+        </div>
       </div>
       <ul className="space-y-3">
         {responses.map((response) => (

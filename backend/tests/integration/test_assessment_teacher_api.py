@@ -123,3 +123,31 @@ class TestAssessmentTeacherApi:
             assert test_id in ids
         finally:
             _assessment(service_supabase_client, "tests").delete().eq("id", test_id).execute()
+
+    def test_teacher_can_delete_a_draft(
+        self,
+        teacher_test_client: TestClient,
+        service_supabase_client: Client,
+    ):
+        created = teacher_test_client.post(
+            f"{PREFIX}/tests",
+            json={
+                "name": "API delete me",
+                "exam_type": "jee_main",
+                "duration_minutes": 60,
+                "default_correct_marks": 4,
+                "default_negative_marks": 1,
+            },
+        )
+        assert created.status_code == 201
+        test_id = created.json()["id"]
+        try:
+            deleted = teacher_test_client.delete(f"{PREFIX}/tests/{test_id}")
+            assert deleted.status_code == 204
+            missing = teacher_test_client.get(f"{PREFIX}/tests/{test_id}")
+            assert missing.status_code == 404
+            listed = teacher_test_client.get(f"{PREFIX}/tests")
+            assert listed.status_code == 200
+            assert test_id not in {item["id"] for item in listed.json()["tests"]}
+        finally:
+            _assessment(service_supabase_client, "tests").delete().eq("id", test_id).execute()

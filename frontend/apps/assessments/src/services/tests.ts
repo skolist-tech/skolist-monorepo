@@ -41,6 +41,12 @@ export function updateTest(testId: string, payload: Record<string, unknown>) {
   });
 }
 
+export function deleteTest(testId: string) {
+  return apiFetch<void>(`/tests/${testId}`, {
+    method: "DELETE",
+  });
+}
+
 export function createSection(
   testId: string,
   payload: { name: string; position: number }
