@@ -35,18 +35,26 @@ def create_or_get_auth_user(supabase: Client, user_data: dict) -> str:
     )
     if existing.data:
         user_id = existing.data[0]["id"]
-        print(f"⚠ User already exists: {email} (ID: {user_id})")
+        expected = user_data.get("id")
+        if expected and str(user_id) != str(expected):
+            print(
+                f"⚠ User already exists: {email} (ID: {user_id}; "
+                f"data file wants {expected} — reset + reseed to align)"
+            )
+        else:
+            print(f"⚠ User already exists: {email} (ID: {user_id})")
         return user_id
 
     try:
-        response = supabase.auth.admin.create_user(
-            {
-                "email": email,
-                "password": user_data["password"],
-                "email_confirm": True,
-                "user_metadata": user_data.get("user_metadata", {}),
-            }
-        )
+        attrs = {
+            "email": email,
+            "password": user_data["password"],
+            "email_confirm": True,
+            "user_metadata": user_data.get("user_metadata", {}),
+        }
+        if user_data.get("id"):
+            attrs["id"] = user_data["id"]
+        response = supabase.auth.admin.create_user(attrs)
         user_id = response.user.id
         print(f"✓ Created user: {email} (ID: {user_id})")
         return user_id
