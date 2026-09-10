@@ -51,7 +51,7 @@ From `e2e/`:
 ```bash
 npm test                          # all projects
 npm run test:qgen                 # qgen only
-npm run test:assessments          # assessments only
+npm run test:assessments          # assessments only (1 worker — shared seed users)
 npm run test:headed               # all, headed, 1 worker
 npm run test:headed:video         # headed + record videos → videos/
 npm run test:headed:video:images  # video + distinct JPEG frames (ffmpeg)
@@ -78,6 +78,8 @@ Assessment specs can mutate attempt state (`Start`, `Continue`, submit, mark-for
 
 - different seeded students for different workflow specs, and
 - `--workers=1` when a run intentionally exercises the same student / same test end-to-end.
+
+`npm run test:assessments` already uses **one worker**. Parallel logins as the same seed teacher/student can invalidate the other's JWT (`Invalid or expired token`).
 
 Playwright does not provide a clean general-purpose "run test B only if test A passed" feature inside one spec file the way a build graph would. Project-level dependencies / global setup exist, but for product e2e the better pattern is usually **independent tests + isolated seed state**, not test-on-test dependencies.
 
@@ -128,9 +130,12 @@ e2e/
       teachers/
         teacher.spec.ts
         workflow.spec.ts
+        author-and-publish.spec.ts
       students/
         student.spec.ts
         workflow.spec.ts
+        attempt-authored-paper.spec.ts
+        unreleased-paper.spec.ts
         jee-main-complete-attempt.spec.ts
         nta-jee-main-attempt.spec.ts
 ```

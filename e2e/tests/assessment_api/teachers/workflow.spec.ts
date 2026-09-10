@@ -3,6 +3,8 @@ import { loginAs } from "../../helpers/auth";
 import { createNamedDraft, uniqueDraftName } from "../helpers";
 import { STUDENT_3, TEACHER_2 } from "../seed";
 
+test.describe.configure({ mode: "serial" });
+
 test.describe("Teacher authoring workflows", () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page, TEACHER_2.email, TEACHER_2.password);
