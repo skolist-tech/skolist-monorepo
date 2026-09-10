@@ -3,10 +3,17 @@ import { QuestionEditor } from "./QuestionEditor";
 
 export function SectionList({
   sections,
+  editable = false,
   onAddQuestion,
+  onSave,
 }: {
   sections: Section<TeacherQuestion>[];
+  editable?: boolean;
   onAddQuestion: (sectionId: string) => void;
+  onSave?: (
+    questionId: string,
+    payload: Partial<TeacherQuestion>
+  ) => Promise<void> | void;
 }) {
   if (!sections.length) {
     return <p className="text-sm text-muted-foreground">No sections yet.</p>;
@@ -29,7 +36,12 @@ export function SectionList({
           </div>
           <div className="space-y-3">
             {section.questions.map((question) => (
-              <QuestionEditor key={question.id} question={question} />
+              <QuestionEditor
+                key={question.id}
+                question={question}
+                editable={editable}
+                onSave={onSave}
+              />
             ))}
           </div>
         </div>

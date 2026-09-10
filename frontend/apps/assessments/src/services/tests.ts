@@ -64,6 +64,16 @@ export function createQuestion(
   });
 }
 
+export function updateQuestion(
+  questionId: string,
+  payload: Partial<TeacherQuestion>
+) {
+  return apiFetch<TeacherQuestion>(`/questions/${questionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function listAssignees(testId: string) {
   return apiFetch<{ assignees: Assignee[] }>(`/tests/${testId}/assignees`);
 }

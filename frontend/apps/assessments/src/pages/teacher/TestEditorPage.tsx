@@ -10,6 +10,7 @@ import {
   getTeacherTest,
   listTestAttempts,
   removeAssignee,
+  updateQuestion,
   updateTest,
 } from "@/services/tests";
 import type { AttemptSummary, TeacherTestDetail } from "@/types/assessment";
@@ -95,6 +96,11 @@ export function TestEditorPage() {
         </form>
         <SectionList
           sections={test.sections}
+          editable={test.status === "draft"}
+          onSave={async (questionId, payload) => {
+            await updateQuestion(questionId, payload);
+            await reload();
+          }}
           onAddQuestion={(sectionId) => {
             createQuestion(sectionId, {
               question_text: "New question",
