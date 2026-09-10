@@ -172,6 +172,13 @@ class AssigneeCreate(BaseModel):
     user_id: UUID
 
 
+class OrgStudent(BaseModel):
+    id: str
+    name: str | None = None
+    email: str | None = None
+    avatar_url: str | None = None
+
+
 class ResponseUpsert(BaseModel):
     selected_mcq_option: int | None = Field(default=None, ge=1, le=4)
     selected_msq_options: list[bool] | None = None

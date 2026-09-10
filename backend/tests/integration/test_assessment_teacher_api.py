@@ -31,6 +31,9 @@ class TestAssessmentTeacherApi:
         assert questions
         assert any(q.get("correct_mcq_option") is not None for q in questions)
         assert any(q.get("explanation") for q in questions)
+        assert body["assignees"]
+        assert any(item.get("name") for item in body["assignees"])
+        assert any(item.get("email") for item in body["assignees"])
 
     def test_teacher_crud_and_assign(
         self,
@@ -78,11 +81,34 @@ class TestAssessmentTeacherApi:
             )
             assert question.status_code == 201
 
+            students = teacher_test_client.get(f"{PREFIX}/students")
+            assert students.status_code == 200
+            student_ids = {item["id"] for item in students.json()}
+            assert student_auth_session["user_id"] in student_ids
+            assert any(item.get("name") for item in students.json())
+
+            filtered = teacher_test_client.get(f"{PREFIX}/students", params={"q": "Student 1"})
+            assert filtered.status_code == 200
+            assert any(item["id"] == student_auth_session["user_id"] for item in filtered.json())
+
             assigned = teacher_test_client.post(
                 f"{PREFIX}/tests/{test_id}/assignees",
                 json={"user_id": student_auth_session["user_id"]},
             )
             assert assigned.status_code == 201
+            assert assigned.json().get("user_id") == student_auth_session["user_id"]
+            assert assigned.json().get("name")
+            assert assigned.json().get("email") == student_auth_session["email"]
+
+            listed = teacher_test_client.get(f"{PREFIX}/tests/{test_id}/assignees")
+            assert listed.status_code == 200
+            listed_rows = listed.json()["assignees"]
+            assert listed_rows
+            assert listed_rows[0].get("name")
+
+            detail = teacher_test_client.get(f"{PREFIX}/tests/{test_id}")
+            assert detail.status_code == 200
+            assert any(item.get("name") for item in detail.json()["assignees"])
 
             published = teacher_test_client.patch(
                 f"{PREFIX}/tests/{test_id}",
