@@ -15,6 +15,8 @@ then in the e2e folder write a test for it
 then run relavant test
 and video will be produced , tell that to user. and remind him to delete that test file it not needed as a e2e test
 
+Pace the recording like a person watching: at least **0.5–1 second** between clicks (and similarly after typing, opening menus, or navigating). Use `page.waitForTimeout(500)`–`page.waitForTimeout(1000)` (or equivalent) so frames are not a blur of instant actions. Do not click as fast as Playwright can.
+
 ### How to run it in this repo
 
 1. Put the temporary spec under `e2e/tests/` (for assessments, prefer
