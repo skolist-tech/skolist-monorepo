@@ -10,16 +10,18 @@ pnpm + Turbo monorepo for Skolist web apps and shared packages.
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Lint, type-check, app vs package boundaries |
 | [INTERN_GUIDE.md](./INTERN_GUIDE.md) | Longer onboarding for interns               |
 
+Each app has a **[PRODUCT_DESCRIPTION.md](#apps)** — a non-technical note on who the product is for and what it does. Read that before changing product behaviour.
+
 Repo hub: [../README.md](../README.md) · [../SETUP.md](../SETUP.md) · [../CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ## Apps
 
-| App                       | Package name                  | Typical local port | Product                |
-| ------------------------- | ----------------------------- | ------------------ | ---------------------- |
-| `apps/landing_page`       | `@skolist/landing-page`       | `3000`             | skolist.com            |
-| `apps/ai_paper_generator` | `@skolist/ai-paper-generator` | `3001`             | qgen.skolist.com       |
-| `apps/ai_tutor`           | `@skolist/ai-tutor`           | (see app)          | aitutor.skolist.com    |
-| `apps/assessments`        | `@skolist/assessments`        | `3003`             | Assessments (JEE/NEET) |
+| App                       | Package name                  | Typical local port | Product                | Product description                                                        |
+| ------------------------- | ----------------------------- | ------------------ | ---------------------- | -------------------------------------------------------------------------- |
+| `apps/landing_page`       | `@skolist/landing-page`       | `3000`             | skolist.com            | [PRODUCT_DESCRIPTION.md](./apps/landing_page/PRODUCT_DESCRIPTION.md)       |
+| `apps/ai_paper_generator` | `@skolist/ai-paper-generator` | `3001`             | qgen.skolist.com       | [PRODUCT_DESCRIPTION.md](./apps/ai_paper_generator/PRODUCT_DESCRIPTION.md) |
+| `apps/ai_tutor`           | `@skolist/ai-tutor`           | (see app)          | aitutor.skolist.com    | [PRODUCT_DESCRIPTION.md](./apps/ai_tutor/PRODUCT_DESCRIPTION.md)           |
+| `apps/assessments`        | `@skolist/assessments`        | `3003`             | Assessments (JEE/NEET) | [PRODUCT_DESCRIPTION.md](./apps/assessments/PRODUCT_DESCRIPTION.md)        |
 
 ## Shared packages
 
