@@ -1,11 +1,12 @@
 # Assessments
 
-Assessments is the **exam hall** product: a place to sit a timed, structured paper the way a student would in a serious entrance test (especially JEE Main / NEET-style papers), and a place for a teacher to set that paper and see how it went.
+Assessments is a **standalone exam product** for tuitions, schools, and coaching centres that need students to sit timed tests on a computer. It is **not** a deep piece of the main Skolist strategy loop (diagnose gaps → personalised improvement). It shares Skolist’s login backend and database, but it is a separate product with its own simple sign-in screen — no QGen or Skolist marketing.
 
 It is built so the attempt feels familiar to anyone who has used an official computer-based exam — instructions first, countdown clock, question palette, save vs mark-for-review, then a result.
 
 ## Who it is for
 
+- **Coaching institutes, tuitions, and schools** that run mock or internal tests.
 - **Students** practising or taking assigned papers under exam-like conditions.
 - **Teachers** (or academic staff) who author a paper, publish it, assign it to students, and later review attempts and scores.
 
@@ -27,8 +28,8 @@ The goal is not a casual quiz. It is a fair, focused attempt that matches how hi
 
 ## What it is not
 
-This is not Skolist’s marketing site, and it is not QGen’s day-to-day “build me a worksheet” studio. QGen is where many papers are _composed_. Assessments is where a **full exam sitting** happens. It also does not tutor the student after the result; that is AI Tutor’s job.
+This is not Skolist’s marketing site, and it is not QGen’s day-to-day “build me a worksheet” studio. It does not tutor the student after the result. It is the **exam hall**: sign in, sit the paper, see the score.
 
-## How it fits with the other apps
+## How it relates to other Skolist apps
 
-Together with QGen, this is how Skolist **collects evidence** of learning: a real attempt, not a guess from homework. Scores and responses here are meant to feed the larger Skolist idea — see the gap, then decide what to fix — rather than stop at a percentage.
+Same accounts and API as the rest of the platform, different job. QGen is for composing papers inside the Skolist teacher workflow. Assessments is for institutes that just need a serious test sitting. Do not assume a change here should look or feel like QGen.

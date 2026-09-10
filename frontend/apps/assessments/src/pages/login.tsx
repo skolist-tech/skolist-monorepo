@@ -20,9 +20,9 @@ export function LoginPage() {
 
   return (
     <AuthLoginPage
+      variant="simple"
       title="Assessments"
-      productName="Assessments"
-      productTagline="To take or create assessments"
+      productTagline="Sign in to take or create tests"
       onSuccess={() => navigate(from, { replace: true })}
       apiUrl={import.meta.env.VITE_FASTAPI_URL}
       enabledMethods={["phone", "google", "email"]}
