@@ -7,6 +7,10 @@ test.describe("Assessment auth", () => {
     await page.goto("/");
     await page.waitForURL("**/login**");
     await expect(page).toHaveURL(/\/login/);
+    await expect(page.getByRole("heading", { name: "Sign Up Now" })).toBeVisible();
+    await expect(page.getByText("INSTANTLY CHOOSE FROM")).toHaveCount(0);
+    await expect(page.getByText("New to QGEN?")).toHaveCount(0);
+    await expect(page.getByText("Built by founders from")).toHaveCount(0);
   });
 
   test("teacher is redirected to the teacher test list", async ({ page }) => {
