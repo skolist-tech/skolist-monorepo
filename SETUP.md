@@ -46,7 +46,7 @@ Follow **[backend/SETUP.md](./backend/SETUP.md)**:
 - `.env` from local Supabase keys
 - run with `uvicorn` **or** `docker compose up`
 
-**Docker note:** if the API runs in Compose and Supabase is on the host, use `SUPABASE_URL=http://host.docker.internal:54321` (not `127.0.0.1`).
+**Docker note:** if the API runs in Compose and Supabase is on the host, use `SUPABASE_URL=http://host.docker.internal:54321` (not `127.0.0.1`). Compose **does not** hot-reload Python (`uvicorn` has no `--reload`); after API code or new routes, `docker compose restart` in `backend/` or the old process will keep serving stale handlers (new paths 404). Details: [backend/SETUP.md](./backend/SETUP.md).
 
 Smoke check: `GET http://127.0.0.1:8080/`
 

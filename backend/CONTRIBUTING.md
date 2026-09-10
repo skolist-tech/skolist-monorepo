@@ -22,6 +22,7 @@ pre-commit run --all-files
 - Prefer feature modules under `api/v1/<feature>/` and include them from the v1 router.
 - Keep routes behind existing Supabase auth; do not weaken JWT checks.
 - Assessment APIs live under `api/v1/assessment/` and the `assessment` DB schema (see `skolist-db`).
+- If the API is running via **Docker Compose**, restart it after route changes (`docker compose restart`). Compose uvicorn has **no `--reload`** — see [SETUP.md](./SETUP.md).
 
 ## Tests
 

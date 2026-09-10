@@ -60,6 +60,15 @@ SUPABASE_URL=http://host.docker.internal:54321
 
 (`extra_hosts` for `host.docker.internal` is already in `docker-compose.yaml`.)
 
+**Compose does not hot-reload Python.** The repo is bind-mounted into the container, but uvicorn is started **without** `--reload`. New or changed routes (and other Python edits) stay invisible — often as **404** — until you restart the API process:
+
+```bash
+cd backend
+docker compose restart
+```
+
+Host `uvicorn main:app --reload --port 8080` **does** pick up file changes. Restart Compose (or recreate the container) after adding endpoints if you use Docker.
+
 ## Smoke auth
 
 Routes under `/api/v1/*` expect `Authorization: Bearer <Supabase JWT>`.
