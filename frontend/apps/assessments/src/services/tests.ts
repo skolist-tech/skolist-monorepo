@@ -2,6 +2,7 @@ import type {
   Actor,
   Assignee,
   AttemptSummary,
+  OrgStudent,
   StudentResponse,
   TeacherQuestion,
   TeacherTestDetail,
@@ -72,6 +73,11 @@ export function updateQuestion(
     method: "PATCH",
     body: JSON.stringify(payload),
   });
+}
+
+export function listOrgStudents(q?: string) {
+  const search = q?.trim() ? `?q=${encodeURIComponent(q.trim())}` : "";
+  return apiFetch<OrgStudent[]>(`/students${search}`);
 }
 
 export function listAssignees(testId: string) {

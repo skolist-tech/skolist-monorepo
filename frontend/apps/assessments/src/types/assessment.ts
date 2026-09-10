@@ -78,11 +78,21 @@ export type Section<TQuestion = StudentQuestion> = {
   questions: TQuestion[];
 };
 
+export type OrgStudent = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  avatar_url?: string | null;
+};
+
 export type Assignee = {
   id: string;
   test_id: string;
   user_id: string;
   created_at?: string;
+  name?: string | null;
+  email?: string | null;
+  avatar_url?: string | null;
 };
 
 export type StudentResponse = {

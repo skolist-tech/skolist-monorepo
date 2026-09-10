@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAs } from "../../helpers/auth";
 import { createNamedDraft, uniqueDraftName } from "../helpers";
-import { TEACHER_2 } from "../seed";
+import { STUDENT_3, TEACHER_2 } from "../seed";
 
 test.describe("Teacher authoring workflows", () => {
   test.beforeEach(async ({ page }) => {
@@ -49,6 +49,24 @@ test.describe("Teacher authoring workflows", () => {
 
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText(edited)).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("assigns a seed student to a new draft", async ({ page }) => {
+    const name = uniqueDraftName();
+    await createNamedDraft(page, name);
+
+    await expect(page.getByRole("heading", { name: "Assignees" })).toBeVisible();
+
+    const search = page.getByRole("textbox", { name: "Search students" });
+    await search.fill(STUDENT_3.name);
+    await page
+      .getByRole("listbox", { name: "Search students" })
+      .getByRole("button", { name: new RegExp(STUDENT_3.name) })
+      .click();
+
+    await expect(page.getByText(STUDENT_3.name).first()).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test("publishes a new draft", async ({ page }) => {
