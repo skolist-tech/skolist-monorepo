@@ -33,7 +33,9 @@ import { GoogleSignInButton } from "./social";
 import { ErrorDisplay, EmailConfirmation, TrustBadges } from "./shared";
 import "./login-page.css";
 
-interface LoginPageProps {
+export type LoginPageVariant = "marketing" | "simple";
+
+export interface LoginPageProps {
   title?: string;
   description?: string;
   onSuccess?: () => void;
@@ -42,6 +44,12 @@ interface LoginPageProps {
   productName?: string;
   productTagline?: string;
   showLeftPanel?: boolean;
+  /**
+   * `marketing` (default) is the QGen / Skolist split-screen login.
+   * Pass `simple` from a product that should keep the same form controls
+   * without Skolist marketing (left panel, IIT badges, QGen copy).
+   */
+  variant?: LoginPageVariant;
   logoUrl?: string;
   apiUrl?: string;
   isPhoneAvailable?: boolean;
@@ -55,8 +63,9 @@ export function LoginPage({
   className,
   enabledMethods = ["phone", "google", "email"],
   productName = "QGEN",
-  productTagline = "To use the QGEN",
+  productTagline,
   showLeftPanel = true,
+  variant = "marketing",
   logoUrl,
   apiUrl = "http://localhost:8080",
   isPhoneAvailable = false,
@@ -272,6 +281,13 @@ export function LoginPage({
   };
 
   const showGoogle = enabledMethods.includes("google");
+  const isSimple = variant === "simple";
+  const showMarketing = !isSimple && showLeftPanel;
+  const resolvedTagline =
+    productTagline ?? (isSimple ? undefined : "To use the QGEN");
+  const newAccountPrompt = isSimple
+    ? "Don't have an account? "
+    : "New to QGEN? ";
 
   const handleToggleSignUp = () => {
     setIsSignUp(!isSignUp);
@@ -290,18 +306,18 @@ export function LoginPage({
     <div
       className={cn(
         "login-page-container",
-        !showLeftPanel && "login-page-container--centered",
+        !showMarketing && "login-page-container--centered",
         className
       )}
     >
-      {showLeftPanel && (
+      {showMarketing && (
         <LeftPanel productName={productName} logoUrl={logoUrl} />
       )}
 
       <div className="login-right-panel">
         <div className="login-right-panel__content">
           {/* Mobile Marketing Header */}
-          {showLeftPanel && (
+          {showMarketing && (
             <div className="login-mobile-marketing">
               <LeftPanelHeadline />
               <LeftPanelBranding productName={productName} />
@@ -316,10 +332,12 @@ export function LoginPage({
             <h2 className="login-right-panel__title">
               {isSignUp ? "Sign Up Now" : "Welcome Back"}
             </h2>
-            <p className="login-right-panel__subtitle">{productTagline}</p>
+            {resolvedTagline && (
+              <p className="login-right-panel__subtitle">{resolvedTagline}</p>
+            )}
             {!hideSignUpToggle && (
               <div className="login-right-panel__toggle">
-                {isSignUp ? "Already have an account? " : "New to QGEN? "}
+                {isSignUp ? "Already have an account? " : newAccountPrompt}
                 <span
                   className="login-right-panel__toggle-link"
                   onClick={handleToggleSignUp}
@@ -403,11 +421,10 @@ export function LoginPage({
             )}
           </div>
 
-          {/* Badges */}
-          <TrustBadges />
+          {!isSimple && <TrustBadges />}
 
           {/* Mobile Footer Marketing */}
-          {showLeftPanel && (
+          {showMarketing && (
             <div className="login-mobile-footer">
               <LeftPanelFeatures />
               <LeftPanelCTA productName={productName} />

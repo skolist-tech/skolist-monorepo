@@ -37,6 +37,17 @@
   overflow: hidden; /* Prevent body scroll */
 }
 
+.login-page-container--centered {
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.login-page-container--centered .login-right-panel {
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 28rem;
+}
+
 /* ─────────────────────────────────────────────────────────────────
    Animations
    ───────────────────────────────────────────────────────────────── */

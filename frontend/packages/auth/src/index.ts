@@ -17,7 +17,11 @@ export { initializeFirebase } from "./firebase";
 export { AuthProvider, useAuth, type AuthContextValue } from "./context";
 
 // Components
-export { LoginPage } from "./components/login-page/index";
+export {
+  LoginPage,
+  type LoginPageProps,
+  type LoginPageVariant,
+} from "./components/login-page/index";
 export { ProtectedRoute } from "./components/protected-route";
 export { UserMenu } from "./components/user-menu";
 export { AuthButton } from "./components/auth-button";

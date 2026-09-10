@@ -27,6 +27,12 @@ const meta: Meta<typeof LoginPage> = {
       control: "boolean",
       description: "Toggle split-screen layout",
     },
+    variant: {
+      control: "select",
+      options: ["marketing", "simple"],
+      description:
+        "marketing = Skolist/QGen panel; simple = forms only (Assessments)",
+    },
     productName: {
       control: "text",
       description: "Product name displayed in marketing panel",
@@ -66,6 +72,17 @@ export const CenteredMinimal: Story = {
     showLeftPanel: false,
     title: "Welcome Back",
     description: "Please sign in to continue",
+  },
+};
+
+/**
+ * Assessments / coaching login: same inputs, no Skolist marketing.
+ */
+export const SimpleAssessments: Story = {
+  args: {
+    variant: "simple",
+    title: "Assessments",
+    productTagline: "Sign in to take or create tests",
   },
 };
 
