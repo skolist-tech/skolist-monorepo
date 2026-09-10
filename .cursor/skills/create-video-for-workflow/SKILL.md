@@ -11,17 +11,21 @@ description: >-
 ## Instructions
 
 If user tells you to create video for certain thing,
-then in the e2e folder write a test for it
+then write a test under a **`video_test/`** subfolder next to the relevant suite
 then run relavant test
-and video will be produced , tell that to user. and remind him to delete that test file it not needed as a e2e test
+and video will be produced , tell that to user.
+
+Never put recorder specs in tracked test folders. `video_test/` is gitignored (`e2e/.gitignore`), so git status stays clean after a recording.
 
 Pace the recording like a person watching: at least **0.5–1 second** between clicks (and similarly after typing, opening menus, or navigating). Use `page.waitForTimeout(500)`–`page.waitForTimeout(1000)` (or equivalent) so frames are not a blur of instant actions. Do not click as fast as Playwright can.
 
 ### How to run it in this repo
 
-1. Put the temporary spec under `e2e/tests/` (for assessments, prefer
-   `e2e/tests/assessment_api/students/` or `e2e/tests/assessment_api/teachers/`
-   with a clear name like `jee-main-complete-attempt.spec.ts`).
+1. Put the temporary spec in a `video_test/` directory beside the suite it belongs to.
+   Assessments examples:
+   - `e2e/tests/assessment_api/teachers/video_test/assign-student-typeahead.spec.ts`
+   - `e2e/tests/assessment_api/students/video_test/jee-main-complete-attempt.spec.ts`
+   Fix relative imports for the extra directory (`../../../helpers/auth`, `../../helpers`, `../../seed`).
 2. Reuse existing helpers (`e2e/tests/helpers/auth.ts`, assessment seeds) when the flow needs login or seed data.
 3. Record with video enabled. Cursor’s agent sandbox may set
    `PLAYWRIGHT_BROWSERS_PATH` to an empty `/tmp/cursor-sandbox-cache/.../playwright`.
@@ -47,4 +51,4 @@ done
 Or the project scripts: `npm run test:assessments:headed:video:images` / `npm run test:headed:video:images` when they match (still prefix `PLAYWRIGHT_BROWSERS_PATH="$HOME/.cache/ms-playwright"` in agent runs).
 
 4. Tell the user the video path under `e2e/videos/<timestamp>/…` (gitignored; older timestamp folders are kept). If `E2E_IMAGES=1`, also point at `images/` next to `video.webm` (`frame_001.jpg` …). Needs `ffmpeg` on PATH.
-5. Remind them to delete the temporary test file if it is not meant to stay as a real e2e test.
+5. Do **not** `git add` `video_test/` files. They are ignored so the worktree stays clean. No need to remind the user to delete them for git cleanliness.
