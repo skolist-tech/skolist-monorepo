@@ -1,0 +1,20 @@
+{
+  "files.exclude": {
+
+    "Permenantly Excludes Files": true,
+
+    "**/.git": true,
+    "**/.pnpm-store": true,
+    "**/.turbo": true,
+
+
+
+    "Temporary Files. Developer working on them may include it on their local machine": true,
+
+    ".husky": true,
+    ".coderabbit.yaml": true,
+    ".pre-commit-config.yaml": true,
+    "infra/": true,
+    ".claude": true,
+    }
+}
