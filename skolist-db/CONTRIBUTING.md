@@ -10,6 +10,20 @@ Repo-wide rules: [../CONTRIBUTING.md](../CONTRIBUTING.md). Setup: [SETUP.md](./S
 | Static SQL fixtures | `supabase/seeds/` | Data loaded on `supabase db reset` |
 | Auth users + rich domains | `python_seeds/` | After reset via `seed.py` |
 
+## How migrations are applied
+
+**Never apply a migration by hand** — not on local, not on staging, not on production. That includes the Supabase SQL editor, MCP `apply_migration` / `execute_sql` DDL, `supabase db push` from a laptop, and dashboard “run SQL”.
+
+| Environment | Who applies `supabase/migrations/` |
+| --- | --- |
+| Local | `cd skolist-db && supabase migration up --local` only |
+| Staging | GitHub Action [`.github/workflows/db-push-stage.yaml`](../.github/workflows/db-push-stage.yaml) (`supabase db push` on push to `stage`) |
+| Production | GitHub Action [`.github/workflows/db-push-main.yaml`](../.github/workflows/db-push-main.yaml) (`supabase db push` on push to `main`) |
+
+Write a new timestamped file under `supabase/migrations/`, merge it, and let those paths apply it. If you apply SQL out of band, the remote history version will not match the filename and CI `db push` will fail with “Remote migration versions not found in local migrations directory.”
+
+`supabase db reset` (local only) is a full wipe-and-rebuild, not a way to ship one new migration. Do not `db reset --linked` against a shared cloud project.
+
 ## Conventions
 
 - Prefer **additive** migrations.

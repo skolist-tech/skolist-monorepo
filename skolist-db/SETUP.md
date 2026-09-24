@@ -35,7 +35,16 @@ supabase stop
 
 ## Schema + SQL seeds
 
-Migrations under `supabase/migrations/` apply on start / reset. To rebuild from scratch:
+Do **not** apply migrations by hand (SQL editor, MCP, `db push` from your machine). New local files:
+
+```bash
+cd skolist-db
+supabase migration up --local
+```
+
+Staging and production are applied only by GitHub Actions. Details: [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+Migrations under `supabase/migrations/` also apply on a full local rebuild. To wipe and start from scratch:
 
 ```bash
 cd skolist-db/supabase
@@ -92,4 +101,4 @@ See `unseed.py --help` for table-scoped deletes.
 
 ## Cloud projects
 
-Linking / `db reset --linked` notes: [supabase/README.md](./supabase/README.md). Prefer careful review before resetting a shared cloud project.
+Do not run migrations against staging or production from your laptop. Those environments are updated only by the db-push GitHub Actions. Linking / `db reset --linked` notes: [supabase/README.md](./supabase/README.md). Do not `db reset --linked` a shared cloud project.
