@@ -2,6 +2,8 @@
 
 This directory contains unit and integration tests for the Skolist backend.
 
+What each file covers: [unit/TESTING.md](./unit/TESTING.md) and [integration/TESTING.md](./integration/TESTING.md). Package overview: [../TESTING.md](../TESTING.md).
+
 ## Quick Start
 
 ### Run Unit Tests (No External Dependencies)

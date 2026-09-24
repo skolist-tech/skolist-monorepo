@@ -8,10 +8,11 @@ FastAPI service for Skolist: Supabase JWT auth, question generation, assessment 
 | --- | --- |
 | [SETUP.md](./SETUP.md) | Local install, `.env`, run with uvicorn or Docker |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Lint, tests, adding routes |
-| [tests/README.md](./tests/README.md) | Unit vs integration pytest |
+| [TESTING.md](./TESTING.md) | Unit vs integration, and the tests in each folder |
+| [tests/README.md](./tests/README.md) | How to run pytest |
 | [INTERN_GUIDE.md](./INTERN_GUIDE.md) | Longer onboarding for interns |
 
-Repo hub: [../README.md](../README.md) · [../SETUP.md](../SETUP.md) · [../CONTRIBUTING.md](../CONTRIBUTING.md)
+Repo hub: [../README.md](../README.md) · [../SETUP.md](../SETUP.md) · [../CONTRIBUTING.md](../CONTRIBUTING.md) · [../TESTING.md](../TESTING.md)
 
 ## Layout (high level)
 

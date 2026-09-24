@@ -9,19 +9,20 @@ Platform code for Skolist: database (Supabase), FastAPI backend, frontend apps, 
 | [AGENTS.md](./AGENTS.md) | Instructions for AI agents working in this repo |
 | [SETUP.md](./SETUP.md) | Get a local stack running (DB → API → apps → e2e) |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Branches, PRs, and quality bar |
+| [TESTING.md](./TESTING.md) | Unit, integration, and e2e: what each needs, and what to add |
 
 Package-level docs:
 
-| Package | README | Setup | Contributing |
-| --- | --- | --- | --- |
-| [backend/](./backend/) | [README](./backend/README.md) | [SETUP](./backend/SETUP.md) | [CONTRIBUTING](./backend/CONTRIBUTING.md) |
-| [frontend/](./frontend/) | [README](./frontend/README.md) | [SETUP](./frontend/SETUP.md) | [CONTRIBUTING](./frontend/CONTRIBUTING.md) |
-| [skolist-db/](./skolist-db/) | [README](./skolist-db/README.md) | [SETUP](./skolist-db/SETUP.md) | [CONTRIBUTING](./skolist-db/CONTRIBUTING.md) |
-| [e2e/](./e2e/) | [README](./e2e/README.md) | — | — |
+| Package | README | Setup | Contributing | Testing |
+| --- | --- | --- | --- | --- |
+| [backend/](./backend/) | [README](./backend/README.md) | [SETUP](./backend/SETUP.md) | [CONTRIBUTING](./backend/CONTRIBUTING.md) | [TESTING](./backend/TESTING.md) |
+| [frontend/](./frontend/) | [README](./frontend/README.md) | [SETUP](./frontend/SETUP.md) | [CONTRIBUTING](./frontend/CONTRIBUTING.md) | [e2e TESTING](./e2e/TESTING.md) |
+| [skolist-db/](./skolist-db/) | [README](./skolist-db/README.md) | [SETUP](./skolist-db/SETUP.md) | [CONTRIBUTING](./skolist-db/CONTRIBUTING.md) | — |
+| [e2e/](./e2e/) | [README](./e2e/README.md) | — | — | [TESTING](./e2e/TESTING.md) |
 
 Also useful:
 
-- [backend/tests/README.md](./backend/tests/README.md) — unit / integration pytest details
+- [backend/tests/README.md](./backend/tests/README.md) — how to run unit / integration pytest
 - [infra/README.md](./infra/README.md), [aws-cdk-infra/README.md](./aws-cdk-infra/README.md) — infrastructure
 
 ## Layout

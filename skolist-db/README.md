@@ -8,9 +8,10 @@ Supabase project for Skolist: migrations, SQL seeds, and Python seed scripts (au
 | --- | --- |
 | [SETUP.md](./SETUP.md) | Local Supabase, reset, Python seeds / unseed |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Migrations vs seeds, conventions |
+| [TESTING.md](../TESTING.md) | Repo test map; this package has no suite of its own |
 | [supabase/README.md](./supabase/README.md) | Extra CLI / cloud linking notes |
 
-Repo hub: [../README.md](../README.md) · [../SETUP.md](../SETUP.md) · [../CONTRIBUTING.md](../CONTRIBUTING.md)
+Repo hub: [../README.md](../README.md) · [../SETUP.md](../SETUP.md) · [../CONTRIBUTING.md](../CONTRIBUTING.md) · [../TESTING.md](../TESTING.md)
 
 ## Layout
 

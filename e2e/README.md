@@ -2,9 +2,15 @@
 
 Browser end-to-end tests for Skolist. Specs live under `tests/`; Playwright starts the frontends (or reuses ones already running).
 
-What each spec covers: **[TESTS.md](./TESTS.md)**.
+## Docs
 
-Monorepo docs: [../README.md](../README.md) · [../SETUP.md](../SETUP.md) · [../CONTRIBUTING.md](../CONTRIBUTING.md)  
+| Doc | Purpose |
+| --- | --- |
+| [TESTING.md](./TESTING.md) | What this suite needs, and the specs in each folder |
+| [TESTS.md](./TESTS.md) | Flat list of the same specs |
+| [../TESTING.md](../TESTING.md) | Repo test map (unit, integration, e2e) |
+
+Monorepo docs: [../README.md](../README.md) · [../SETUP.md](../SETUP.md) · [../CONTRIBUTING.md](../CONTRIBUTING.md) · [../TESTING.md](../TESTING.md)  
 Stack setup: [../skolist-db/SETUP.md](../skolist-db/SETUP.md) · [../backend/SETUP.md](../backend/SETUP.md) · [../frontend/SETUP.md](../frontend/SETUP.md)
 
 ## Projects

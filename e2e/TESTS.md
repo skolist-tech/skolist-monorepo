@@ -1,6 +1,6 @@
 # E2E test list
 
-Tracked Playwright specs under `tests/`. How to run them: [README.md](./README.md).
+Tracked Playwright specs under `tests/`. How to run them: [README.md](./README.md). Per-folder writeups: [TESTING.md](./TESTING.md).
 
 Recorder specs live in gitignored `video_test/` folders and are not listed here.
 
