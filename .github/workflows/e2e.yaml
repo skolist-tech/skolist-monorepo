@@ -69,9 +69,9 @@ jobs:
             -x vector \
             -x mailpit
           # Export envs for subsequent steps
-          echo "SUPABASE_URL=$(supabase status -o json | jq -r .api_url)" >> $GITHUB_ENV
-          echo "SUPABASE_ANON_KEY=$(supabase status -o json | jq -r .anon_key)" >> $GITHUB_ENV
-          echo "SUPABASE_SERVICE_KEY=$(supabase status -o json | jq -r .service_role_key)" >> $GITHUB_ENV
+          echo "SUPABASE_URL=$(supabase status -o json | jq -r .API_URL)" >> $GITHUB_ENV
+          echo "SUPABASE_ANON_KEY=$(supabase status -o json | jq -r .ANON_KEY)" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_KEY=$(supabase status -o json | jq -r .SERVICE_ROLE_KEY)" >> $GITHUB_ENV
 
       # Backend (Docker)
       - name: Start Backend (Docker)
