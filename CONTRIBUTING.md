@@ -129,6 +129,7 @@ Details: [frontend/CONTRIBUTING.md](./frontend/CONTRIBUTING.md).
 **Database**
 
 - Prefer new migrations over editing applied history.
+- **Never apply migrations by hand** (SQL editor, MCP, laptop `db push`) on local, staging, or production. Local: `cd skolist-db && supabase migration up --local`. Staging/production: GitHub Actions only. See [skolist-db/CONTRIBUTING.md](./skolist-db/CONTRIBUTING.md).
 - Keep Python seed IDs / emails in sync with backend and e2e expectations.
 - Run Python seeds from `skolist-db/venv` (`cd skolist-db && source venv/bin/activate`), never raw `python`.
 

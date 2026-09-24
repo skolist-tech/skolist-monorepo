@@ -16,6 +16,13 @@ This file applies to **every** task in this monorepo.
 4. Do **not** edit the codebase or create a commit until that reading is done for the packages in scope.
 5. **Before any commit:** run the mandatory checks in root [CONTRIBUTING.md](../../../CONTRIBUTING.md) (“Before committing”) for every package you touched. Do not commit on type-check-only or “seeded OK” when lint/tests/e2e apply.
 
+## Database migrations
+
+**Never apply migrations yourself** on local, staging, or production (no SQL editor, no MCP `apply_migration` / DDL `execute_sql`, no laptop `supabase db push`).
+
+- **Local:** `cd skolist-db && supabase migration up --local`
+- **Staging / production:** GitHub Actions only (see [skolist-db/CONTRIBUTING.md](../../../skolist-db/CONTRIBUTING.md))
+
 ## GitHub
 
 Use the **`gh` CLI** for all GitHub work in this repo: issues, pull requests, checks, releases, branch/PR inspection, and reviewing CI failures. Prefer `gh` over the GitHub website or inventing raw `curl`/`api.github.com` calls.
