@@ -6,6 +6,8 @@ export function testUserCredentials() {
   return { email, password };
 }
 
+export const SEED_ORG_CODE = process.env.ASSESSMENT_ORG_CODE ?? "SEEDOR";
+
 /** Switch the login page to the email Sign In form. */
 export async function openEmailSignIn(page: Page) {
   await page.goto("/login");
@@ -37,8 +39,17 @@ export async function fillEmailSignIn(
 
 /** Full email sign-in and wait until /login is left. */
 export async function loginAs(page: Page, email: string, password: string) {
-  await openEmailSignIn(page);
-  await fillEmailSignIn(page, email, password);
+  await page.goto("/login");
+  const orgCode = page.getByLabel("Org code");
+  if (await orgCode.isVisible()) {
+    await orgCode.fill(SEED_ORG_CODE);
+    await page.getByLabel("Email").fill(email);
+    await page.getByPlaceholder("Enter password").fill(password);
+    await page.getByRole("button", { name: "Proceed Securely" }).click();
+  } else {
+    await openEmailSignIn(page);
+    await fillEmailSignIn(page, email, password);
+  }
   await page.waitForURL((url) => !url.pathname.includes("/login"), {
     timeout: 15_000,
   });

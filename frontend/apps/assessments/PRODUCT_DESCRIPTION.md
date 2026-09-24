@@ -1,6 +1,6 @@
 # Assessments
 
-Assessments is a **standalone exam product** for tuitions, schools, and coaching centres that need students to sit timed tests on a computer. It is **not** a deep piece of the main Skolist strategy loop (diagnose gaps → personalised improvement). It shares Skolist’s login backend and database, but it is a separate product with its own simple sign-in screen — no QGen or Skolist marketing.
+Assessments is a **standalone exam product** for tuitions, schools, and coaching centres that need students to sit timed tests on a computer. It is **not** a deep piece of the main Skolist strategy loop (diagnose gaps → personalised improvement). It shares Skolist’s accounts and database, but it is a separate product with its own sign-in screen: email, password, and organisation code only — no sign-up, Google, or phone login.
 
 It is built so the attempt feels familiar to anyone who has used an official computer-based exam — instructions first, countdown clock, question palette, save vs mark-for-review, then a result.
 

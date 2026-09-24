@@ -8,6 +8,8 @@
 export const SEED_PASSWORD =
   process.env.ASSESSMENT_PASSWORD ?? "password123";
 
+export const SEED_ORG_CODE = process.env.ASSESSMENT_ORG_CODE ?? "SEEDOR";
+
 export const TEACHER_1 = {
   email: process.env.ASSESSMENT_TEACHER_EMAIL ?? "teacher1@seed.skolist.com",
   password: SEED_PASSWORD,

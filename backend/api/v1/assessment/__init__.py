@@ -18,11 +18,15 @@ from api.v1.auth import require_supabase_user
 
 from .assignees import router as assignees_router
 from .attempts import router as attempts_router
+from .login import router as login_router
 from .me import router as me_router
 from .questions import router as questions_router
 from .sections import router as sections_router
 from .student import router as student_router
 from .tests import router as tests_router
+
+public_router = APIRouter(prefix="/assessment", tags=["assessment"])
+public_router.include_router(login_router)
 
 router = APIRouter(
     prefix="/assessment",

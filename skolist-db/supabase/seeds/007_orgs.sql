@@ -1,3 +1,4 @@
 -- Organisations are seeded by python_seeds/001_seed_orgs.py (run via seed.py after db reset).
 -- Seed Organisation uses id 751434e6-0e95-4e09-8b78-1f8b1e05a94c so
 -- public.handle_auth_user_created() still resolves org_id for new auth users.
+-- Assessment sign-in uses organisation_code SEEDOR on that same org.

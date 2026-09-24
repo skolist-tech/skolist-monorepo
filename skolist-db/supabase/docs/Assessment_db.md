@@ -14,6 +14,7 @@ The Assessment database schema is as follows:
     - This table stores the details of the tests (metadata and configuration).
     - There will be sepearate table for questions, which will be linked to the test using the test_id.
     - A test refers to an organisation from the public.orgs table using org_id.
+    - Assessment sign-in looks up `public.orgs.organisation_code` (unique 6-letter A–Z code), not the org UUID.
     - A test is created by a user from the public.users table using created_by.
     - A test must have it's exam type : like "jee_main", "jee_advanced", "neet".
 

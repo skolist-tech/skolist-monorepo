@@ -7,6 +7,7 @@ which assigns this org_id to every new auth user.
 # Keep in sync with public.handle_auth_user_created() in
 # supabase/migrations/20260202210931_remote_schema.sql
 SEED_ORG_ID = "751434e6-0e95-4e09-8b78-1f8b1e05a94c"
+SEED_ORG_CODE = "SEEDOR"
 CBSE_BOARD_ID = "51b7d3cb-b469-4c4e-8c42-70d3c2388fb5"
 
 SEED_ORG = {
@@ -18,6 +19,7 @@ SEED_ORG = {
     "address": None,
     "header_line": "Seed Organisation",
     "board_id": CBSE_BOARD_ID,
+    "organisation_code": SEED_ORG_CODE,
 }
 
 ORGS = [SEED_ORG]

@@ -19,7 +19,7 @@ Credentials and paper titles: [`tests/assessment_api/seed.ts`](./tests/assessmen
 
 | File | What it covers |
 | --- | --- |
-| [`tests/assessment_api/auth.spec.ts`](./tests/assessment_api/auth.spec.ts) | Guest is sent to a simple Assessments login (no QGen marketing). Teacher 1 lands on the test list; Student 1 lands on assigned tests. |
+| [`tests/assessment_api/auth.spec.ts`](./tests/assessment_api/auth.spec.ts) | Guest is sent to email + password + org-code sign-in (no sign-up, Google, or phone). Teacher 1 lands on the test list; Student 1 lands on assigned tests. |
 
 ### Teachers
 
