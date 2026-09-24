@@ -17,9 +17,13 @@ def test_normalizes_organisation_code_to_uppercase():
 def test_password_sign_in_uses_a_throwaway_client():
     """sign_in must not reuse the shared service-role client."""
     fake_client = MagicMock()
-    with patch("api.v1.assessment.login.create_client", return_value=fake_client) as create:
+    with (
+        patch("api.v1.assessment.login.SUPABASE_URL", "http://127.0.0.1:54321"),
+        patch("api.v1.assessment.login.SUPABASE_SERVICE_KEY", "test-service-key"),
+        patch("api.v1.assessment.login.create_client", return_value=fake_client) as create,
+    ):
         sign_in_with_password("teacher1@seed.skolist.com", "password123")
-    create.assert_called_once()
+    create.assert_called_once_with("http://127.0.0.1:54321", "test-service-key")
     fake_client.auth.sign_in_with_password.assert_called_once_with(
         {"email": "teacher1@seed.skolist.com", "password": "password123"}
     )
