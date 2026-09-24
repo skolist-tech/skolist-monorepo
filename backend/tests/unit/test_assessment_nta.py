@@ -1,7 +1,7 @@
 """Unit tests for NTA CBT fields (images, visit, mark-for-review)."""
 
 from api.v1.assessment.grading import grade_question, is_unanswered
-from api.v1.assessment.models import ResponseUpsert, StudentQuestion, StudentResponse, dump_unset
+from api.v1.assessment.models import QuestionCreate, ResponseUpsert, StudentQuestion, StudentResponse, dump_unset
 from api.v1.assessment.serializers import strip_question_for_student, strip_response_for_student
 from tests.utils.assessment_factories import make_question, make_response
 
@@ -26,6 +26,34 @@ class TestNtaQuestionImages:
         payload = strip_question_for_student(make_question(image_url="https://example.com/a.svg"))
         model = StudentQuestion.model_validate(payload)
         assert model.image_url == "https://example.com/a.svg"
+
+    def test_student_strip_keeps_svg_image_code(self):
+        """Stem and option SVG markup stay on the student payload."""
+        stem = '<svg xmlns="http://www.w3.org/2000/svg"><text>stem</text></svg>'
+        option = '<svg xmlns="http://www.w3.org/2000/svg"><text>opt-b</text></svg>'
+        question = make_question(svg_image_code=stem, option2_svg_image_code=option)
+        stripped = strip_question_for_student(question)
+        assert stripped["svg_image_code"] == stem
+        assert stripped["option2_svg_image_code"] == option
+        assert stripped["option1_svg_image_code"] is None
+        assert "correct_mcq_option" not in stripped
+
+    def test_question_create_accepts_svg_fields(self):
+        """Create payload includes stem and option SVG markup."""
+        stem = '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
+        body = QuestionCreate(
+            question_text="See the figure",
+            position=1,
+            marks=4,
+            svg_image_code=stem,
+            option1_svg_image_code=stem,
+            option2_svg_image_code=stem,
+            option3_svg_image_code=stem,
+            option4_svg_image_code=stem,
+        )
+        payload = dump_unset(body)
+        assert payload["svg_image_code"] == stem
+        assert payload["option4_svg_image_code"] == stem
 
 
 class TestNtaResponseFlags:

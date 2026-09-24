@@ -22,7 +22,8 @@ from python_seeds.client import (
 from python_seeds.data import assessment as data
 from python_seeds.data import orgs as org_data
 from python_seeds.data import user as user_data
-from python_seeds.data.photos import QUESTION_FIGURES, SEED_ASSETS_BUCKET
+from python_seeds.data.photos import QUESTION_FIGURES, SEED_ASSETS_BUCKET, option_badge_svg
+from python_seeds.data.data_assessment.uuids_and_meta import Q_MAIN_1_PHY_MCQ
 
 SEED_KEYS = ("created_by_key", "student_key")
 
@@ -122,6 +123,12 @@ def seed_assessment():
         figure = QUESTION_FIGURES.get(question["id"])
         if figure:
             question["image_url"] = figure_urls[figure[0]]
+            question["svg_image_code"] = figure[1]().decode("utf-8")
+        if question["id"] == Q_MAIN_1_PHY_MCQ:
+            question["option1_svg_image_code"] = option_badge_svg("opt-a").decode("utf-8")
+            question["option2_svg_image_code"] = option_badge_svg("opt-b").decode("utf-8")
+            question["option3_svg_image_code"] = option_badge_svg("opt-c").decode("utf-8")
+            question["option4_svg_image_code"] = option_badge_svg("opt-d").decode("utf-8")
 
     parents = [q for q in questions if not q.get("parent_question_id")]
     children = [q for q in questions if q.get("parent_question_id")]

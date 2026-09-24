@@ -47,23 +47,27 @@ export function optionEntries(question: StudentQuestion) {
       index: 1,
       text: question.option1,
       imageUrl: question.option1_image_url,
+      svgCode: question.option1_svg_image_code,
     },
     {
       index: 2,
       text: question.option2,
       imageUrl: question.option2_image_url,
+      svgCode: question.option2_svg_image_code,
     },
     {
       index: 3,
       text: question.option3,
       imageUrl: question.option3_image_url,
+      svgCode: question.option3_svg_image_code,
     },
     {
       index: 4,
       text: question.option4,
       imageUrl: question.option4_image_url,
+      svgCode: question.option4_svg_image_code,
     },
-  ].filter((item) => item.text || item.imageUrl);
+  ].filter((item) => item.text || item.imageUrl || item.svgCode);
 }
 
 export function emptyAnswerPayload(

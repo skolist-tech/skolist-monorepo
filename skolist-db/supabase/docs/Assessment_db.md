@@ -25,7 +25,8 @@ The Assessment database schema is as follows:
 
 - assessment.questions
     - Optional NTA-style figures live on `image_url` and `optionN_image_url`.
-    - Python seeds upload a few SVG figures to the public `seed_assets` storage bucket and set those URLs.
+    - Inline SVG markup lives on `svg_image_code` and `optionN_svg_image_code`. The assessment UI renders the markup when it is set, and falls back to the URL columns otherwise.
+    - Python seeds upload a few SVG figures to the public `seed_assets` storage bucket, set those URLs, and store the same markup in the SVG code columns. JEE Main Mock Test 1 physics Q1 also has option badge SVGs.
 
 Candidate photos are **not** on the assessment schema. They are `public.users.avatar_url`. `_002_seed_users.py` uploads portrait SVGs (person + camera badge, not name initials) to `seed_assets/avatars/` and writes the public URL onto each seeded user. 
 

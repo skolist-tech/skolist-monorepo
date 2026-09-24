@@ -180,6 +180,15 @@ def mitochondria_svg() -> bytes:
 """
 
 
+def option_badge_svg(label: str) -> bytes:
+    safe = _xml_escape(label)
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="120" height="48" viewBox="0 0 120 48">
+  <rect width="120" height="48" rx="6" fill="#e0f2fe" stroke="#0369a1" stroke-width="2"/>
+  <text x="60" y="30" text-anchor="middle" font-size="16" font-family="Arial, sans-serif">{safe}</text>
+</svg>
+""".encode()
+
+
 QUESTION_FIGURES: dict[str, tuple[str, Callable[[], bytes]]] = {
     Q_MAIN_1_PHY_MCQ: ("questions/force-mass.svg", force_mass_svg),
     Q_MAIN_2_PHY_MCQ: ("questions/force-mass.svg", force_mass_svg),

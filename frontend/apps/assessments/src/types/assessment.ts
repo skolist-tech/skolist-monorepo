@@ -57,6 +57,11 @@ export type StudentQuestion = {
   option2_image_url?: string | null;
   option3_image_url?: string | null;
   option4_image_url?: string | null;
+  svg_image_code?: string | null;
+  option1_svg_image_code?: string | null;
+  option2_svg_image_code?: string | null;
+  option3_svg_image_code?: string | null;
+  option4_svg_image_code?: string | null;
 };
 
 export type TeacherQuestion = StudentQuestion & {

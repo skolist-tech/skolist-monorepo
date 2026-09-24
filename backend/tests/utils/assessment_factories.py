@@ -33,6 +33,11 @@ def make_question(**overrides: Any) -> dict[str, Any]:
         "option2_image_url": None,
         "option3_image_url": None,
         "option4_image_url": None,
+        "svg_image_code": None,
+        "option1_svg_image_code": None,
+        "option2_svg_image_code": None,
+        "option3_svg_image_code": None,
+        "option4_svg_image_code": None,
     }
     question.update(overrides)
     return question

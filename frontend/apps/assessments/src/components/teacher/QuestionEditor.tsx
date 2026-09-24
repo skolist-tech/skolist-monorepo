@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Badge, Button, Input, Label, Textarea } from "@skolist/ui";
 import { LatexRenderer } from "@/components/shared/LatexRenderer";
+import { QuestionFigure } from "@/components/shared/QuestionFigure";
 import { optionEntries } from "@/lib/ntaPalette";
 import type { TeacherQuestion } from "@/types/assessment";
 
@@ -380,10 +381,11 @@ export function QuestionEditor({
         <LatexRenderer content={question.question_text} />
       </div>
 
-      {question.image_url ? (
-        <div className="mt-2 overflow-hidden rounded border bg-background p-2">
-          <img
-            src={question.image_url}
+      {question.svg_image_code || question.image_url ? (
+        <div className="mt-2 overflow-hidden rounded border bg-background p-2 [&>div>svg]:mx-auto [&>div>svg]:max-h-72 [&>div>svg]:w-auto">
+          <QuestionFigure
+            svgCode={question.svg_image_code}
+            imageUrl={question.image_url}
             alt="Question figure"
             className="mx-auto max-h-72 object-contain"
           />
@@ -412,13 +414,12 @@ export function QuestionEditor({
                   ({String.fromCharCode(64 + option.index)})
                 </span>
                 {option.text ? <LatexRenderer content={option.text} /> : null}
-                {option.imageUrl ? (
-                  <img
-                    src={option.imageUrl}
-                    alt={`Option ${option.index}`}
-                    className="mt-2 max-h-40 object-contain"
-                  />
-                ) : null}
+                <QuestionFigure
+                  svgCode={option.svgCode}
+                  imageUrl={option.imageUrl}
+                  alt={`Option ${option.index}`}
+                  className="mt-2 max-h-40 object-contain [&>svg]:max-h-40 [&>svg]:w-auto"
+                />
               </li>
             );
           })}

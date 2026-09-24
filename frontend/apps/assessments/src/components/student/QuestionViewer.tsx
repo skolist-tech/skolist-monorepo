@@ -1,4 +1,5 @@
 import { LatexRenderer } from "@/components/shared/LatexRenderer";
+import { QuestionFigure } from "@/components/shared/QuestionFigure";
 import { optionEntries } from "@/lib/ntaPalette";
 import type { StudentQuestion, StudentResponse } from "@/types/assessment";
 
@@ -62,10 +63,11 @@ export function QuestionViewer({
         <LatexRenderer content={question.question_text} />
       </div>
 
-      {question.image_url ? (
-        <div className="overflow-hidden rounded border border-slate-200 bg-white p-2">
-          <img
-            src={question.image_url}
+      {question.svg_image_code || question.image_url ? (
+        <div className="overflow-hidden rounded border border-slate-200 bg-white p-2 [&>div>svg]:mx-auto [&>div>svg]:max-h-72 [&>div>svg]:w-auto">
+          <QuestionFigure
+            svgCode={question.svg_image_code}
+            imageUrl={question.image_url}
             alt={`Figure for question ${questionNumber}`}
             className="mx-auto max-h-72 object-contain"
           />
@@ -99,13 +101,12 @@ export function QuestionViewer({
                 </span>
                 <span className="flex-1">
                   {option.text ? <LatexRenderer content={option.text} /> : null}
-                  {option.imageUrl ? (
-                    <img
-                      src={option.imageUrl}
-                      alt={`Option ${option.index}`}
-                      className="mt-2 max-h-40 object-contain"
-                    />
-                  ) : null}
+                  <QuestionFigure
+                    svgCode={option.svgCode}
+                    imageUrl={option.imageUrl}
+                    alt={`Option ${option.index}`}
+                    className="mt-2 max-h-40 object-contain [&>svg]:max-h-40 [&>svg]:w-auto"
+                  />
                 </span>
               </label>
             );
@@ -148,13 +149,12 @@ export function QuestionViewer({
                 </span>
                 <span className="flex-1">
                   {option.text ? <LatexRenderer content={option.text} /> : null}
-                  {option.imageUrl ? (
-                    <img
-                      src={option.imageUrl}
-                      alt={`Option ${option.index}`}
-                      className="mt-2 max-h-40 object-contain"
-                    />
-                  ) : null}
+                  <QuestionFigure
+                    svgCode={option.svgCode}
+                    imageUrl={option.imageUrl}
+                    alt={`Option ${option.index}`}
+                    className="mt-2 max-h-40 object-contain [&>svg]:max-h-40 [&>svg]:w-auto"
+                  />
                 </span>
               </label>
             );

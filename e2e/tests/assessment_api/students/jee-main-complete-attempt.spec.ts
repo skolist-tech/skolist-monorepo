@@ -48,6 +48,9 @@ test.describe("Workflow video: complete JEE attempt", () => {
     await expect(
       page.getByText(/A body of mass 2 kg is acted upon by a force of 10 N/)
     ).toBeVisible();
+    await expect(page.getByText("m = 2 kg")).toBeVisible();
+    await expect(page.getByText("F = 10 N")).toBeVisible();
+    await expect(page.getByText("opt-b")).toBeVisible();
     await beat(page, 1800);
     await selectMcqOption(page, 2);
     await page.getByRole("button", { name: "Save & Next" }).click();

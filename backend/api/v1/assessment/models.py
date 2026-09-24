@@ -138,6 +138,11 @@ class QuestionCreate(BaseModel):
     option2_image_url: str | None = None
     option3_image_url: str | None = None
     option4_image_url: str | None = None
+    svg_image_code: str | None = None
+    option1_svg_image_code: str | None = None
+    option2_svg_image_code: str | None = None
+    option3_svg_image_code: str | None = None
+    option4_svg_image_code: str | None = None
 
 
 class QuestionUpdate(BaseModel):
@@ -166,6 +171,11 @@ class QuestionUpdate(BaseModel):
     option2_image_url: str | None = None
     option3_image_url: str | None = None
     option4_image_url: str | None = None
+    svg_image_code: str | None = None
+    option1_svg_image_code: str | None = None
+    option2_svg_image_code: str | None = None
+    option3_svg_image_code: str | None = None
+    option4_svg_image_code: str | None = None
 
 
 class AssigneeCreate(BaseModel):
@@ -208,6 +218,11 @@ class StudentQuestion(BaseModel):
     option2_image_url: str | None = None
     option3_image_url: str | None = None
     option4_image_url: str | None = None
+    svg_image_code: str | None = None
+    option1_svg_image_code: str | None = None
+    option2_svg_image_code: str | None = None
+    option3_svg_image_code: str | None = None
+    option4_svg_image_code: str | None = None
 
 
 class TeacherQuestion(StudentQuestion):

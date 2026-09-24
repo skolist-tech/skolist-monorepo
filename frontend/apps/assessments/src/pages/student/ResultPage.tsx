@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { BackLink } from "@/components/layout/BackLink";
 import { LatexRenderer } from "@/components/shared/LatexRenderer";
+import { QuestionFigure } from "@/components/shared/QuestionFigure";
 import { isAnswerable } from "@/lib/ntaPalette";
 import { getAttemptResult } from "@/services/attempts";
 import type { AttemptPaper } from "@/types/assessment";
@@ -61,13 +62,12 @@ export function ResultPage() {
                 <div className="text-base">
                   <LatexRenderer content={question.question_text} />
                 </div>
-                {question.image_url ? (
-                  <img
-                    src={question.image_url}
-                    alt=""
-                    className="max-h-48 object-contain"
-                  />
-                ) : null}
+                <QuestionFigure
+                  svgCode={question.svg_image_code}
+                  imageUrl={question.image_url}
+                  alt=""
+                  className="max-h-48 object-contain [&>svg]:max-h-48 [&>svg]:w-auto"
+                />
                 <p className="text-sm text-muted-foreground">
                   Marks: {response?.marks_obtained ?? "—"} ·{" "}
                   {response?.is_correct ? "Correct" : "Incorrect / unanswered"}
