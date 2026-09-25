@@ -38,7 +38,6 @@ Credentials and paper titles: [`tests/assessment_api/seed.ts`](./tests/assessmen
 | [`tests/assessment_api/students/attempt-authored-paper.spec.ts`](./tests/assessment_api/students/attempt-authored-paper.spec.ts) | Teacher 2 authors, assigns Student 3, and publishes. Student 3 sits the paper (correct answers), submits, sees 8/8, then **Back** to assigned tests. Teacher reviews the graded attempt, then **Back** to the paper. |
 | [`tests/assessment_api/students/unreleased-paper.spec.ts`](./tests/assessment_api/students/unreleased-paper.spec.ts) | Student 3 does not see a draft they were assigned, a published paper that was never assigned, or a paper after the teacher closes it. |
 | [`tests/assessment_api/students/jee-main-complete-attempt.spec.ts`](./tests/assessment_api/students/jee-main-complete-attempt.spec.ts) | Student 2 sits JEE Main Mock Test 1 end to end (paced for a headed recording). Physics Q1 shows the inline stem SVG and option badge SVGs. |
-| [`tests/assessment_api/students/nta-jee-main-attempt.spec.ts`](./tests/assessment_api/students/nta-jee-main-attempt.spec.ts) | Student 1 on the local full-length JEE Main mock: instructions gate, NTA chrome, answer, Save & Next, mark for review. Needs the gitignored full-paper seed. |
 
 ## Browser check (`npm run test:browser`)
 

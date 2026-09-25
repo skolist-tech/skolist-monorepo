@@ -143,7 +143,6 @@ e2e/
         attempt-authored-paper.spec.ts
         unreleased-paper.spec.ts
         jee-main-complete-attempt.spec.ts
-        nta-jee-main-attempt.spec.ts
 ```
 
 ## Notes
