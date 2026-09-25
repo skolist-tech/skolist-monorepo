@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { loginAs } from "../../helpers/auth";
-import { testCard } from "../helpers";
+import { openAttemptFromCard, testCard } from "../helpers";
 import { STUDENT_2, TESTS } from "../seed";
 
 /** Pause so the headed recording is watchable. */
@@ -37,7 +37,7 @@ test.describe("Workflow video: complete JEE attempt", () => {
     await expect(card).toBeVisible({ timeout: 15_000 });
     await beat(page, 1200);
 
-    await card.getByRole("button", { name: /^(Start|Continue)$/ }).click();
+    await openAttemptFromCard(page, TESTS.jeeMain1.name);
 
     await expect(page).toHaveURL(/\/student\/attempts\/.+/);
     await proceedPastInstructions(page);

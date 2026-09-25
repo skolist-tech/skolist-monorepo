@@ -3,6 +3,8 @@ import { loginAs } from "../../helpers/auth";
 import {
   JOURNEY_MCQS,
   authorDraftWithMcqs,
+  openPaperView,
+  renderedStem,
   publishDraft,
   uniqueDraftName,
 } from "../helpers";
@@ -20,14 +22,18 @@ test("teacher creates a draft, writes questions, edits them, and publishes", asy
   await authorDraftWithMcqs(page, name);
   await expect(page.getByText(/draft/i).first()).toBeVisible();
 
-  for (const question of JOURNEY_MCQS) {
-    await expect(page.getByText(question.stem)).toBeVisible();
+  await openPaperView(page);
+  for (const [index, question] of JOURNEY_MCQS.entries()) {
+    if (index > 0) await page.getByRole("button", { name: "Next" }).click();
+    await expect(renderedStem(page, question.stem)).toBeVisible();
     await expect(
       page.getByText(question.options[question.correctIndex - 1], {
         exact: true,
       })
     ).toBeVisible();
+    await expect(page.getByText("Correct answer")).toBeVisible();
   }
+  await page.getByRole("link", { name: "Back to test" }).click();
 
   await publishDraft(page);
   await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();

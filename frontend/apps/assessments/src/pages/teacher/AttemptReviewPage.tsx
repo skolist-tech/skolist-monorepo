@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { BackLink } from "@/components/layout/BackLink";
 import { getTeacherAttempt } from "@/services/tests";
 import type {
+  AttemptReviewSummary,
   AttemptSummary,
   StudentResponse,
   TeacherTestDetail,
@@ -13,6 +14,7 @@ export function AttemptReviewPage() {
   const [attempt, setAttempt] = useState<AttemptSummary | null>(null);
   const [responses, setResponses] = useState<StudentResponse[]>([]);
   const [test, setTest] = useState<TeacherTestDetail | null>(null);
+  const [summary, setSummary] = useState<AttemptReviewSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -22,6 +24,7 @@ export function AttemptReviewPage() {
         setAttempt(data.attempt);
         setResponses(data.responses);
         setTest(data.test);
+        setSummary(data.summary);
       })
       .catch((err: Error) => setError(err.message));
   }, [testId, attemptId]);
@@ -55,6 +58,12 @@ export function AttemptReviewPage() {
           </p>
         </div>
       </div>
+      {summary ? (
+        <p className="text-sm">
+          {summary.correct} correct · {summary.wrong} wrong ·{" "}
+          {summary.unanswered} unanswered
+        </p>
+      ) : null}
       <ul className="space-y-3">
         {responses.map((response) => (
           <li

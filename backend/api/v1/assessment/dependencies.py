@@ -9,7 +9,7 @@ from supabase import Client
 
 from api.v1.auth import get_supabase_client, require_supabase_user
 
-from .db import fetch_attempt, fetch_section, fetch_test, is_assigned
+from .db import fetch_attempt, fetch_section, fetch_test, is_assigned, list_teacher_ids_for_test
 from .models import STUDENT_USER_TYPE, TEACHER_USER_TYPES, AssessmentActor
 
 
@@ -53,12 +53,16 @@ def can_student_attempt(test: dict) -> bool:
     return test.get("status") == "published" and is_within_window(test)
 
 
-def teacher_can_access_test(actor: AssessmentActor, test: dict) -> bool:
+def teacher_has_access(actor: AssessmentActor, teacher_ids: set[str]) -> bool:
     if actor.is_platform_admin:
         return True
-    if test.get("created_by") == actor.id:
-        return True
-    return bool(actor.org_id and test.get("org_id") == actor.org_id)
+    return actor.id in teacher_ids
+
+
+def teacher_can_access_test(actor: AssessmentActor, test: dict, supabase: Client | None = None) -> bool:
+    if supabase is None:
+        return actor.is_platform_admin
+    return teacher_has_access(actor, list_teacher_ids_for_test(supabase, test["id"]))
 
 
 def require_assessment_actor(
@@ -114,7 +118,7 @@ def require_test_for_teacher(
     supabase: Client = Depends(get_supabase_client),
 ) -> dict:
     test = fetch_test(supabase, test_id)
-    if not teacher_can_access_test(actor, test):
+    if not teacher_can_access_test(actor, test, supabase):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not allowed to access this test",
@@ -129,7 +133,7 @@ def require_section_for_teacher(
 ) -> dict:
     section = fetch_section(supabase, section_id)
     test = fetch_test(supabase, section["test_id"])
-    if not teacher_can_access_test(actor, test):
+    if not teacher_can_access_test(actor, test, supabase):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not allowed to access this section",

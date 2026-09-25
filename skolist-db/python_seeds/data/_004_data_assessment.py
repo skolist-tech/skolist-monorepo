@@ -22,9 +22,13 @@ from .data_assessment.uuids_and_meta import (
     TEST_NEET_OPEN,
 )
 from .data_assessment.attempts import ATTEMPTS
+from .data_assessment.blueprint_questions import BLUEPRINT_QUESTIONS
+from .data_assessment.blueprint_sections import BLUEPRINT_SECTIONS
+from .data_assessment.blueprints import TEST_BLUEPRINTS
 from .data_assessment.questions import QUESTIONS
 from .data_assessment.responses import RESPONSES
 from .data_assessment.sections import SECTIONS
+from .data_assessment.student_groups import STUDENT_GROUP_MEMBERS, STUDENT_GROUPS
 from .data_assessment.test_assignees import TEST_ASSIGNEES
 from .data_assessment.tests import TESTS
 
@@ -46,4 +50,9 @@ __all__ = [
     "ATTEMPTS",
     "RESPONSES",
     "TEST_ASSIGNEES",
+    "TEST_BLUEPRINTS",
+    "BLUEPRINT_SECTIONS",
+    "BLUEPRINT_QUESTIONS",
+    "STUDENT_GROUPS",
+    "STUDENT_GROUP_MEMBERS",
 ]

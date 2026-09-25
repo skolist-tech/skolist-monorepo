@@ -7,11 +7,22 @@ from supabase import Client
 
 from api.v1.auth import get_supabase_client
 
+from .common.question_images import IMAGE_URL_COLUMNS, STORAGE_PREFIX
 from .db import as_str, assessment_table, fetch_question, fetch_test
 from .dependencies import require_section_for_teacher, require_teacher, teacher_can_access_test
 from .models import HARDNESS_LEVELS, QUESTION_TYPES, AssessmentActor, QuestionCreate, QuestionUpdate, dump_unset
 
 router = APIRouter()
+
+
+def _reject_storage_refs(payload: dict) -> None:
+    for column in IMAGE_URL_COLUMNS:
+        value = payload.get(column)
+        if isinstance(value, str) and value.startswith(STORAGE_PREFIX):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Use the image upload endpoint for question images",
+            )
 
 
 def _validate_question_fields(payload: dict, *, partial: bool = False) -> None:
@@ -44,6 +55,7 @@ def create_question(
     supabase: Client = Depends(get_supabase_client),
 ) -> dict:
     payload = dump_unset(body)
+    _reject_storage_refs(payload)
     _validate_question_fields(payload, partial=False)
     payload["section_id"] = section["id"]
     payload["test_id"] = section["test_id"]
@@ -65,9 +77,10 @@ def update_question(
 ) -> dict:
     question = fetch_question(supabase, question_id)
     test = fetch_test(supabase, question["test_id"])
-    if not teacher_can_access_test(actor, test):
+    if not teacher_can_access_test(actor, test, supabase):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed to access this question")
     payload = dump_unset(body)
+    _reject_storage_refs(payload)
     _validate_question_fields({**question, **payload}, partial=True)
     if payload.get("parent_question_id"):
         payload["parent_question_id"] = as_str(payload["parent_question_id"])
@@ -86,6 +99,6 @@ def delete_question(
 ) -> None:
     question = fetch_question(supabase, question_id)
     test = fetch_test(supabase, question["test_id"])
-    if not teacher_can_access_test(actor, test):
+    if not teacher_can_access_test(actor, test, supabase):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed to access this question")
     assessment_table(supabase, "questions").delete().eq("id", as_str(question_id)).execute()

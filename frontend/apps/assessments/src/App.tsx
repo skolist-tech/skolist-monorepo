@@ -6,9 +6,12 @@ import { RoleRoute } from "./components/layout/RoleRoute";
 import { LoginPage } from "./pages/login";
 import { HomeRedirect } from "./pages/HomeRedirect";
 import { TestListPage } from "./pages/teacher/TestListPage";
+import { CreateTestPage } from "./pages/teacher/CreateTestPage";
 import { TestEditorPage } from "./pages/teacher/TestEditorPage";
+import { TeacherPaperPage } from "./pages/teacher/TeacherPaperPage";
 import { AttemptReviewPage } from "./pages/teacher/AttemptReviewPage";
 import { AssignedTestsPage } from "./pages/student/AssignedTestsPage";
+import { StudentAttemptsPage } from "./pages/student/StudentAttemptsPage";
 import { AttemptPage } from "./pages/student/AttemptPage";
 import { ResultPage } from "./pages/student/ResultPage";
 
@@ -34,6 +37,14 @@ function App() {
           }
         />
         <Route
+          path="teacher/tests/new"
+          element={
+            <RoleRoute role="teacher">
+              <CreateTestPage />
+            </RoleRoute>
+          }
+        />
+        <Route
           path="teacher/tests/:testId"
           element={
             <RoleRoute role="teacher">
@@ -50,6 +61,14 @@ function App() {
           }
         />
         <Route
+          path="student/tests/:testId/attempts"
+          element={
+            <RoleRoute role="student">
+              <StudentAttemptsPage />
+            </RoleRoute>
+          }
+        />
+        <Route
           path="student/tests"
           element={
             <RoleRoute role="student">
@@ -62,6 +81,23 @@ function App() {
           element={
             <RoleRoute role="student">
               <ResultPage />
+            </RoleRoute>
+          }
+        />
+      </Route>
+      <Route
+        path="/teacher/tests/:testId/paper"
+        element={
+          <ProtectedRoute>
+            <ExamLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route
+          index
+          element={
+            <RoleRoute role="teacher">
+              <TeacherPaperPage />
             </RoleRoute>
           }
         />

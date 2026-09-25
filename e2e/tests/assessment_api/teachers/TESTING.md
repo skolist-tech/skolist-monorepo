@@ -4,6 +4,8 @@ Parent: [../TESTING.md](../TESTING.md).
 
 | File | What it covers |
 | --- | --- |
-| `teacher.spec.ts` | Teacher 1 sees seed papers, including draft and closed. Opens the draft JEE Advanced editor. Opens a live NEET paper and sees attempts. **Open** on a draft goes to the editor; **Back** returns to the list. |
-| `workflow.spec.ts` | Teacher 2 creates a draft, adds and edits a question, assigns Student 3, publishes, and closes a paper. Delete confirm: Cancel keeps the paper, Delete removes it. |
-| `author-and-publish.spec.ts` | Teacher 2 creates a draft, adds a section and two MCQs, edits stems, options, and keys, and publishes. |
+| `teacher.spec.ts` | Teacher 1 sees only papers they can access, including the draft. Opens the draft editor and a live NEET paper. **Open** on a draft goes to the editor; **Back** returns to the list. Teacher 2 opens the closed paper. |
+| `workflow.spec.ts` | Teacher 2 clones a blueprint, edits a question, assigns Student 3, publishes, and closes a paper. Delete confirm: Cancel keeps the paper, Delete removes it. |
+| `author-and-publish.spec.ts` | Teacher 2 clones a blueprint, edits two MCQs in the paper view, and publishes. |
+| `paper-view.spec.ts` | **Open question paper** shows the student attempt layout with **Edit** on the question and each option. Cancel discards an edit. A stem image uploads, survives reload, and is removed with the cross. Changing the correct option persists. |
+| `blueprint-flow.spec.ts` | Header shows name, organisation, and log out. Chapter Wise stays disabled. Full Syllabus lists the seeded blueprint. Another teacher's paper is hidden. Seed group can be assigned and deassigned. |

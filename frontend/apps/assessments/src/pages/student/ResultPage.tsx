@@ -69,8 +69,11 @@ export function ResultPage() {
                   className="max-h-48 object-contain [&>svg]:max-h-48 [&>svg]:w-auto"
                 />
                 <p className="text-sm text-muted-foreground">
-                  Marks: {response?.marks_obtained ?? "—"} ·{" "}
-                  {response?.is_correct ? "Correct" : "Incorrect / unanswered"}
+                  {response?.is_correct == null
+                    ? "Correct answers are hidden"
+                    : response.is_correct
+                      ? "Correct"
+                      : "Wrong"}
                 </p>
                 {question.explanation ? (
                   <div className="text-sm">

@@ -149,8 +149,94 @@ def list_responses_for_attempt(supabase: Client, attempt_id: UUID | str) -> list
     return fetch_all(assessment_table(supabase, RESPONSES_TABLE).select("*").eq("attempt_id", as_str(attempt_id)))
 
 
+def list_teacher_ids_for_test(supabase: Client, test_id: UUID | str) -> set[str]:
+    rows = fetch_all(
+        assessment_table(supabase, "test_teacher_access").select("teacher_id").eq("test_id", as_str(test_id))
+    )
+    return {str(row["teacher_id"]) for row in rows if row.get("teacher_id")}
+
+
+def grant_teacher_access(supabase: Client, test_id: UUID | str, teacher_id: str) -> None:
+    existing = fetch_all(
+        assessment_table(supabase, "test_teacher_access")
+        .select("id")
+        .eq("test_id", as_str(test_id))
+        .eq("teacher_id", teacher_id)
+    )
+    if existing:
+        return
+    assessment_table(supabase, "test_teacher_access").insert(
+        {"test_id": as_str(test_id), "teacher_id": teacher_id}
+    ).execute()
+
+
+def list_tests_for_teacher(supabase: Client, teacher_id: str) -> list[dict]:
+    access_rows = fetch_all(
+        assessment_table(supabase, "test_teacher_access").select("test_id").eq("teacher_id", teacher_id)
+    )
+    test_ids = [row["test_id"] for row in access_rows if row.get("test_id")]
+    if not test_ids:
+        return []
+    return fetch_all(assessment_table(supabase, "tests").select("*").in_("id", test_ids).order("created_at", desc=True))
+
+
+def list_assigned_test_ids(supabase: Client, user_id: str) -> list[str]:
+    direct = fetch_all(assessment_table(supabase, "test_assignees").select("test_id").eq("user_id", user_id))
+    ids = [str(row["test_id"]) for row in direct if row.get("test_id")]
+    group_ids = list_group_ids_for_user(supabase, user_id)
+    if group_ids:
+        links = fetch_all(
+            assessment_table(supabase, "test_group_assignees").select("test_id").in_("group_id", group_ids)
+        )
+        ids.extend(str(row["test_id"]) for row in links if row.get("test_id"))
+    return list(dict.fromkeys(ids))
+
+
+def list_group_ids_for_user(supabase: Client, user_id: str) -> list[str]:
+    rows = fetch_all(assessment_table(supabase, "student_group_members").select("group_id").eq("user_id", user_id))
+    return [str(row["group_id"]) for row in rows if row.get("group_id")]
+
+
 def is_assigned(supabase: Client, test_id: UUID | str, user_id: str) -> bool:
     rows = fetch_all(
         assessment_table(supabase, "test_assignees").select("id").eq("test_id", as_str(test_id)).eq("user_id", user_id)
     )
-    return bool(rows)
+    if rows:
+        return True
+    group_ids = list_group_ids_for_user(supabase, user_id)
+    if not group_ids:
+        return False
+    links = fetch_all(
+        assessment_table(supabase, "test_group_assignees")
+        .select("id")
+        .eq("test_id", as_str(test_id))
+        .in_("group_id", group_ids)
+    )
+    return bool(links)
+
+
+def list_group_assignees_for_test(supabase: Client, test_id: UUID | str) -> list[dict]:
+    links = fetch_all(
+        assessment_table(supabase, "test_group_assignees")
+        .select("*")
+        .eq("test_id", as_str(test_id))
+        .order("created_at")
+    )
+    if not links:
+        return []
+    group_ids = [row["group_id"] for row in links]
+    groups = fetch_all(assessment_table(supabase, "student_groups").select("id, name, org_id").in_("id", group_ids))
+    by_id = {str(row["id"]): row for row in groups}
+    payload = []
+    for link in links:
+        group = by_id.get(str(link.get("group_id")), {})
+        payload.append({**link, "name": group.get("name"), "org_id": group.get("org_id")})
+    return payload
+
+
+def list_org_groups(supabase: Client, org_id: str | None) -> list[dict]:
+    if not org_id:
+        return []
+    return fetch_all(
+        assessment_table(supabase, "student_groups").select("id, name, org_id").eq("org_id", org_id).order("name")
+    )

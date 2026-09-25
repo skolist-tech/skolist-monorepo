@@ -63,6 +63,15 @@ Q_ADV_CLOSED_PASSAGE = seed_uuid(157)
 Q_ADV_CLOSED_MSQ = seed_uuid(158)
 Q_ADV_CLOSED_INT = seed_uuid(159)
 
+# Full-syllabus blueprint (180-184) and seed student group (190-191)
+BLUEPRINT_FULL_SYLLABUS = seed_uuid(180)
+BLUEPRINT_SECTION_PHYSICS = seed_uuid(181)
+BLUEPRINT_SECTION_CHEMISTRY = seed_uuid(182)
+BLUEPRINT_Q_PHYSICS = seed_uuid(183)
+BLUEPRINT_Q_CHEMISTRY = seed_uuid(184)
+STUDENT_GROUP_SEED = seed_uuid(190)
+STUDENT_GROUP_MEMBER_S3 = seed_uuid(191)
+
 # Attempts (200-208)
 ATTEMPT_NEET_LIVE_S1 = seed_uuid(200)  # student1, attempt 1, in_progress
 ATTEMPT_NEET_LIVE_S2 = seed_uuid(201)  # student2, attempt 1, graded (weaker)

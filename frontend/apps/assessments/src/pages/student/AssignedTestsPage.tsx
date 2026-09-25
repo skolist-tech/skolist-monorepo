@@ -1,10 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { TestCard } from "@/components/student/TestCard";
 import { useAssignedTests } from "@/hooks/useAssignedTests";
-import { startAttempt } from "@/services/attempts";
 
 export function AssignedTestsPage() {
-  const { tests, error, loading } = useAssignedTests();
+  const { tests, pastTests, error, loading } = useAssignedTests();
   const navigate = useNavigate();
 
   if (loading) return <p className="text-muted-foreground">Loading…</p>;
@@ -23,13 +22,26 @@ export function AssignedTestsPage() {
           <TestCard
             key={test.id}
             test={test}
-            onStart={async (testId) => {
-              const attempt = await startAttempt(testId);
-              navigate(`/student/attempts/${attempt.id}`);
-            }}
+            onOpen={(testId) => navigate(`/student/tests/${testId}/attempts`)}
           />
         ))}
       </div>
+      {pastTests.length ? (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Past tests</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {pastTests.map((test) => (
+              <TestCard
+                key={test.id}
+                test={test}
+                onOpen={(testId) =>
+                  navigate(`/student/tests/${testId}/attempts`)
+                }
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

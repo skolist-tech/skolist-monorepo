@@ -41,8 +41,8 @@ export function paletteStatus(
   return "not_visited";
 }
 
-export function optionEntries(question: StudentQuestion) {
-  return [
+export function optionEntries(question: StudentQuestion, includeEmpty = false) {
+  const entries = [
     {
       index: 1,
       text: question.option1,
@@ -67,7 +67,9 @@ export function optionEntries(question: StudentQuestion) {
       imageUrl: question.option4_image_url,
       svgCode: question.option4_svg_image_code,
     },
-  ].filter((item) => item.text || item.imageUrl || item.svgCode);
+  ];
+  if (includeEmpty) return entries;
+  return entries.filter((item) => item.text || item.imageUrl || item.svgCode);
 }
 
 export function emptyAnswerPayload(

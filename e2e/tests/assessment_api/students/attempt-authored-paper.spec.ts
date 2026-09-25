@@ -6,6 +6,7 @@ import {
   authorDraftWithMcqs,
   proceedPastInstructionsIfPresent,
   publishDraft,
+  openAttemptFromCard,
   testCard,
   uniqueDraftName,
 } from "../helpers";
@@ -34,7 +35,7 @@ test("teacher authors and publishes a paper, then a student sits it and the teac
 
   const card = testCard(page, name);
   await expect(card).toBeVisible({ timeout: 15_000 });
-  await card.getByRole("button", { name: /^(Start|Continue)$/ }).click();
+  await openAttemptFromCard(page, name);
   await expect(page).toHaveURL(/\/student\/attempts\/.+/);
   await proceedPastInstructionsIfPresent(page);
 
@@ -70,6 +71,7 @@ test("teacher authors and publishes a paper, then a student sits it and the teac
   await expect(page.getByRole("heading", { name, exact: true })).toBeVisible({
     timeout: 15_000,
   });
+  await page.getByRole("button", { name: "Attempts" }).click();
   await expect(page.getByText(/graded/i).first()).toBeVisible({
     timeout: 15_000,
   });

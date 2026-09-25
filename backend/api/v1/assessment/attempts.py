@@ -8,6 +8,8 @@ from supabase import Client
 
 from api.v1.auth import get_supabase_client
 
+from .common.access import student_can_review_attempt, student_can_see_answers
+from .common.question_images import sign_question_images
 from .db import (
     RESPONSES_TABLE,
     as_str,
@@ -42,10 +44,17 @@ def _require_in_progress(attempt: dict) -> None:
         )
 
 
+def _visible_attempt(supabase: Client, attempt: dict) -> dict:
+    test = fetch_test(supabase, attempt["test_id"])
+    if not student_can_review_attempt(test, attempt):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This attempt is not available")
+    return test
+
+
 def _paper_payload(supabase: Client, attempt: dict, include_grading: bool) -> dict:
     test = fetch_test(supabase, attempt["test_id"])
     sections = list_sections_for_test(supabase, test["id"])
-    questions = list_questions_for_test(supabase, test["id"])
+    questions = sign_question_images(supabase, list_questions_for_test(supabase, test["id"]))
     responses = list_responses_for_attempt(supabase, attempt["id"])
     questions_by_section: dict[str, list] = {section["id"]: [] for section in sections}
     for question in questions:
@@ -114,7 +123,8 @@ def get_attempt(
     attempt: dict = Depends(require_attempt_owner),
     supabase: Client = Depends(get_supabase_client),
 ) -> dict:
-    include_grading = attempt.get("status") in TERMINAL_STATUSES
+    test = _visible_attempt(supabase, attempt)
+    include_grading = student_can_see_answers(test, attempt)
     responses = list_responses_for_attempt(supabase, attempt["id"])
     attempt_out = dict(attempt)
     if not include_grading:
@@ -130,7 +140,8 @@ def get_attempt_paper(
     attempt: dict = Depends(require_attempt_owner),
     supabase: Client = Depends(get_supabase_client),
 ) -> dict:
-    include_grading = attempt.get("status") in TERMINAL_STATUSES
+    test = _visible_attempt(supabase, attempt)
+    include_grading = student_can_see_answers(test, attempt)
     return _paper_payload(supabase, attempt, include_grading=include_grading)
 
 
@@ -199,7 +210,8 @@ def submit_attempt(
     supabase: Client = Depends(get_supabase_client),
 ) -> dict:
     if attempt.get("status") in TERMINAL_STATUSES:
-        return _result_payload(supabase, attempt)
+        test = _visible_attempt(supabase, attempt)
+        return _result_payload(supabase, attempt, include_answers=student_can_see_answers(test, attempt))
 
     _require_in_progress(attempt)
     questions = list_questions_for_test(supabase, attempt["test_id"])
@@ -232,7 +244,11 @@ def submit_attempt(
         .execute()
     )
     attempt_row = (updated.data or [attempt])[0]
-    return _result_payload(supabase, attempt_row)
+    return _result_payload(
+        supabase,
+        attempt_row,
+        include_answers=student_can_see_answers(fetch_test(supabase, attempt["test_id"]), attempt_row),
+    )
 
 
 @router.get("/attempts/{attempt_id}/result")
@@ -245,27 +261,30 @@ def get_attempt_result(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Results are available after submit",
         )
-    return _result_payload(supabase, attempt)
+    test = fetch_test(supabase, attempt["test_id"])
+    if not student_can_review_attempt(test, attempt):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This attempt is not available")
+    return _result_payload(supabase, attempt, include_answers=student_can_see_answers(test, attempt))
 
 
-def _result_payload(supabase: Client, attempt: dict) -> dict:
-    questions = list_questions_for_test(supabase, attempt["test_id"])
+def _result_payload(supabase: Client, attempt: dict, include_answers: bool = False) -> dict:
+    questions = sign_question_images(supabase, list_questions_for_test(supabase, attempt["test_id"]))
     responses = list_responses_for_attempt(supabase, attempt["id"])
-    paper = _paper_payload(supabase, attempt, include_grading=True)
-    # Results may include explanations after submit, but never live keys during an attempt.
-    # After submit, teachers own the keys; students get explanations + correctness only.
+    paper = _paper_payload(supabase, attempt, include_grading=include_answers)
     questions_by_id = {q["id"]: q for q in questions}
     graded_questions = []
     for question in questions:
         item = strip_question_for_student(question)
-        item["explanation"] = questions_by_id[question["id"]].get("explanation")
-        item["answer"] = questions_by_id[question["id"]].get("answer")
+        if include_answers:
+            item["explanation"] = questions_by_id[question["id"]].get("explanation")
+            item["answer"] = questions_by_id[question["id"]].get("answer")
+            item["correct_mcq_option"] = questions_by_id[question["id"]].get("correct_mcq_option")
         graded_questions.append(item)
 
     by_section: dict[str, list] = {}
     for question in graded_questions:
         by_section.setdefault(question["section_id"], []).append(question)
     paper["sections"] = [{**section, "questions": by_section.get(section["id"], [])} for section in paper["sections"]]
-    paper["responses"] = responses
+    paper["responses"] = [strip_response_for_student(row, include_grading=include_answers) for row in responses]
     paper["attempt"] = attempt
     return paper

@@ -4,6 +4,7 @@ import type { TestSummary } from "@/types/assessment";
 
 export function useAssignedTests() {
   const [tests, setTests] = useState<TestSummary[]>([]);
+  const [pastTests, setPastTests] = useState<TestSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -12,6 +13,7 @@ export function useAssignedTests() {
     try {
       const data = await listAssignedTests();
       setTests(data.tests);
+      setPastTests(data.past_tests ?? []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tests");
@@ -24,5 +26,5 @@ export function useAssignedTests() {
     void reload();
   }, [reload]);
 
-  return { tests, error, loading, reload };
+  return { tests, pastTests, error, loading, reload };
 }

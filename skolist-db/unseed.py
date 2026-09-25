@@ -59,6 +59,8 @@ def print_info(message: str):
 
 
 BATCH = 500
+# ids go in the query string (`id=in.(…)`); ~100 UUIDs keeps it under gateway URI limits.
+DELETE_CHUNK = 100
 
 
 def _table(supabase, schema: str, table: str):
@@ -105,7 +107,8 @@ def _delete_batches(api, build_query) -> int:
         if not rows:
             return total
         ids = [row["id"] for row in rows]
-        api.delete().in_("id", ids).execute()
+        for start in range(0, len(ids), DELETE_CHUNK):
+            api.delete().in_("id", ids[start : start + DELETE_CHUNK]).execute()
         total += len(ids)
         if len(ids) < BATCH:
             return total

@@ -10,6 +10,8 @@
     "test:headed:video:images": "E2E_VIDEO=1 E2E_IMAGES=1 playwright test --headed --workers=1",
     "test:qgen": "playwright test --project=qgen",
     "test:assessments": "playwright test --project=assessments --workers=1",
+    "test:assessments:teacher": "playwright test --project=assessments --workers=1 tests/assessment_api/teachers",
+    "test:assessments:student": "playwright test --project=assessments --workers=1 tests/assessment_api/students",
     "test:assessments:headed": "playwright test --project=assessments --headed --workers=1",
     "test:assessments:headed:video": "E2E_VIDEO=1 playwright test --project=assessments --headed --workers=1",
     "test:assessments:headed:video:images": "E2E_VIDEO=1 E2E_IMAGES=1 playwright test --project=assessments --headed --workers=1",

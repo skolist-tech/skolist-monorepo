@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAs } from "../../helpers/auth";
-import { testCard } from "../helpers";
+import { openAttemptFromCard, testCard } from "../helpers";
 import { STUDENT_1, STUDENT_3, STUDENT_VISIBLE_PUBLISHED, TESTS } from "../seed";
 
 async function openAssignedTests(page: import("@playwright/test").Page, email: string, password: string) {
@@ -40,7 +40,7 @@ test.describe("Student assessment flows", () => {
     await expect(card.getByText("No attempt yet")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(card.getByRole("button", { name: "Start" })).toBeVisible();
+    await expect(card.getByRole("button", { name: "View attempts" })).toBeVisible();
   });
 
   test("opens NEET paper into the NTA paper UI", async ({
@@ -55,7 +55,7 @@ test.describe("Student assessment flows", () => {
     ).toBeVisible({
       timeout: 15_000,
     });
-    await card.getByRole("button", { name: /^(Start|Continue)$/ }).click();
+    await openAttemptFromCard(page, TESTS.neetLive.name);
 
     await expect(page).toHaveURL(/\/student\/attempts\/.+/);
     await expect(

@@ -10,10 +10,10 @@ import type { TestSummary } from "@/types/assessment";
 
 export function TestCard({
   test,
-  onStart,
+  onOpen,
 }: {
   test: TestSummary;
-  onStart: (testId: string) => void;
+  onOpen: (testId: string) => void;
 }) {
   const attempt = test.latest_attempt;
   return (
@@ -31,9 +31,7 @@ export function TestCard({
         ) : (
           <p className="text-sm">No attempt yet</p>
         )}
-        <Button onClick={() => onStart(test.id)}>
-          {attempt?.status === "in_progress" ? "Continue" : "Start"}
-        </Button>
+        <Button onClick={() => onOpen(test.id)}>View attempts</Button>
       </CardContent>
     </Card>
   );

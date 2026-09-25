@@ -1,7 +1,19 @@
+import type { ReactNode } from "react";
 import { LatexRenderer } from "@/components/shared/LatexRenderer";
 import { QuestionFigure } from "@/components/shared/QuestionFigure";
+import {
+  EditableBlock,
+  type BlockSave,
+} from "@/components/teacher/EditableBlock";
 import { optionEntries } from "@/lib/ntaPalette";
 import type { StudentQuestion, StudentResponse } from "@/types/assessment";
+
+export type QuestionEditor = {
+  onSaveStem: (save: BlockSave) => Promise<void>;
+  onSaveOption: (index: number, save: BlockSave) => Promise<void>;
+  correctOptions: number[];
+  answer?: string | null;
+};
 
 type Props = {
   question: StudentQuestion;
@@ -10,7 +22,10 @@ type Props = {
   questionNumber: number;
   passageText?: string | null;
   language: "en" | "hi";
+  editor?: QuestionEditor;
 };
+
+type Option = ReturnType<typeof optionEntries>[number];
 
 export function QuestionViewer({
   question,
@@ -19,8 +34,9 @@ export function QuestionViewer({
   questionNumber,
   passageText,
   language,
+  editor,
 }: Props) {
-  const options = optionEntries(question);
+  const options = optionEntries(question, Boolean(editor));
   const typeLabel =
     question.question_type === "mcq"
       ? language === "hi"
@@ -37,6 +53,82 @@ export function QuestionViewer({
           : language === "hi"
             ? "पूर्णांक"
             : "Integer Answer";
+
+  const editGutter = editor ? "pr-14" : "";
+  const stemBody = (
+    <>
+      <div
+        className={`${editGutter} text-[15px] leading-relaxed text-slate-900`}
+      >
+        <LatexRenderer content={question.question_text} />
+      </div>
+      {question.svg_image_code || question.image_url ? (
+        <div className="mt-4 overflow-hidden rounded border border-slate-200 bg-white p-2 [&>div>svg]:mx-auto [&>div>svg]:max-h-72 [&>div>svg]:w-auto">
+          <QuestionFigure
+            svgCode={question.svg_image_code}
+            imageUrl={question.image_url}
+            alt={`Figure for question ${questionNumber}`}
+            className="mx-auto max-h-72 object-contain"
+          />
+        </div>
+      ) : null}
+    </>
+  );
+
+  const isAnswerType =
+    question.question_type === "numerical" ||
+    question.question_type === "integer";
+
+  function renderOption(option: Option, selected: boolean, input: ReactNode) {
+    const letter = String.fromCharCode(64 + option.index);
+    const isCorrect = editor?.correctOptions.includes(option.index) ?? false;
+    const body = (
+      <>
+        {input}
+        <span className="font-semibold text-slate-700">({letter})</span>
+        <span className={`flex-1 ${editGutter}`}>
+          {option.text ? <LatexRenderer content={option.text} /> : null}
+          <QuestionFigure
+            svgCode={option.svgCode}
+            imageUrl={option.imageUrl}
+            alt={`Option ${option.index}`}
+            className="mt-2 max-h-40 object-contain [&>svg]:max-h-40 [&>svg]:w-auto"
+          />
+          {isCorrect ? (
+            <span className="mt-1 inline-block rounded bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+              Correct answer
+            </span>
+          ) : null}
+        </span>
+      </>
+    );
+    const rowClass = `flex items-start gap-3 rounded border px-3 py-2 text-sm ${
+      selected
+        ? "border-sky-600 bg-sky-50"
+        : "border-slate-300 bg-white hover:bg-slate-50"
+    }`;
+
+    if (!editor) {
+      return (
+        <label key={option.index} className={`cursor-pointer ${rowClass}`}>
+          {body}
+        </label>
+      );
+    }
+    return (
+      <EditableBlock
+        key={option.index}
+        label={`option ${letter}`}
+        text={option.text ?? ""}
+        imageUrl={option.imageUrl}
+        svgCode={option.svgCode}
+        correct={isCorrect}
+        onSave={(save) => editor.onSaveOption(option.index, save)}
+      >
+        <div className={rowClass}>{body}</div>
+      </EditableBlock>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -59,56 +151,44 @@ export function QuestionViewer({
         </div>
       ) : null}
 
-      <div className="text-[15px] leading-relaxed text-slate-900">
-        <LatexRenderer content={question.question_text} />
-      </div>
-
-      {question.svg_image_code || question.image_url ? (
-        <div className="overflow-hidden rounded border border-slate-200 bg-white p-2 [&>div>svg]:mx-auto [&>div>svg]:max-h-72 [&>div>svg]:w-auto">
-          <QuestionFigure
-            svgCode={question.svg_image_code}
-            imageUrl={question.image_url}
-            alt={`Figure for question ${questionNumber}`}
-            className="mx-auto max-h-72 object-contain"
-          />
-        </div>
-      ) : null}
+      {editor ? (
+        <EditableBlock
+          label="question"
+          text={question.question_text}
+          imageUrl={question.image_url}
+          svgCode={question.svg_image_code}
+          answer={isAnswerType ? (editor.answer ?? "") : undefined}
+          answerLabel={isAnswerType ? "Correct answer" : undefined}
+          onSave={editor.onSaveStem}
+        >
+          {stemBody}
+          {isAnswerType && editor.answer != null ? (
+            <p className="mt-2 text-sm font-semibold text-green-800">
+              Correct answer: {editor.answer}
+            </p>
+          ) : null}
+        </EditableBlock>
+      ) : (
+        stemBody
+      )}
 
       {question.question_type === "mcq" ? (
         <div className="space-y-2">
           {options.map((option) => {
             const selected = draft.selected_mcq_option === option.index;
-            return (
-              <label
-                key={option.index}
-                className={`flex cursor-pointer items-start gap-3 rounded border px-3 py-2 text-sm ${
-                  selected
-                    ? "border-sky-600 bg-sky-50"
-                    : "border-slate-300 bg-white hover:bg-slate-50"
-                }`}
-              >
-                <input
-                  type="radio"
-                  className="mt-1"
-                  name={`q-${question.id}`}
-                  checked={selected}
-                  onChange={() =>
-                    onDraftChange({ selected_mcq_option: option.index })
-                  }
-                />
-                <span className="font-semibold text-slate-700">
-                  ({String.fromCharCode(64 + option.index)})
-                </span>
-                <span className="flex-1">
-                  {option.text ? <LatexRenderer content={option.text} /> : null}
-                  <QuestionFigure
-                    svgCode={option.svgCode}
-                    imageUrl={option.imageUrl}
-                    alt={`Option ${option.index}`}
-                    className="mt-2 max-h-40 object-contain [&>svg]:max-h-40 [&>svg]:w-auto"
-                  />
-                </span>
-              </label>
+            return renderOption(
+              option,
+              selected,
+              <input
+                type="radio"
+                className="mt-1"
+                name={`q-${question.id}`}
+                checked={selected}
+                disabled={Boolean(editor)}
+                onChange={() =>
+                  onDraftChange({ selected_mcq_option: option.index })
+                }
+              />
             );
           })}
         </div>
@@ -124,46 +204,27 @@ export function QuestionViewer({
               false,
             ];
             const selected = Boolean(flags[option.index - 1]);
-            return (
-              <label
-                key={option.index}
-                className={`flex cursor-pointer items-start gap-3 rounded border px-3 py-2 text-sm ${
-                  selected
-                    ? "border-sky-600 bg-sky-50"
-                    : "border-slate-300 bg-white hover:bg-slate-50"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={selected}
-                  onChange={() => {
-                    const next = [...flags];
-                    while (next.length < 4) next.push(false);
-                    next[option.index - 1] = !selected;
-                    onDraftChange({ selected_msq_options: next });
-                  }}
-                />
-                <span className="font-semibold text-slate-700">
-                  ({String.fromCharCode(64 + option.index)})
-                </span>
-                <span className="flex-1">
-                  {option.text ? <LatexRenderer content={option.text} /> : null}
-                  <QuestionFigure
-                    svgCode={option.svgCode}
-                    imageUrl={option.imageUrl}
-                    alt={`Option ${option.index}`}
-                    className="mt-2 max-h-40 object-contain [&>svg]:max-h-40 [&>svg]:w-auto"
-                  />
-                </span>
-              </label>
+            return renderOption(
+              option,
+              selected,
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={selected}
+                disabled={Boolean(editor)}
+                onChange={() => {
+                  const next = [...flags];
+                  while (next.length < 4) next.push(false);
+                  next[option.index - 1] = !selected;
+                  onDraftChange({ selected_msq_options: next });
+                }}
+              />
             );
           })}
         </div>
       ) : null}
 
-      {question.question_type === "numerical" ||
-      question.question_type === "integer" ? (
+      {isAnswerType && !editor ? (
         <div className="max-w-xs space-y-1">
           <label className="text-xs font-medium text-slate-600">
             {language === "hi" ? "अपना उत्तर दर्ज करें" : "Enter your answer"}

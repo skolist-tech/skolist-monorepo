@@ -8,6 +8,7 @@ export type Actor = {
   name?: string | null;
   avatar_url?: string | null;
   role: UserRole;
+  org_name?: string | null;
 };
 
 export type TestSummary = {
@@ -115,9 +116,41 @@ export type StudentResponse = {
   is_marked_for_review?: boolean;
 };
 
+export type StudentGroup = {
+  id: string;
+  name: string;
+  org_id?: string | null;
+};
+
+export type GroupAssignee = {
+  id: string;
+  test_id: string;
+  group_id: string;
+  name?: string | null;
+};
+
+export type BlueprintSummary = {
+  id: string;
+  name: string;
+  description?: string | null;
+  exam_type: string;
+  duration_minutes: number;
+  kind: string;
+};
+
+export type AttemptReviewSummary = {
+  correct: number;
+  wrong: number;
+  unanswered: number;
+  total: number;
+};
+
 export type TeacherTestDetail = TestSummary & {
   sections: Section<TeacherQuestion>[];
   assignees: Assignee[];
+  group_assignees?: GroupAssignee[];
+  students_can_review_attempts?: boolean;
+  students_can_see_answers?: boolean;
 };
 
 export type AttemptPaper = {

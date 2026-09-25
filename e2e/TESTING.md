@@ -11,4 +11,6 @@ Playwright drives the frontend in a browser. Supabase and the backend must alrea
 cd e2e
 npm run test:qgen
 npm run test:assessments
+npm run test:assessments:teacher   # tests/assessment_api/teachers only
+npm run test:assessments:student   # tests/assessment_api/students only
 ```

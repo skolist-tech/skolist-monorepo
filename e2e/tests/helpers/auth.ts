@@ -41,7 +41,11 @@ export async function fillEmailSignIn(
 export async function loginAs(page: Page, email: string, password: string) {
   await page.goto("/login");
   const orgCode = page.getByLabel("Org code");
-  if (await orgCode.isVisible()) {
+  const assessmentsLogin = await orgCode
+    .waitFor({ state: "visible", timeout: 8_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (assessmentsLogin) {
     await orgCode.fill(SEED_ORG_CODE);
     await page.getByLabel("Email").fill(email);
     await page.getByPlaceholder("Enter password").fill(password);

@@ -69,6 +69,7 @@ class MeResponse(BaseModel):
     name: str | None = None
     avatar_url: str | None = None
     role: Literal["teacher", "student", "other"]
+    org_name: str | None = None
 
 
 class TestCreate(BaseModel):
@@ -94,6 +95,8 @@ class TestUpdate(BaseModel):
     default_negative_marks: float | None = Field(default=None, ge=0)
     starts_at: datetime | None = None
     ends_at: datetime | None = None
+    students_can_review_attempts: bool | None = None
+    students_can_see_answers: bool | None = None
 
 
 class SectionCreate(BaseModel):
@@ -180,6 +183,10 @@ class QuestionUpdate(BaseModel):
 
 class AssigneeCreate(BaseModel):
     user_id: UUID
+
+
+class GroupAssigneeCreate(BaseModel):
+    group_id: UUID
 
 
 class OrgStudent(BaseModel):

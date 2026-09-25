@@ -24,6 +24,9 @@ load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+# Origin browsers use for Supabase links (signed storage URLs). Differs from
+# SUPABASE_URL when the API runs in Docker (host.docker.internal).
+SUPABASE_PUBLIC_URL = os.getenv("SUPABASE_PUBLIC_URL") or SUPABASE_URL
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # LiteLLM model string for qgen — e.g. "gemini/gemini-2.5-flash", "gpt-4o", "claude-sonnet-4-6"

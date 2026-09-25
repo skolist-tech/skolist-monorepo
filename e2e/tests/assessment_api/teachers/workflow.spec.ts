@@ -3,6 +3,9 @@ import { loginAs } from "../../helpers/auth";
 import {
   closePublishedPaper,
   createNamedDraft,
+  editStem,
+  openPaperView,
+  renderedStem,
   goBackToTeacherTests,
   openDeleteDialog,
   publishDraft,
@@ -33,39 +36,19 @@ test.describe("Teacher authoring workflows", () => {
     const name = uniqueDraftName();
     await createNamedDraft(page, name);
 
-    await page.getByRole("button", { name: "Add section" }).click();
-    await expect(page.getByRole("heading", { name: /Physics/ })).toBeVisible({
-      timeout: 15_000,
-    });
-
-    if ((await page.getByText("New question").count()) === 0) {
-      await page.getByRole("button", { name: "Add question" }).click();
-      await expect(page.getByText("New question")).toBeVisible({
-        timeout: 15_000,
-      });
-    }
-
+    await openPaperView(page);
     const edited = `Edited question ${Date.now()}`;
-    await page.getByRole("button", { name: "Edit" }).click();
-    await expect(page.getByRole("button", { name: "Save" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
-
-    const questionField = page.getByRole("textbox", { name: /question/i });
-    if (await questionField.count()) {
-      await questionField.first().fill(edited);
-    } else {
-      await page.locator("textarea").first().fill(edited);
-    }
-
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByText(edited)).toBeVisible({ timeout: 15_000 });
+    await editStem(page, edited);
+    await page.reload();
+    await expect(renderedStem(page, edited)).toBeVisible({ timeout: 15_000 });
   });
 
   test("assigns a seed student to a new draft", async ({ page }) => {
     const name = uniqueDraftName();
     await createNamedDraft(page, name);
 
-    await expect(page.getByRole("heading", { name: "Assignees" })).toBeVisible();
+    await page.getByRole("button", { name: "Students" }).click();
+    await expect(page.getByRole("heading", { name: "Students" })).toBeVisible();
 
     const search = page.getByRole("textbox", { name: "Search students" });
     await search.fill(STUDENT_3.name);

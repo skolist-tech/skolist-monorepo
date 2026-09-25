@@ -7,7 +7,19 @@ import type {
 import { apiFetch } from "./api";
 
 export function listAssignedTests() {
-  return apiFetch<{ tests: TestSummary[] }>("/assigned-tests");
+  return apiFetch<{ tests: TestSummary[]; past_tests: TestSummary[] }>(
+    "/assigned-tests"
+  );
+}
+
+export function listMyAttempts(testId: string) {
+  return apiFetch<{
+    test: TestSummary & {
+      can_start: boolean;
+      students_can_see_answers: boolean;
+    };
+    attempts: AttemptSummary[];
+  }>(`/tests/${testId}/my-attempts`);
 }
 
 export function startAttempt(testId: string) {

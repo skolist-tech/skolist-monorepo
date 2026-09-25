@@ -1,9 +1,12 @@
-import { Link, Outlet } from "react-router-dom";
-import { UserMenu } from "@skolist/auth";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { UserMenu, useAuth } from "@skolist/auth";
+import { Button } from "@skolist/ui";
 import { useActor } from "@/hooks/useActor";
 
 export function Header() {
   const { actor } = useActor();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const isTeacher = actor?.role === "teacher";
 
   return (
@@ -33,7 +36,24 @@ export function Header() {
             </nav>
           )}
         </div>
-        <UserMenu />
+        <div className="flex items-center gap-3">
+          {actor ? (
+            <p className="hidden text-sm text-muted-foreground sm:block">
+              <span>{actor.name || actor.email}</span>
+              {actor.org_name ? <span> · {actor.org_name}</span> : null}
+            </p>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              void signOut().then(() => navigate("/login"));
+            }}
+          >
+            Log out
+          </Button>
+          <UserMenu />
+        </div>
       </div>
     </header>
   );

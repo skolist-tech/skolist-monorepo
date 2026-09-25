@@ -134,6 +134,23 @@ def seed_assessment():
     children = [q for q in questions if q.get("parent_question_id")]
 
     upsert_rows(supabase, "tests", tests)
+    access_rows = [
+        {"test_id": test["id"], "teacher_id": test["created_by"]}
+        for test in tests
+        if test.get("created_by")
+    ]
+    upsert_rows(supabase, "test_teacher_access", access_rows, on_conflict="test_id,teacher_id")
+    groups = copy.deepcopy(data.STUDENT_GROUPS)
+    for group in groups:
+        group["org_id"] = org_id
+    members = copy.deepcopy(data.STUDENT_GROUP_MEMBERS)
+    for member in members:
+        member["user_id"] = students[member["student_key"]]["id"]
+    upsert_rows(supabase, "test_blueprints", copy.deepcopy(data.TEST_BLUEPRINTS))
+    upsert_rows(supabase, "blueprint_sections", copy.deepcopy(data.BLUEPRINT_SECTIONS))
+    upsert_rows(supabase, "blueprint_questions", copy.deepcopy(data.BLUEPRINT_QUESTIONS))
+    upsert_rows(supabase, "student_groups", groups)
+    upsert_rows(supabase, "student_group_members", members)
     upsert_rows(supabase, "test_assignees", assignees)
     upsert_rows(supabase, "sections", copy.deepcopy(data.SECTIONS))
     upsert_questions(supabase, parents)

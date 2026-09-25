@@ -33,10 +33,11 @@ export async function apiFetch<T>(
     throw new Error("User not authenticated");
   }
 
+  const isForm = options.body instanceof FormData;
   const response = await fetch(`${API_URL}/api/v1/assessment${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isForm ? {} : { "Content-Type": "application/json" }),
       Authorization: `Bearer ${token}`,
       ...(options.headers || {}),
     },

@@ -1,36 +1,52 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Button, Input } from "@skolist/ui";
+import { Button, Input, Label } from "@skolist/ui";
 import { BackLink } from "@/components/layout/BackLink";
 import { AssigneeManager } from "@/components/teacher/AssigneeManager";
-import { SectionList } from "@/components/teacher/SectionList";
 import {
   addAssignee,
-  createQuestion,
-  createSection,
-  getTeacherTest,
+  addGroupAssignee,
+  listOrgGroups,
   listTestAttempts,
+  getTeacherTest,
   removeAssignee,
-  updateQuestion,
+  removeGroupAssignee,
   updateTest,
 } from "@/services/tests";
-import type { AttemptSummary, TeacherTestDetail } from "@/types/assessment";
+import type {
+  AttemptSummary,
+  StudentGroup,
+  TeacherTestDetail,
+} from "@/types/assessment";
+
+type Tab = "paper" | "students" | "attempts";
 
 export function TestEditorPage() {
   const { testId } = useParams();
   const [test, setTest] = useState<TeacherTestDetail | null>(null);
   const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
+  const [groups, setGroups] = useState<StudentGroup[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [sectionName, setSectionName] = useState("Physics");
+  const [tab, setTab] = useState<Tab>("paper");
+  const [name, setName] = useState("");
+  const [duration, setDuration] = useState("180");
+  const [reviewAttempts, setReviewAttempts] = useState(false);
+  const [seeAnswers, setSeeAnswers] = useState(false);
 
   async function reload() {
     if (!testId) return;
-    const [detail, attemptList] = await Promise.all([
+    const [detail, attemptList, groupList] = await Promise.all([
       getTeacherTest(testId),
       listTestAttempts(testId),
+      listOrgGroups(),
     ]);
     setTest(detail);
     setAttempts(attemptList.attempts);
+    setGroups(groupList.groups);
+    setName(detail.name);
+    setDuration(String(detail.duration_minutes));
+    setReviewAttempts(Boolean(detail.students_can_review_attempts));
+    setSeeAnswers(Boolean(detail.students_can_see_answers));
   }
 
   useEffect(() => {
@@ -47,7 +63,7 @@ export function TestEditorPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-3">
           <BackLink to="/teacher/tests" />
@@ -85,87 +101,181 @@ export function TestEditorPage() {
         ) : null}
       </div>
       {error ? <p className="text-destructive">{error}</p> : null}
-
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">Sections</h2>
-        <form
-          className="flex gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            createSection(test.id, {
-              name: sectionName,
-              position: test.sections.length + 1,
-            })
-              .then(reload)
-              .catch((err: Error) => setError(err.message));
-          }}
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant={tab === "paper" ? "default" : "outline"}
+          onClick={() => setTab("paper")}
         >
-          <Input
-            value={sectionName}
-            onChange={(event) => setSectionName(event.target.value)}
-          />
-          <Button type="submit">Add section</Button>
-        </form>
-        <SectionList
-          sections={test.sections}
-          editable={test.status === "draft"}
-          onSave={async (questionId, payload) => {
-            await updateQuestion(questionId, payload);
-            await reload();
-          }}
-          onAddQuestion={(sectionId) => {
-            createQuestion(sectionId, {
-              question_text: "New question",
-              question_type: "mcq",
-              position:
-                (test.sections.find((s) => s.id === sectionId)?.questions
-                  .length || 0) + 1,
-              marks: 4,
-              negative_marks: 1,
-              option1: "A",
-              option2: "B",
-              option3: "C",
-              option4: "D",
-              correct_mcq_option: 1,
-            })
-              .then(reload)
-              .catch((err: Error) => setError(err.message));
-          }}
-        />
-      </section>
+          Question paper
+        </Button>
+        <Button
+          type="button"
+          variant={tab === "students" ? "default" : "outline"}
+          onClick={() => setTab("students")}
+        >
+          Students
+        </Button>
+        <Button
+          type="button"
+          variant={tab === "attempts" ? "default" : "outline"}
+          onClick={() => setTab("attempts")}
+        >
+          Attempts
+        </Button>
+      </div>
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">Assignees</h2>
-        <AssigneeManager
-          assignees={test.assignees}
-          onAdd={(userId) => addAssignee(test.id, userId).then(() => reload())}
-          onRemove={(userId) =>
-            removeAssignee(test.id, userId).then(() => reload())
-          }
-        />
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">Attempts</h2>
-        <ul className="space-y-2">
-          {attempts.map((attempt) => (
-            <li
-              key={attempt.id}
-              className="flex items-center justify-between rounded-md border px-3 py-2"
-            >
-              <span className="text-sm">
-                {attempt.student_id} · {attempt.status}
-              </span>
-              <Link
-                className="text-sm text-primary"
-                to={`/teacher/tests/${test.id}/attempts/${attempt.id}`}
-              >
-                Review
+      {tab === "paper" ? (
+        <section className="space-y-6">
+          <form
+            className="grid gap-4 md:grid-cols-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              updateTest(test.id, {
+                name,
+                duration_minutes: Number(duration),
+                students_can_review_attempts: reviewAttempts,
+                students_can_see_answers: seeAnswers,
+              })
+                .then(reload)
+                .catch((err: Error) => setError(err.message));
+            }}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="test-name">Test name</Label>
+              <Input
+                id="test-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Input
+                id="duration"
+                type="number"
+                min={1}
+                value={duration}
+                onChange={(event) => setDuration(event.target.value)}
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={reviewAttempts}
+                onChange={(event) => setReviewAttempts(event.target.checked)}
+              />
+              Students can review past attempts
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={seeAnswers}
+                onChange={(event) => setSeeAnswers(event.target.checked)}
+              />
+              Students can see correct answers
+            </label>
+            <Button type="submit">Save paper</Button>
+          </form>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-4">
+            <p className="text-sm text-muted-foreground">
+              {test.sections.length} section(s) ·{" "}
+              {test.sections.reduce((n, s) => n + s.questions.length, 0)}{" "}
+              question(s). Open the paper to see it the way students do and edit
+              questions, options, and images.
+            </p>
+            <Button asChild>
+              <Link to={`/teacher/tests/${test.id}/paper`}>
+                Open question paper
               </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
+      {tab === "students" ? (
+        <section className="space-y-6">
+          <h2 className="text-xl font-semibold">Students</h2>
+          <AssigneeManager
+            assignees={test.assignees}
+            onAdd={(userId) =>
+              addAssignee(test.id, userId).then(() => reload())
+            }
+            onRemove={(userId) =>
+              removeAssignee(test.id, userId).then(() => reload())
+            }
+          />
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold">Student groups</h3>
+            <ul className="space-y-2">
+              {(test.group_assignees ?? []).map((group) => (
+                <li
+                  key={group.id}
+                  className="flex items-center justify-between rounded-md border px-3 py-2"
+                >
+                  <span>{group.name}</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      removeGroupAssignee(test.id, group.group_id).then(() =>
+                        reload()
+                      )
+                    }
+                  >
+                    Deassign group
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-2">
+              {groups
+                .filter(
+                  (group) =>
+                    !(test.group_assignees ?? []).some(
+                      (row) => row.group_id === group.id
+                    )
+                )
+                .map((group) => (
+                  <Button
+                    key={group.id}
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      addGroupAssignee(test.id, group.id).then(() => reload())
+                    }
+                  >
+                    Assign {group.name}
+                  </Button>
+                ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {tab === "attempts" ? (
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold">Attempts</h2>
+          <ul className="space-y-2">
+            {attempts.map((attempt) => (
+              <li
+                key={attempt.id}
+                className="flex items-center justify-between rounded-md border px-3 py-2"
+              >
+                <span className="text-sm">
+                  {attempt.student_id} · {attempt.status}
+                </span>
+                <Link
+                  className="text-sm text-primary"
+                  to={`/teacher/tests/${test.id}/attempts/${attempt.id}`}
+                >
+                  Review
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -1,0 +1,42 @@
+from .uuids_and_meta import (
+    BLUEPRINT_FULL_SYLLABUS,
+    BLUEPRINT_Q_CHEMISTRY,
+    BLUEPRINT_Q_PHYSICS,
+    BLUEPRINT_SECTION_CHEMISTRY,
+    BLUEPRINT_SECTION_PHYSICS,
+)
+
+BLUEPRINT_QUESTIONS = [
+    {
+        "id": BLUEPRINT_Q_PHYSICS,
+        "blueprint_id": BLUEPRINT_FULL_SYLLABUS,
+        "section_id": BLUEPRINT_SECTION_PHYSICS,
+        "position": 1,
+        "question_text": "Blueprint physics: what is 2 + 2?",
+        "question_type": "mcq",
+        "hardness_level": "easy",
+        "marks": 4,
+        "negative_marks": 1,
+        "option1": "3",
+        "option2": "4",
+        "option3": "5",
+        "option4": "6",
+        "correct_mcq_option": 2,
+    },
+    {
+        "id": BLUEPRINT_Q_CHEMISTRY,
+        "blueprint_id": BLUEPRINT_FULL_SYLLABUS,
+        "section_id": BLUEPRINT_SECTION_CHEMISTRY,
+        "position": 1,
+        "question_text": "Blueprint chemistry: capital of France?",
+        "question_type": "mcq",
+        "hardness_level": "easy",
+        "marks": 4,
+        "negative_marks": 1,
+        "option1": "London",
+        "option2": "Berlin",
+        "option3": "Paris",
+        "option4": "Rome",
+        "correct_mcq_option": 3,
+    },
+]

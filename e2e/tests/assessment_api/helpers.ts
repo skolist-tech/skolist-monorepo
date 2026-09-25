@@ -8,7 +8,7 @@ export function testCard(page: Page, title: string) {
   return page
     .getByRole("heading", { name: title, exact: true })
     .locator(
-      "xpath=ancestor::div[.//a[normalize-space()='Open'] or .//button[normalize-space()='Start' or normalize-space()='Continue']][1]"
+      "xpath=ancestor::div[.//a[normalize-space()='Open'] or .//button[normalize-space()='Start' or normalize-space()='Continue' or normalize-space()='View attempts']][1]"
     );
 }
 
@@ -16,17 +16,19 @@ export function uniqueDraftName(prefix = "E2E draft") {
   return `${prefix} ${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
 }
 
-/** Create a named draft from the teacher tests list and land on the editor. */
+/** Clone the seeded full-syllabus blueprint and rename it on the paper view. */
 export async function createNamedDraft(page: Page, name: string) {
-  await page.getByLabel("Name").fill(name);
-  await page.getByRole("button", { name: "Create draft" }).click();
+  await page.getByRole("link", { name: "Create test" }).click();
+  await page.getByRole("button", { name: "Full Syllabus Test" }).click();
+  await page.getByRole("button", { name: "Full Syllabus Sample" }).click();
   await expect(page).toHaveURL(/\/teacher\/tests\/[0-9a-f-]{36}/i, {
     timeout: 15_000,
   });
+  await page.getByLabel("Test name").fill(name);
+  await page.getByRole("button", { name: "Save paper" }).click();
   await expect(page.getByRole("heading", { name, exact: true })).toBeVisible({
     timeout: 15_000,
   });
-  await expect(page.getByRole("heading", { name: "Sections" })).toBeVisible();
 }
 
 export async function proceedPastInstructionsIfPresent(page: Page) {
@@ -63,55 +65,64 @@ export const JOURNEY_MCQS: McqDraft[] = [
   },
 ];
 
-export async function addSection(page: Page, heading = /Physics/) {
-  await page.getByRole("button", { name: "Add section" }).click();
-  await expect(page.getByRole("heading", { name: heading })).toBeVisible({
-    timeout: 15_000,
-  });
+/** Rendered stem text only, not the edit textarea. */
+export function renderedStem(page: Page, text: string) {
+  return page.locator("span").filter({ hasText: text });
 }
 
-export async function addQuestion(page: Page) {
-  const edits = page.getByRole("button", { name: "Edit" });
-  const before = await edits.count();
-  await page.getByRole("button", { name: "Add question" }).click();
-  await expect
-    .poll(async () => edits.count(), { timeout: 15_000 })
-    .toBeGreaterThan(before);
+/** From the Question paper tab, open the student-style paper view. */
+export async function openPaperView(page: Page) {
+  await page.getByRole("link", { name: "Open question paper" }).click();
+  await expect(page).toHaveURL(/\/teacher\/tests\/[0-9a-f-]{36}\/paper$/i);
+  await expect(page.getByRole("button", { name: "Edit question" })).toBeVisible(
+    { timeout: 15_000 }
+  );
 }
 
-export async function editMcqAt(page: Page, index: number, draft: McqDraft) {
-  await page.getByRole("button", { name: "Edit" }).nth(index).click();
-  await expect(page.getByRole("button", { name: "Save" })).toBeVisible();
-  await page.getByLabel("Question").fill(draft.stem);
+export async function editStem(page: Page, stem: string) {
+  await page.getByRole("button", { name: "Edit question" }).click();
+  await page.getByLabel("question text").fill(stem);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(renderedStem(page, stem)).toBeVisible({ timeout: 15_000 });
+}
+
+/** On the paper view: edit the current question's stem, options, and key. */
+export async function editMcq(page: Page, draft: McqDraft) {
+  await editStem(page, draft.stem);
   for (let i = 0; i < draft.options.length; i += 1) {
-    await page.getByLabel(`Option ${i + 1}`).fill(draft.options[i]);
+    const letter = String.fromCharCode(65 + i);
+    await page.getByRole("button", { name: `Edit option ${letter}` }).click();
+    await page.getByLabel(`option ${letter} text`).fill(draft.options[i]);
+    if (i + 1 === draft.correctIndex) {
+      await page.getByLabel("Correct answer").check();
+    }
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: `Edit option ${letter}` })
+    ).toBeVisible({ timeout: 15_000 });
   }
-  await page
-    .getByRole("radio", { name: "Correct" })
-    .nth(draft.correctIndex - 1)
-    .check();
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByText(draft.stem)).toBeVisible({ timeout: 15_000 });
 }
 
-/** From the teacher tests list: named draft, one section, edited MCQs. */
+/** Clone a blueprint draft, then edit each question in the paper view. */
 export async function authorDraftWithMcqs(
   page: Page,
   name: string,
   questions: McqDraft[] = JOURNEY_MCQS
 ) {
   await createNamedDraft(page, name);
-  await addSection(page);
-  const edits = page.getByRole("button", { name: "Edit" });
+  await openPaperView(page);
   for (let index = 0; index < questions.length; index += 1) {
-    if ((await edits.count()) <= index) {
-      await addQuestion(page);
-    }
-    await editMcqAt(page, index, questions[index]);
+    if (index > 0) await page.getByRole("button", { name: "Next" }).click();
+    await editMcq(page, questions[index]);
   }
+  await page.getByRole("link", { name: "Back to test" }).click();
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 export async function assignStudentByName(page: Page, studentName: string) {
+  await page.getByRole("button", { name: "Students" }).click();
   const search = page.getByRole("textbox", { name: "Search students" });
   await search.fill(studentName);
   const match = page
@@ -140,6 +151,18 @@ export async function closePublishedPaper(page: Page) {
   });
   await expect(page.getByRole("button", { name: "Close paper" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
+}
+
+export async function openAttemptFromCard(page: Page, title: string) {
+  await testCard(page, title).getByRole("button", { name: "View attempts" }).click();
+  const start = page.getByRole("button", { name: "Start" });
+  const continueLink = page.getByRole("link", { name: "Continue" });
+  await expect(start.or(continueLink)).toBeVisible({ timeout: 15_000 });
+  if (await start.isVisible()) {
+    await start.click();
+    return;
+  }
+  await continueLink.click();
 }
 
 export async function goBackToTeacherTests(page: Page) {

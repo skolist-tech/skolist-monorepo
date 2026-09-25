@@ -4,6 +4,10 @@ import type {
   AttemptSummary,
   OrgStudent,
   StudentResponse,
+  AttemptReviewSummary,
+  BlueprintSummary,
+  GroupAssignee,
+  StudentGroup,
   TeacherQuestion,
   TeacherTestDetail,
   TestSummary,
@@ -20,6 +24,33 @@ export function listTeacherTests() {
 
 export function getTeacherTest(testId: string) {
   return apiFetch<TeacherTestDetail>(`/tests/${testId}`);
+}
+
+export function listBlueprints() {
+  return apiFetch<{ blueprints: BlueprintSummary[] }>("/blueprints");
+}
+
+export function cloneBlueprint(blueprintId: string) {
+  return apiFetch<TestSummary>(`/blueprints/${blueprintId}/clone`, {
+    method: "POST",
+  });
+}
+
+export function listOrgGroups() {
+  return apiFetch<{ groups: StudentGroup[] }>("/groups");
+}
+
+export function addGroupAssignee(testId: string, groupId: string) {
+  return apiFetch<GroupAssignee>(`/tests/${testId}/group-assignees`, {
+    method: "POST",
+    body: JSON.stringify({ group_id: groupId }),
+  });
+}
+
+export function removeGroupAssignee(testId: string, groupId: string) {
+  return apiFetch<void>(`/tests/${testId}/group-assignees/${groupId}`, {
+    method: "DELETE",
+  });
 }
 
 export function createTest(payload: {
@@ -81,6 +112,27 @@ export function updateQuestion(
   });
 }
 
+export type ImageSlot = "stem" | "option1" | "option2" | "option3" | "option4";
+
+export function uploadQuestionImage(
+  questionId: string,
+  slot: ImageSlot,
+  file: File
+) {
+  const body = new FormData();
+  body.append("file", file);
+  return apiFetch<TeacherQuestion>(`/questions/${questionId}/images/${slot}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function removeQuestionImage(questionId: string, slot: ImageSlot) {
+  return apiFetch<TeacherQuestion>(`/questions/${questionId}/images/${slot}`, {
+    method: "DELETE",
+  });
+}
+
 export function listOrgStudents(q?: string) {
   const search = q?.trim() ? `?q=${encodeURIComponent(q.trim())}` : "";
   return apiFetch<OrgStudent[]>(`/students${search}`);
@@ -112,5 +164,6 @@ export function getTeacherAttempt(testId: string, attemptId: string) {
     attempt: AttemptSummary;
     responses: StudentResponse[];
     test: TeacherTestDetail;
+    summary: AttemptReviewSummary;
   }>(`/tests/${testId}/attempts/${attemptId}`);
 }

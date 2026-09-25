@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { loginAs } from "../../helpers/auth";
+import { loginAs, logOut } from "../../helpers/auth";
 import { testCard } from "../helpers";
-import { TEACHER_1, TESTS } from "../seed";
+import { TEACHER_1, TEACHER_2, TESTS } from "../seed";
 
 test.describe("Teacher assessment flows", () => {
   test.beforeEach(async ({ page }) => {
@@ -12,8 +12,8 @@ test.describe("Teacher assessment flows", () => {
   test("lists seed papers for the org including draft and closed", async ({
     page,
   }) => {
-    // Teacher list merges created_by + org tests, so teacher1 sees all seed papers.
-    for (const testMeta of Object.values(TESTS)) {
+    const visible = [TESTS.jeeMain1, TESTS.neetLive, TESTS.advDraft];
+    for (const testMeta of visible) {
       await expect(
         page.getByRole("heading", { name: testMeta.name })
       ).toBeVisible({
@@ -22,7 +22,7 @@ test.describe("Teacher assessment flows", () => {
     }
 
     await expect(page.getByText("jee_advanced · draft")).toBeVisible();
-    await expect(page.getByText("jee_advanced · closed")).toBeVisible();
+    await expect(page.getByRole("heading", { name: TESTS.advClosed.name })).toHaveCount(0);
     await expect(page.getByText("jee_main · published").first()).toBeVisible();
   });
 
@@ -35,7 +35,7 @@ test.describe("Teacher assessment flows", () => {
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/jee_advanced · draft/)).toBeVisible();
     await expect(page.getByRole("button", { name: "Publish" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Sections" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Question paper" })).toBeVisible();
   });
 
   test("opens a live NEET paper and shows attempts", async ({ page }) => {
@@ -44,6 +44,7 @@ test.describe("Teacher assessment flows", () => {
       page.getByRole("heading", { name: TESTS.neetLive.name })
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/neet · published/)).toBeVisible();
+    await page.getByRole("button", { name: "Attempts" }).click();
     await expect(page.getByRole("heading", { name: "Attempts" })).toBeVisible();
     // Seed: all 3 students started; student2 also has a graded retake.
     await expect(page.getByText(/in_progress|graded/).first()).toBeVisible();
@@ -54,6 +55,8 @@ test.describe("Teacher assessment flows", () => {
   test("closed paper shows Back and no Close paper action", async ({
     page,
   }) => {
+    await logOut(page);
+    await loginAs(page, TEACHER_2.email, TEACHER_2.password);
     await page.goto(`/teacher/tests/${TESTS.advClosed.id}`);
     await expect(
       page.getByRole("heading", { name: TESTS.advClosed.name })

@@ -29,6 +29,7 @@ Fill from `supabase status` (or your cloud project):
 | Variable | Notes |
 | --- | --- |
 | `SUPABASE_URL` | Local: `http://127.0.0.1:54321` on host; **`http://host.docker.internal:54321`** inside Compose |
+| `SUPABASE_PUBLIC_URL` | Origin browsers use for Supabase links (signed image URLs). Defaults to `SUPABASE_URL`. Set to `http://127.0.0.1:54321` when the API runs in Compose |
 | `SUPABASE_SERVICE_KEY` | Service role — server only |
 | `SUPABASE_ANON_KEY` | Used by some tests / clients |
 | `OPENAI_API_KEY` / `GEMINI_API_KEY` | As needed for AI features |
@@ -56,6 +57,7 @@ Compose maps `8080:8080`, loads `.env`, and mounts the tree. If Supabase is on t
 
 ```env
 SUPABASE_URL=http://host.docker.internal:54321
+SUPABASE_PUBLIC_URL=http://127.0.0.1:54321
 ```
 
 (`extra_hosts` for `host.docker.internal` is already in `docker-compose.yaml`.)

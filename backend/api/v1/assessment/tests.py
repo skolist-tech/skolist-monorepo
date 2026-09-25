@@ -7,16 +7,21 @@ from supabase import Client
 
 from api.v1.auth import get_supabase_client
 
+from .common.access import attempt_summary
+from .common.question_images import sign_question_images
 from .db import (
     assessment_table,
     fetch_all,
     fetch_attempt,
     fetch_test,
+    grant_teacher_access,
     list_assignees_for_test,
     list_attempts_for_test,
+    list_group_assignees_for_test,
     list_questions_for_test,
     list_responses_for_attempt,
     list_sections_for_test,
+    list_tests_for_teacher,
 )
 from .dependencies import require_teacher, require_test_for_teacher, teacher_can_access_test
 from .models import (
@@ -42,22 +47,16 @@ def _validate_status(value: str | None) -> None:
 
 
 def _list_teacher_tests(supabase: Client, actor: AssessmentActor) -> list[dict]:
-    table = assessment_table(supabase, "tests")
     if actor.is_platform_admin:
-        return fetch_all(table.select("*").order("created_at", desc=True))
-
-    by_creator = fetch_all(table.select("*").eq("created_by", actor.id))
-    by_org: list[dict] = []
-    if actor.org_id:
-        by_org = fetch_all(table.select("*").eq("org_id", actor.org_id))
-    merged = {row["id"]: row for row in by_creator + by_org}
-    return sorted(merged.values(), key=lambda row: row.get("created_at") or "", reverse=True)
+        return fetch_all(assessment_table(supabase, "tests").select("*").order("created_at", desc=True))
+    return list_tests_for_teacher(supabase, actor.id)
 
 
 def _test_detail(supabase: Client, test: dict) -> dict:
     sections = list_sections_for_test(supabase, test["id"])
-    questions = list_questions_for_test(supabase, test["id"])
+    questions = sign_question_images(supabase, list_questions_for_test(supabase, test["id"]))
     assignees = list_assignees_for_test(supabase, test["id"])
+    group_assignees = list_group_assignees_for_test(supabase, test["id"])
     by_section: dict[str, list] = {section["id"]: [] for section in sections}
     for question in questions:
         by_section.setdefault(question["section_id"], []).append(question)
@@ -65,6 +64,7 @@ def _test_detail(supabase: Client, test: dict) -> dict:
         **test,
         "sections": [{**section, "questions": by_section.get(section["id"], [])} for section in sections],
         "assignees": assignees,
+        "group_assignees": group_assignees,
     }
 
 
@@ -91,6 +91,7 @@ def create_test(
     rows = response.data or []
     if not rows:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create test")
+    grant_teacher_access(supabase, rows[0]["id"], actor.id)
     return rows[0]
 
 
@@ -144,10 +145,13 @@ def get_test_attempt(
     attempt = fetch_attempt(supabase, attempt_id)
     if attempt.get("test_id") != test["id"]:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
-    if not teacher_can_access_test(actor, fetch_test(supabase, attempt["test_id"])):
+    if not teacher_can_access_test(actor, fetch_test(supabase, attempt["test_id"]), supabase):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed to access this attempt")
+    responses = list_responses_for_attempt(supabase, attempt["id"])
+    questions = list_questions_for_test(supabase, test["id"])
     return {
         "attempt": attempt,
-        "responses": list_responses_for_attempt(supabase, attempt["id"]),
+        "responses": responses,
         "test": _test_detail(supabase, test),
+        "summary": attempt_summary(questions, responses),
     }

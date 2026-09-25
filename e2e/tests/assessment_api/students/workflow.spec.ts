@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAs } from "../../helpers/auth";
 import {
+  openAttemptFromCard,
   proceedPastInstructionsIfPresent,
   testCard,
 } from "../helpers";
@@ -24,7 +25,7 @@ test.describe("Student attempt workflows", () => {
 
     const card = testCard(page, TESTS.neetOpen.name);
     await expect(card).toBeVisible({ timeout: 15_000 });
-    await card.getByRole("button", { name: /^(Start|Continue)$/ }).click();
+    await openAttemptFromCard(page, TESTS.neetOpen.name);
 
     await expect(page).toHaveURL(/\/student\/attempts\/.+/);
     await proceedPastInstructionsIfPresent(page);
