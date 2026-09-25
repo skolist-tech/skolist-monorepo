@@ -73,6 +73,14 @@ jobs:
           echo "SUPABASE_ANON_KEY=$(supabase status -o json | jq -r .ANON_KEY)" >> $GITHUB_ENV
           echo "SUPABASE_SERVICE_KEY=$(supabase status -o json | jq -r .SERVICE_ROLE_KEY)" >> $GITHUB_ENV
 
+      - name: Seed database
+        working-directory: skolist-db
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+          SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_KEY" python seed.py
+
       # Backend (Docker)
       - name: Start Backend (Docker)
         env:
