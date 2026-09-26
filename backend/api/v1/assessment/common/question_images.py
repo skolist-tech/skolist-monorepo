@@ -18,6 +18,7 @@ IMAGE_URL_COLUMNS = (
     "option2_image_url",
     "option3_image_url",
     "option4_image_url",
+    "explanation_image_url",
 )
 
 

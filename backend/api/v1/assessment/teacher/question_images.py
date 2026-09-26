@@ -32,6 +32,7 @@ SLOT_COLUMNS = {
     "option2": ("option2_image_url", "option2_svg_image_code"),
     "option3": ("option3_image_url", "option3_svg_image_code"),
     "option4": ("option4_image_url", "option4_svg_image_code"),
+    "explanation": ("explanation_image_url", "explanation_svg_image_code"),
 }
 
 

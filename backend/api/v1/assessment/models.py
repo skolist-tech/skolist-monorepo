@@ -26,6 +26,8 @@ QUESTION_SECRET_FIELDS = frozenset(
         "integer_answer",
         "answer",
         "explanation",
+        "explanation_image_url",
+        "explanation_svg_image_code",
     }
 )
 
@@ -136,6 +138,8 @@ class QuestionCreate(BaseModel):
     integer_answer: int | None = None
     answer: str | None = None
     explanation: str | None = None
+    explanation_image_url: str | None = None
+    explanation_svg_image_code: str | None = None
     image_url: str | None = None
     option1_image_url: str | None = None
     option2_image_url: str | None = None
@@ -169,6 +173,8 @@ class QuestionUpdate(BaseModel):
     integer_answer: int | None = None
     answer: str | None = None
     explanation: str | None = None
+    explanation_image_url: str | None = None
+    explanation_svg_image_code: str | None = None
     image_url: str | None = None
     option1_image_url: str | None = None
     option2_image_url: str | None = None
@@ -242,6 +248,8 @@ class TeacherQuestion(StudentQuestion):
     integer_answer: int | None = None
     answer: str | None = None
     explanation: str | None = None
+    explanation_image_url: str | None = None
+    explanation_svg_image_code: str | None = None
 
 
 class StudentResponse(BaseModel):

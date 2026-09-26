@@ -276,8 +276,11 @@ def _result_payload(supabase: Client, attempt: dict, include_answers: bool = Fal
     for question in questions:
         item = strip_question_for_student(question)
         if include_answers:
-            item["explanation"] = questions_by_id[question["id"]].get("explanation")
-            item["answer"] = questions_by_id[question["id"]].get("answer")
+            source = questions_by_id[question["id"]]
+            item["explanation"] = source.get("explanation")
+            item["explanation_image_url"] = source.get("explanation_image_url")
+            item["explanation_svg_image_code"] = source.get("explanation_svg_image_code")
+            item["answer"] = source.get("answer")
             item["correct_mcq_option"] = questions_by_id[question["id"]].get("correct_mcq_option")
         graded_questions.append(item)
 
