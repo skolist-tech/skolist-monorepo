@@ -30,7 +30,7 @@ Python seeds create shared demo users (defined in `skolist-db/python_seeds/data/
 | | |
 | --- | --- |
 | Password | `password123` (`DEFAULT_PASSWORD`) |
-| Examples | `teacher1@seed.skolist.com`, `student1@seed.skolist.com`, `student2@seed.skolist.com`, `student3@seed.skolist.com`, `test@example.com` |
+| Examples | `teacher1@seed.skolist.com`, `student1@seed.skolist.com`, `student2@seed.skolist.com`, `student3@seed.skolist.com`, `e2e-teacher-1@seed.skolist.com` … `e2e-teacher-8@seed.skolist.com`, `e2e-student-1@seed.skolist.com` … `e2e-student-8@seed.skolist.com`, `bank-admin@seed.skolist.com`, `test@example.com` |
 
 Emails are listed in that data file; the password is **not** repeated per user — it comes from `DEFAULT_PASSWORD`. Seeded users also get an avatar at `public.users.avatar_url` (SVG in the `seed_assets` bucket).
 

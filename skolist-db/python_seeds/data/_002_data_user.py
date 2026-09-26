@@ -27,6 +27,12 @@ STUDENT_1_ID = _seed_user_uuid(4)
 STUDENT_2_ID = _seed_user_uuid(5)
 STUDENT_3_ID = _seed_user_uuid(6)
 
+# One teacher + student pair per Playwright worker (e2e-teacher-N / e2e-student-N).
+# Keep in sync with e2e/tests/assessment_api/seed.ts E2E_WORKER_COUNT.
+E2E_WORKER_COUNT = 8
+E2E_TEACHER_ID_START = 7  # 7-14
+E2E_STUDENT_ID_START = 15  # 15-22
+
 
 def _auth_user(
     *, email: str, name: str, user_id: str, user_type: str | None = None
@@ -48,6 +54,16 @@ def _auth_user(
 # Used by backend qgen / bank integration tests (private_user).
 TEST_USER = _auth_user(
     email="test@example.com", name="Test User", user_id=TEST_USER_ID
+)
+
+# Dedicated bank-API admin. Must not share test@example.com: that user is
+# private_user for qgen tests, and flipping user_type races under pytest-xdist.
+BANK_ADMIN_ID = _seed_user_uuid(23)
+BANK_ADMIN = _auth_user(
+    email="bank-admin@seed.skolist.com",
+    name="Bank Admin",
+    user_id=BANK_ADMIN_ID,
+    user_type="skolist-admin",
 )
 
 TEACHER_1 = _auth_user(
@@ -81,21 +97,52 @@ STUDENT_3 = _auth_user(
     user_type="student",
 )
 
+
+def _e2e_worker_pair(n: int) -> tuple[dict, dict]:
+    if not 1 <= n <= E2E_WORKER_COUNT:
+        raise ValueError(f"e2e worker index out of range: {n}")
+    teacher = _auth_user(
+        email=f"e2e-teacher-{n}@seed.skolist.com",
+        name=f"E2E Teacher {n}",
+        user_id=_seed_user_uuid(E2E_TEACHER_ID_START + n - 1),
+        user_type="teacher",
+    )
+    student = _auth_user(
+        email=f"e2e-student-{n}@seed.skolist.com",
+        name=f"E2E Student {n}",
+        user_id=_seed_user_uuid(E2E_STUDENT_ID_START + n - 1),
+        user_type="student",
+    )
+    return teacher, student
+
+
+E2E_TEACHERS: dict[str, dict] = {}
+E2E_STUDENTS: dict[str, dict] = {}
+for _worker in range(1, E2E_WORKER_COUNT + 1):
+    _teacher, _student = _e2e_worker_pair(_worker)
+    E2E_TEACHERS[f"e2e_teacher_{_worker}"] = _teacher
+    E2E_STUDENTS[f"e2e_student_{_worker}"] = _student
+
 TEACHERS = {
     "teacher1": TEACHER_1,
     "teacher2": TEACHER_2,
+    **E2E_TEACHERS,
 }
 STUDENTS = {
     "student1": STUDENT_1,
     "student2": STUDENT_2,
     "student3": STUDENT_3,
+    **E2E_STUDENTS,
 }
 
 SEED_USERS = [
     TEST_USER,
+    BANK_ADMIN,
     TEACHER_1,
     TEACHER_2,
     STUDENT_1,
     STUDENT_2,
     STUDENT_3,
+    *E2E_TEACHERS.values(),
+    *E2E_STUDENTS.values(),
 ]
