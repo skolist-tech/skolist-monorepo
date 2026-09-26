@@ -21,7 +21,7 @@
     "codegen": "npm run playwright -- codegen"
   },
   "devDependencies": {
-    "@playwright/test": "^1.52.0",
+    "@playwright/test": "1.63.0",
     "@types/node": "^25.2.3",
     "dotenv": "^16.5.0",
     "typescript": "^5.9.3"

@@ -1,6 +1,6 @@
 # Integration tests
 
-Supabase plus the backend Python code. No browser and no frontend app. Parent: [../../TESTING.md](../../TESTING.md). How to run: [../README.md](../README.md).
+Supabase plus the backend Python code. The API launches Chromium; these tests do not open a frontend. Install the browser for the Playwright version pinned in `backend/pyproject.toml` (same release as `e2e/package.json`). Parent: [../../TESTING.md](../../TESTING.md). How to run: [../README.md](../README.md).
 
 Needs a local Supabase stack and the Python seeds. See [../README.md](../README.md).
 

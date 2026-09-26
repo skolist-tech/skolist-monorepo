@@ -30,7 +30,7 @@ Inventory: [backend/tests/unit/TESTING.md](./backend/tests/unit/TESTING.md).
 
 ### Backend integration tests
 
-Supabase plus the backend Python code. They call the FastAPI app (or a Postgres RPC) against a local Supabase database and the Python seeds. They do not launch a browser or a frontend app. CI starts Supabase in [`.github/workflows/pytest-integration.yaml`](./.github/workflows/pytest-integration.yaml).
+Supabase plus the backend Python code. They call the FastAPI app (or a Postgres RPC) against a local Supabase database and the Python seeds. They do not open a frontend. The API process still launches Chromium, so install the browser for the Playwright version shared by `backend/pyproject.toml` and `e2e/package.json` ([backend/SETUP.md](./backend/SETUP.md)). CI starts Supabase in [`.github/workflows/pytest-integration.yaml`](./.github/workflows/pytest-integration.yaml).
 
 ```bash
 cd backend && source venv/bin/activate

@@ -46,12 +46,20 @@ uvicorn main:app --reload --port 8080
 
 Check: `GET http://127.0.0.1:8080/`
 
+The API launches Chromium on startup. Install the browser that belongs to the pinned `playwright` version (the same version as `e2e/package.json`):
+
+```bash
+playwright install chromium
+```
+
 ## Run with Docker Compose
 
 ```bash
 cd backend
 docker compose up --build
 ```
+
+The image is `mcr.microsoft.com/playwright/python` at the same Playwright version as `pyproject.toml`. That image already includes Chromium. Rebuild after changing the pin.
 
 Compose maps `8080:8080`, loads `.env`, and mounts the tree. If Supabase is on the host, set:
 

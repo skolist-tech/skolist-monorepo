@@ -54,13 +54,18 @@ Push to GitHub and let CI run tests with local Supabase automatically.
    python seed.py
    ```
 
-4. **Run integration tests**:
+4. **Install Chromium** for the Playwright version pinned in `pyproject.toml` (same release as `e2e/package.json`). One install is enough for both, because they share `~/.cache/ms-playwright`:
    ```bash
-   cd backend
+   cd ../backend
+   playwright install chromium
+   ```
+
+5. **Run integration tests**:
+   ```bash
    pytest tests/integration/ -v
    ```
 
-5. **Stop Supabase when done**:
+6. **Stop Supabase when done**:
    ```bash
    cd ../skolist-db
    supabase stop

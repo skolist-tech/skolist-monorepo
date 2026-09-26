@@ -1,5 +1,5 @@
 # This image already has Python, Chromium, and all Linux deps
-FROM mcr.microsoft.com/playwright/python:v1.57.0-noble
+FROM mcr.microsoft.com/playwright/python:v1.63.0-noble
 
 # Pin the same uv release used to generate uv.lock
 COPY --from=ghcr.io/astral-sh/uv:0.12.19 /uv /uvx /bin/

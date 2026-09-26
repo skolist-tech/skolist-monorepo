@@ -48,6 +48,8 @@ npx playwright install chromium   # first time / after Playwright upgrades
 cp .env.example .env              # optional overrides
 ```
 
+`@playwright/test` is pinned to the same release as the backend `playwright` package in `backend/pyproject.toml` and the image tag in `backend/Dockerfile` (`mcr.microsoft.com/playwright/python:v<version>-noble`). Change those three together. Both tools install browsers into `~/.cache/ms-playwright`, so one `playwright install chromium` covers e2e and the backend only while the versions match.
+
 Defaults match local seeds; `.env` is only needed if you change URLs or credentials.
 
 ## Commands
