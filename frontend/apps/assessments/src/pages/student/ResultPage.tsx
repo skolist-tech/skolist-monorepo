@@ -75,10 +75,20 @@ export function ResultPage() {
                       ? "Correct"
                       : "Wrong"}
                 </p>
-                {question.explanation ? (
+                {question.explanation ||
+                question.explanation_svg_image_code ||
+                question.explanation_image_url ? (
                   <div className="text-sm">
                     <span className="font-medium">Explanation: </span>
-                    <LatexRenderer content={question.explanation} />
+                    {question.explanation ? (
+                      <LatexRenderer content={question.explanation} />
+                    ) : null}
+                    <QuestionFigure
+                      svgCode={question.explanation_svg_image_code}
+                      imageUrl={question.explanation_image_url}
+                      alt="Explanation figure"
+                      className="mt-2 max-h-48 object-contain [&>svg]:max-h-48 [&>svg]:w-auto"
+                    />
                   </div>
                 ) : null}
               </div>

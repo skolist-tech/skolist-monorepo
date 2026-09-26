@@ -157,6 +157,11 @@ export function TeacherPaperPage() {
           await applyImage(current.id, `option${index}` as ImageSlot, save);
           await reload();
         },
+        onSaveExplanation: async (save) => {
+          await updateQuestion(current.id, { explanation: save.text || null });
+          await applyImage(current.id, "explanation", save);
+          await reload();
+        },
       }
     : undefined;
 

@@ -6,11 +6,16 @@ import {
   type BlockSave,
 } from "@/components/teacher/EditableBlock";
 import { optionEntries } from "@/lib/ntaPalette";
-import type { StudentQuestion, StudentResponse } from "@/types/assessment";
+import type {
+  StudentQuestion,
+  StudentResponse,
+  TeacherQuestion,
+} from "@/types/assessment";
 
 export type QuestionEditor = {
   onSaveStem: (save: BlockSave) => Promise<void>;
   onSaveOption: (index: number, save: BlockSave) => Promise<void>;
+  onSaveExplanation: (save: BlockSave) => Promise<void>;
   correctOptions: number[];
   answer?: string | null;
 };
@@ -171,6 +176,35 @@ export function QuestionViewer({
       ) : (
         stemBody
       )}
+
+      {editor ? (
+        <EditableBlock
+          label="explanation"
+          text={(question as TeacherQuestion).explanation ?? ""}
+          imageUrl={(question as TeacherQuestion).explanation_image_url}
+          svgCode={(question as TeacherQuestion).explanation_svg_image_code}
+          onSave={editor.onSaveExplanation}
+        >
+          <div className="text-sm text-slate-700">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Explanation
+            </p>
+            {(question as TeacherQuestion).explanation ? (
+              <LatexRenderer
+                content={(question as TeacherQuestion).explanation ?? ""}
+              />
+            ) : (
+              <p className="text-slate-500">No explanation yet.</p>
+            )}
+            <QuestionFigure
+              svgCode={(question as TeacherQuestion).explanation_svg_image_code}
+              imageUrl={(question as TeacherQuestion).explanation_image_url}
+              alt="Explanation figure"
+              className="mt-2 max-h-48 object-contain [&>svg]:max-h-48 [&>svg]:w-auto"
+            />
+          </div>
+        </EditableBlock>
+      ) : null}
 
       {question.question_type === "mcq" ? (
         <div className="space-y-2">

@@ -52,6 +52,8 @@ export type StudentQuestion = {
   option3?: string | null;
   option4?: string | null;
   explanation?: string | null;
+  explanation_image_url?: string | null;
+  explanation_svg_image_code?: string | null;
   answer?: string | null;
   image_url?: string | null;
   option1_image_url?: string | null;
