@@ -18,7 +18,6 @@ tanzania-482107-c1-firebase-adminsdk-fbsvc-ec8986c93e.json
 temp/*
 # Only root level data folder is ignored
 /data/   
-extraction_app/
 
 # Tasks, Plans, etc. 
 TODO
