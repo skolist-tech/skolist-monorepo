@@ -48,6 +48,8 @@ filterwarnings = [
     "ignore::DeprecationWarning:supabase.*",
     "ignore::pydantic.PydanticDeprecatedSince212:pyiceberg.*",
     "ignore::DeprecationWarning:pythonjsonlogger.*",
+    "ignore::DeprecationWarning:starlette.*",
+    "ignore::DeprecationWarning:google.genai.*",
 ]
 markers = [
     "slow: marks tests as slow (use -m 'not slow' to skip)",

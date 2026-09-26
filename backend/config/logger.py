@@ -63,7 +63,7 @@ class StructuredJsonFormatter(jsonlogger.JsonFormatter):
         super().add_fields(log_record, record, message_dict)
 
         # Add standard fields
-        log_record["timestamp"] = datetime.utcnow().isoformat()
+        log_record["timestamp"] = datetime.now(datetime.UTC).isoformat()
         log_record["level"] = record.levelname
         log_record["logger"] = record.name
 
