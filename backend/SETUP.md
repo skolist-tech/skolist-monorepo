@@ -15,7 +15,7 @@ cd backend
 python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements-dev.txt
-pre-commit install          # optional; uses repo-root .pre-commit-config.yaml
+pre-commit install          # repo-root .pre-commit-config.yaml
 ```
 
 ## Environment

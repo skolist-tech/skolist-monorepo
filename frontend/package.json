@@ -13,8 +13,7 @@
     "clean": "turbo clean && rm -rf node_modules",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml,html}\"",
-    "prepare": "cd .. && husky install .husky"
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml,html}\""
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,md,yml,yaml,html}": [

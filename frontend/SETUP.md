@@ -14,7 +14,7 @@ cd frontend
 pnpm install
 ```
 
-Husky is installed via the `prepare` script (repo-root `.husky`).
+Commit hooks come from the repo-root [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) (`pre-commit install` in `backend/`). Prettier still uses the `lint-staged` config in `package.json`.
 
 ## Environment
 

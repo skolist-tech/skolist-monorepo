@@ -10,7 +10,7 @@ pnpm lint
 pnpm type-check
 ```
 
-Prettier runs on staged files via lint-staged / Husky.
+Prettier runs on staged frontend files via lint-staged, from the repo-root pre-commit config.
 
 ## Where to change code
 

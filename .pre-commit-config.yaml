@@ -7,3 +7,11 @@ repos:
         files: ^backend/
       - id: ruff-format
         files: ^backend/
+  - repo: local
+    hooks:
+      - id: lint-staged
+        name: lint-staged
+        entry: bash -c 'cd frontend && ./node_modules/.bin/lint-staged'
+        language: system
+        pass_filenames: false
+        files: ^frontend/

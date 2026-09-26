@@ -146,10 +146,13 @@ Details: [e2e/README.md](./e2e/README.md).
 
 ## Monorepo hooks
 
-- Root [`.pre-commit-config.yaml`](./.pre-commit-config.yaml) runs Ruff on `backend/` when installed.
-- Frontend uses Husky + lint-staged (Prettier) via `frontend/` prepare.
+[`.pre-commit-config.yaml`](./.pre-commit-config.yaml) is the hook config. Install it once from `backend/`:
 
-Install hooks from the packages you work in (see each SETUP / CONTRIBUTING).
+```bash
+pre-commit install
+```
+
+That runs Ruff on staged `backend/` files and Prettier (`lint-staged`) on staged `frontend/` files.
 
 ## Security
 
