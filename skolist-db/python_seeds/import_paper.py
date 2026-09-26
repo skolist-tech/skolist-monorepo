@@ -28,6 +28,7 @@ IMAGE_FIELDS = (
     ("option2_image_path", "option2_image_url", "option2"),
     ("option3_image_path", "option3_image_url", "option3"),
     ("option4_image_path", "option4_image_url", "option4"),
+    ("explanation_image_path", "explanation_image_url", "explanation"),
 )
 SVG_FIELDS = (
     "svg_image_code",
@@ -35,6 +36,7 @@ SVG_FIELDS = (
     "option2_svg_image_code",
     "option3_svg_image_code",
     "option4_svg_image_code",
+    "explanation_svg_image_code",
 )
 
 
@@ -139,6 +141,7 @@ def import_paper(paper_path: Path) -> str:
                 "option3": source.get("option3"),
                 "option4": source.get("option4"),
                 "correct_mcq_option": source.get("correct_mcq_option"),
+                "explanation": source.get("explanation"),
                 "created_at": now,
                 "updated_at": now,
             }
