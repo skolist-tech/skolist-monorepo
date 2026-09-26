@@ -17,5 +17,12 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
+    chunkSizeWarningLimit: 3000,
+    rollupOptions: {
+      onwarn(warning, warn) {
+        if (warning.code === "EVAL") return;
+        warn(warning);
+      },
+    },
   },
 });

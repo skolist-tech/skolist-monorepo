@@ -4,6 +4,7 @@
  */
 
 import { getSupabaseClient } from "@skolist/auth";
+import { createInitialVersion } from "./versionService";
 import type {
   GeneratedQuestion,
   GeneratedImage,
@@ -33,9 +34,6 @@ export async function createQuestion(
     throw error;
   }
 
-  // Create initial version (v0) for undo/redo functionality
-  // Dynamic import to avoid circular dependencies
-  const { createInitialVersion } = await import("./versionService");
   await createInitialVersion(data.id, data);
 
   return data;

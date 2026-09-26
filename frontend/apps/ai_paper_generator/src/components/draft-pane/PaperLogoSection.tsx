@@ -3,7 +3,11 @@ import { Trash2, Upload } from "lucide-react";
 import { Button, Label, Switch } from "@skolist/ui";
 import { useDraftContext } from "../../context/DraftContext";
 import { ConfirmDialog } from "../shared/ConfirmDialog";
-import { getSignedLogoUrl } from "../../services/draftService";
+import {
+  deleteLogo,
+  getSignedLogoUrl,
+  uploadLogo,
+} from "../../services/draftService";
 import type { QgenDraft, UpdateQgenDraft } from "@skolist/db";
 
 interface PaperLogoSectionProps {
@@ -50,7 +54,6 @@ export function PaperLogoSection({
   const handleDeleteLogo = async () => {
     if (!draft.activity_id) return;
     try {
-      const { deleteLogo } = await import("../../services/draftService");
       await deleteLogo(draft.activity_id);
       updateDraftSettings({ logo_url: null });
       setIsDeleteLogoModalOpen(false);
@@ -111,10 +114,6 @@ export function PaperLogoSection({
                   const file = e.target.files?.[0];
                   if (file && draft.activity_id) {
                     try {
-                      const { uploadLogo } =
-                        await import("../../services/draftService");
-
-                      // uploadLogo returns { status, path }
                       const { path } = await uploadLogo(
                         file,
                         draft.activity_id

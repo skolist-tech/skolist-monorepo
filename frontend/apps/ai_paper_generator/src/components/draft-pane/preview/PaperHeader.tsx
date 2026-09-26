@@ -1,5 +1,6 @@
 import type { QgenDraft } from "@skolist/db";
 import { useDraftContext } from "../../../context/DraftContext";
+import { getSignedLogoUrl } from "../../../services/draftService";
 import { useEffect, useState } from "react";
 
 const formatTime = (timeStr?: string | null) => {
@@ -36,8 +37,6 @@ export const PaperHeader = ({
         return;
       }
       if (draft.logo_url) {
-        const { getSignedLogoUrl } =
-          await import("../../../services/draftService");
         const url = await getSignedLogoUrl(draft.logo_url);
         if (isMounted) setLogoSignedUrl(url);
       } else {
