@@ -9,12 +9,14 @@
 
 
 
-    "Temporary Files. Developer working on them may include it on their local machine": true,
+    "Temporary Excludes. Developer working on them may include it on their local machine": true,
 
     ".husky": true,
     ".coderabbit.yaml": true,
     ".pre-commit-config.yaml": true,
     "infra/": true,
     ".claude": true,
+    "**/.venv" :true,
+    "**/venv" :true
     }
 }
