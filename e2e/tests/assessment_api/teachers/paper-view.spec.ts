@@ -27,6 +27,7 @@ test.describe("Teacher question paper view", () => {
       page.getByText("Multiple Choice (Single Correct)")
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Edit option A" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Edit explanation" })).toBeVisible();
     await expect(page.getByText("Correct answer")).toBeVisible();
     await expect(page.getByRole("button", { name: "Save & Next" })).toHaveCount(0);
   });
@@ -68,11 +69,41 @@ test.describe("Teacher question paper view", () => {
   });
 
   test("changes the correct option", async ({ page }) => {
+    const optionC = () =>
+      page.getByRole("button", { name: "Edit option C" }).locator("..");
     await page.getByRole("button", { name: "Edit option C" }).click();
     await page.getByLabel("Correct answer").check();
     await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(optionC().getByText("Correct answer")).toBeVisible({ timeout: 15_000 });
     await page.reload();
-    const optionC = page.getByRole("button", { name: "Edit option C" }).locator("..");
-    await expect(optionC.getByText("Correct answer")).toBeVisible({ timeout: 15_000 });
+    await expect(optionC().getByText("Correct answer")).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("saves an explanation and its figure, then removes the figure", async ({
+    page,
+  }) => {
+    const explanation = "E2E explanation";
+    await page.getByRole("button", { name: "Edit explanation" }).click();
+    await page.getByLabel("explanation text").fill(explanation);
+    await page.getByLabel("explanation image file").setInputFiles({
+      name: "explanation.png",
+      mimeType: "image/png",
+      buffer: PNG_1X1,
+    });
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByText(explanation)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("img", { name: "Explanation figure" })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.reload();
+    await expect(page.getByText(explanation)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("img", { name: "Explanation figure" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Edit explanation" }).click();
+    await page.getByRole("button", { name: "Remove image" }).click();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByText(explanation)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("img", { name: "Explanation figure" })).toHaveCount(0);
   });
 });
