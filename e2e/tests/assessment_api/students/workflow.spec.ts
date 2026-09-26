@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../shared-seed";
 import { loginAs } from "../../helpers/auth";
 import {
   openAttemptFromCard,
@@ -6,6 +6,8 @@ import {
   testCard,
 } from "../helpers";
 import { STUDENT_3, TESTS } from "../seed";
+
+test.describe.configure({ mode: "serial" });
 
 /**
  * STUDENT_3 + NEET Open: seed says nobody has started this paper.

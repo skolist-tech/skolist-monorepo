@@ -12,13 +12,12 @@ import {
   testCard,
   uniqueDraftName,
 } from "../helpers";
-import { STUDENT_3, TEACHER_2 } from "../seed";
-
-test.describe.configure({ mode: "serial" });
+import { workerPair } from "../seed";
 
 test.describe("Teacher authoring workflows", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+  test.beforeEach(async ({ page }, testInfo) => {
+    const { teacher } = workerPair(testInfo);
+    await loginAs(page, teacher.email, teacher.password);
     await expect(page).toHaveURL(/\/teacher\/tests/);
   });
 
@@ -43,7 +42,8 @@ test.describe("Teacher authoring workflows", () => {
     await expect(renderedStem(page, edited)).toBeVisible({ timeout: 15_000 });
   });
 
-  test("assigns a seed student to a new draft", async ({ page }) => {
+  test("assigns a seed student to a new draft", async ({ page }, testInfo) => {
+    const { student } = workerPair(testInfo);
     const name = uniqueDraftName();
     await createNamedDraft(page, name);
 
@@ -51,13 +51,13 @@ test.describe("Teacher authoring workflows", () => {
     await expect(page.getByRole("heading", { name: "Students" })).toBeVisible();
 
     const search = page.getByRole("textbox", { name: "Search students" });
-    await search.fill(STUDENT_3.name);
+    await search.fill(student.name);
     await page
       .getByRole("listbox", { name: "Search students" })
-      .getByRole("button", { name: new RegExp(STUDENT_3.name) })
+      .getByRole("button", { name: new RegExp(student.name) })
       .click();
 
-    await expect(page.getByText(STUDENT_3.name).first()).toBeVisible({
+    await expect(page.getByText(student.name).first()).toBeVisible({
       timeout: 15_000,
     });
   });

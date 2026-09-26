@@ -8,14 +8,15 @@ import {
   publishDraft,
   uniqueDraftName,
 } from "../helpers";
-import { TEACHER_2 } from "../seed";
+import { workerPair } from "../seed";
 
 test("teacher creates a draft, writes questions, edits them, and publishes", async ({
   page,
-}) => {
+}, testInfo) => {
   test.setTimeout(90_000);
 
-  await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+  const { teacher } = workerPair(testInfo);
+  await loginAs(page, teacher.email, teacher.password);
   await expect(page).toHaveURL(/\/teacher\/tests/);
 
   const name = uniqueDraftName("Author publish");

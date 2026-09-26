@@ -5,3 +5,4 @@ video_test/
 playwright-report/
 blob-report/
 .env
+.e2e-shared-seed.lock

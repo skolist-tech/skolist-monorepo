@@ -6,7 +6,7 @@ import {
   renderedStem,
   uniqueDraftName,
 } from "../helpers";
-import { TEACHER_2 } from "../seed";
+import { workerPair } from "../seed";
 
 const PNG_1X1 = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -14,8 +14,9 @@ const PNG_1X1 = Buffer.from(
 );
 
 test.describe("Teacher question paper view", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+  test.beforeEach(async ({ page }, testInfo) => {
+    const { teacher } = workerPair(testInfo);
+    await loginAs(page, teacher.email, teacher.password);
     await createNamedDraft(page, uniqueDraftName("Paper view"));
     await openPaperView(page);
   });

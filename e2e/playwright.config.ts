@@ -6,7 +6,7 @@ import path from "path";
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const headed = process.argv.includes("--headed");
-const serial = !!process.env.CI || headed;
+
 /**
  * Opt-in video via `E2E_VIDEO=1` (Playwright has no `--video` CLI flag).
  * npm scripts: `test:headed:video`, `test:assessments:headed:video`.
@@ -52,10 +52,10 @@ const ASSESSMENTS_URL =
 export default defineConfig({
   testDir: "./tests",
   ...(recordVideo ? { outputDir: videoRunOutputDir() } : {}),
-  fullyParallel: !serial,
+  fullyParallel: !headed,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: serial ? 1 : undefined,
+  workers: 1,
   reporter: extractFrames
     ? [
         ["list"],

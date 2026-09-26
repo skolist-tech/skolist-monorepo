@@ -40,6 +40,43 @@ export const STUDENT_3 = {
   name: "Student 3",
 };
 
+/** One teacher + student pair per Playwright worker. Same count as python seeds. */
+export const E2E_WORKER_COUNT = 8;
+
+export type SeedUser = {
+  email: string;
+  password: string;
+  name: string;
+};
+
+export const E2E_WORKER_PAIRS: { teacher: SeedUser; student: SeedUser }[] =
+  Array.from({ length: E2E_WORKER_COUNT }, (_, index) => {
+    const n = index + 1;
+    return {
+      teacher: {
+        email: `e2e-teacher-${n}@seed.skolist.com`,
+        password: SEED_PASSWORD,
+        name: `E2E Teacher ${n}`,
+      },
+      student: {
+        email: `e2e-student-${n}@seed.skolist.com`,
+        password: SEED_PASSWORD,
+        name: `E2E Student ${n}`,
+      },
+    };
+  });
+
+/** Teacher and student owned by this Playwright worker (0–7). */
+export function workerPair(testInfo: { parallelIndex: number }) {
+  const pair = E2E_WORKER_PAIRS[testInfo.parallelIndex];
+  if (!pair) {
+    throw new Error(
+      `No seed pair for worker parallelIndex ${testInfo.parallelIndex}. Keep --workers <= ${E2E_WORKER_COUNT} and re-seed _002_data_user.py.`
+    );
+  }
+  return pair;
+}
+
 /** Stable titles + IDs from data_assessment/tests.py / uuids_and_meta.py */
 export const TESTS = {
   jeeMain1: {

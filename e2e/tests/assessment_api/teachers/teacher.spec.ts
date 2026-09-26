@@ -1,7 +1,9 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../shared-seed";
 import { loginAs, logOut } from "../../helpers/auth";
 import { testCard } from "../helpers";
 import { TEACHER_1, TEACHER_2, TESTS } from "../seed";
+
+test.describe.configure({ mode: "serial" });
 
 test.describe("Teacher assessment flows", () => {
   test.beforeEach(async ({ page }) => {

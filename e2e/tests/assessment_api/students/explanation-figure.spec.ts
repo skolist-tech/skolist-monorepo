@@ -11,7 +11,7 @@ import {
   testCard,
   uniqueDraftName,
 } from "../helpers";
-import { STUDENT_3, TEACHER_2 } from "../seed";
+import { workerPair } from "../seed";
 
 const PNG_1X1 = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -22,10 +22,11 @@ const EXPLANATION = "E2E revealed explanation";
 
 test("explanation figure stays hidden until the teacher reveals answers", async ({
   page,
-}) => {
+}, testInfo) => {
   test.setTimeout(120_000);
 
-  await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+  const { teacher, student } = workerPair(testInfo);
+  await loginAs(page, teacher.email, teacher.password);
   const name = uniqueDraftName("Explanation figure");
   await authorDraftWithMcqs(page, name);
   await openPaperView(page);
@@ -41,12 +42,12 @@ test("explanation figure stays hidden until the teacher reveals answers", async 
     timeout: 15_000,
   });
   await page.getByRole("link", { name: "Back to test" }).click();
-  await assignStudentByName(page, STUDENT_3.name);
+  await assignStudentByName(page, student.name);
   await publishDraft(page);
   const editorUrl = page.url();
 
   await logOut(page);
-  await loginAs(page, STUDENT_3.email, STUDENT_3.password);
+  await loginAs(page, student.email, student.password);
   await openAttemptFromCard(page, name);
   await proceedPastInstructionsIfPresent(page);
   await expect(page.getByText(EXPLANATION)).toHaveCount(0);
@@ -67,7 +68,7 @@ test("explanation figure stays hidden until the teacher reveals answers", async 
   await expect(page.getByRole("img", { name: "Explanation figure" })).toHaveCount(0);
 
   await logOut(page);
-  await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+  await loginAs(page, teacher.email, teacher.password);
   await page.goto(editorUrl);
   await page.getByRole("button", { name: "Close paper" }).click();
   await page.getByRole("checkbox", { name: "Students can review past attempts" }).check();
@@ -75,7 +76,7 @@ test("explanation figure stays hidden until the teacher reveals answers", async 
   await page.getByRole("button", { name: "Save paper" }).click();
 
   await logOut(page);
-  await loginAs(page, STUDENT_3.email, STUDENT_3.password);
+  await loginAs(page, student.email, student.password);
   await testCard(page, name).getByRole("button", { name: "View attempts" }).click();
   await page.getByRole("link", { name: "View result" }).click();
   await expect(page.getByText(EXPLANATION)).toBeVisible({ timeout: 15_000 });

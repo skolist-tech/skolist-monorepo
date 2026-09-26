@@ -59,7 +59,7 @@ From `e2e/`:
 ```bash
 npm test                          # all projects
 npm run test:qgen                 # qgen only
-npm run test:assessments          # assessments only (1 worker — shared seed users)
+npm run test:assessments          # assessments only (1 worker — shared seed papers)
 npm run test:headed               # all, headed, 1 worker
 npm run test:headed:video         # headed + record videos → videos/
 npm run test:headed:video:images  # video + distinct JPEG frames (ffmpeg)
@@ -82,12 +82,13 @@ npx playwright test --project=qgen tests/login.spec.ts
 
 ## Shared-state note
 
-Assessment specs can mutate attempt state (`Start`, `Continue`, submit, mark-for-review). Prefer:
+Specs that **create their own paper** (`uniqueDraftName()`) log in as `e2e-teacher-N` / `e2e-student-N`, where N is the Playwright worker (1–8). Those can run together when you pass `--workers` up to 8.
 
-- different seeded students for different workflow specs, and
-- `--workers=1` when a run intentionally exercises the same student / same test end-to-end.
+Specs that **sit or edit the seeded JEE/NEET papers** still use Teacher 1/2 and Student 1/2/3. They take a lock so only one of them runs at a time.
 
-`npm run test:assessments` already uses **one worker**. Parallel logins as the same seed teacher/student can invalidate the other's JWT (`Invalid or expired token`).
+`npm run test:assessments` uses **one worker**. Headed mode does too.
+
+After adding the extra seed users, re-run `python seed.py` from `skolist-db`. The local GoTrue sign-in cap in `skolist-db/supabase/config.toml` is 400 per 5 minutes so several browsers can log in; restart Supabase after that config change.
 
 Playwright does not provide a clean general-purpose "run test B only if test A passed" feature inside one spec file the way a build graph would. Project-level dependencies / global setup exist, but for product e2e the better pattern is usually **independent tests + isolated seed state**, not test-on-test dependencies.
 
@@ -133,8 +134,9 @@ e2e/
     login.spec.ts
     assessment_api/
       seed.ts                 # seed emails / test names / IDs
+      shared-seed.ts          # lock for JEE/NEET seed-paper specs
       helpers.ts
-      auth.spec.ts            # shared (teacher + student)
+      auth.spec.ts            # worker e2e teacher + student login
       teachers/
         teacher.spec.ts
         workflow.spec.ts
@@ -150,6 +152,7 @@ e2e/
 ## Notes
 
 - Headed mode forces **one worker** so a single browser window runs at a time.
+- `npm run test:assessments` also uses **one worker**. Pass `--workers=N` (max 8 seed pairs) on `npx playwright test` to run faster.
 - Video is off unless `E2E_VIDEO=1` (see `test:*:video` scripts); files land in `videos/<timestamp>/` and previous runs are kept.
 - Distinct frames are off unless `E2E_IMAGES=1` (needs ffmpeg); JPEGs land in `videos/<timestamp>/<test-folder>/images/`.
 - Assessment specs assert against **seeded** papers (JEE / NEET titles and UUIDs in `assessment_api/seed.ts`). Re-seed if local data drifts.

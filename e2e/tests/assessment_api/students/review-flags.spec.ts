@@ -10,22 +10,23 @@ import {
   publishDraft,
   uniqueDraftName,
 } from "../helpers";
-import { STUDENT_3, TEACHER_2 } from "../seed";
+import { workerPair } from "../seed";
 
 test("past attempts and correct answers stay hidden until the teacher allows them", async ({
   page,
-}) => {
+}, testInfo) => {
   test.setTimeout(120_000);
 
-  await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+  const { teacher, student } = workerPair(testInfo);
+  await loginAs(page, teacher.email, teacher.password);
   const name = uniqueDraftName("Review flags");
   await authorDraftWithMcqs(page, name);
-  await assignStudentByName(page, STUDENT_3.name);
+  await assignStudentByName(page, student.name);
   await publishDraft(page);
   const editorUrl = page.url();
 
   await logOut(page);
-  await loginAs(page, STUDENT_3.email, STUDENT_3.password);
+  await loginAs(page, student.email, student.password);
   await openAttemptFromCard(page, name);
   await proceedPastInstructionsIfPresent(page);
   for (const question of JOURNEY_MCQS) {
@@ -42,7 +43,7 @@ test("past attempts and correct answers stay hidden until the teacher allows the
   });
 
   await logOut(page);
-  await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+  await loginAs(page, teacher.email, teacher.password);
   await page.goto(editorUrl);
   await page.getByRole("button", { name: "Close paper" }).click();
   await page.getByRole("checkbox", { name: "Students can review past attempts" }).check();
@@ -50,7 +51,7 @@ test("past attempts and correct answers stay hidden until the teacher allows the
   await page.getByRole("button", { name: "Save paper" }).click();
 
   await logOut(page);
-  await loginAs(page, STUDENT_3.email, STUDENT_3.password);
+  await loginAs(page, student.email, student.password);
   await expect(page.getByRole("heading", { name: "Past tests" })).toBeVisible({
     timeout: 15_000,
   });

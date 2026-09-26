@@ -10,24 +10,25 @@ import {
   testCard,
   uniqueDraftName,
 } from "../helpers";
-import { STUDENT_3, TEACHER_2 } from "../seed";
+import { workerPair } from "../seed";
 
 test("teacher authors and publishes a paper, then a student sits it and the teacher reviews", async ({
   page,
-}) => {
+}, testInfo) => {
   test.setTimeout(120_000);
 
-  await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+  const { teacher, student } = workerPair(testInfo);
+  await loginAs(page, teacher.email, teacher.password);
   await expect(page).toHaveURL(/\/teacher\/tests/);
 
   const name = uniqueDraftName("Sit authored");
   await authorDraftWithMcqs(page, name);
-  await assignStudentByName(page, STUDENT_3.name);
+  await assignStudentByName(page, student.name);
   await publishDraft(page);
   const editorUrl = page.url();
 
   await logOut(page);
-  await loginAs(page, STUDENT_3.email, STUDENT_3.password);
+  await loginAs(page, student.email, student.password);
   await expect(page).toHaveURL(/\/student\/tests/);
   await expect(
     page.getByRole("heading", { name: "Assigned tests" })
@@ -66,7 +67,7 @@ test("teacher authors and publishes a paper, then a student sits it and the teac
   ).toBeVisible();
 
   await logOut(page);
-  await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+  await loginAs(page, teacher.email, teacher.password);
   await page.goto(editorUrl);
   await expect(page.getByRole("heading", { name, exact: true })).toBeVisible({
     timeout: 15_000,

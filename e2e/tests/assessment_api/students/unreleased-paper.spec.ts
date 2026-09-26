@@ -7,21 +7,20 @@ import {
   publishDraft,
   uniqueDraftName,
 } from "../helpers";
-import { STUDENT_3, TEACHER_2 } from "../seed";
-
-test.describe.configure({ mode: "serial" });
+import { workerPair } from "../seed";
 
 test.describe("Student cannot sit a paper that is not released to them", () => {
-  test("does not see a draft even when assigned", async ({ page }) => {
+  test("does not see a draft even when assigned", async ({ page }, testInfo) => {
     test.setTimeout(60_000);
 
-    await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+    const { teacher, student } = workerPair(testInfo);
+    await loginAs(page, teacher.email, teacher.password);
     const name = uniqueDraftName("Unpublished assigned");
     await createNamedDraft(page, name);
-    await assignStudentByName(page, STUDENT_3.name);
+    await assignStudentByName(page, student.name);
 
     await logOut(page);
-    await loginAs(page, STUDENT_3.email, STUDENT_3.password);
+    await loginAs(page, student.email, student.password);
     await expect(page).toHaveURL(/\/student\/tests/);
     await expect(
       page.getByRole("heading", { name: "Assigned tests" })
@@ -33,16 +32,17 @@ test.describe("Student cannot sit a paper that is not released to them", () => {
 
   test("does not see a published paper that was never assigned", async ({
     page,
-  }) => {
+  }, testInfo) => {
     test.setTimeout(60_000);
 
-    await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+    const { teacher, student } = workerPair(testInfo);
+    await loginAs(page, teacher.email, teacher.password);
     const name = uniqueDraftName("Published unassigned");
     await createNamedDraft(page, name);
     await publishDraft(page);
 
     await logOut(page);
-    await loginAs(page, STUDENT_3.email, STUDENT_3.password);
+    await loginAs(page, student.email, student.password);
     await expect(page).toHaveURL(/\/student\/tests/);
     await expect(
       page.getByRole("heading", { name: "Assigned tests" })
@@ -52,18 +52,21 @@ test.describe("Student cannot sit a paper that is not released to them", () => {
     );
   });
 
-  test("does not see a paper after the teacher closes it", async ({ page }) => {
+  test("does not see a paper after the teacher closes it", async ({
+    page,
+  }, testInfo) => {
     test.setTimeout(60_000);
 
-    await loginAs(page, TEACHER_2.email, TEACHER_2.password);
+    const { teacher, student } = workerPair(testInfo);
+    await loginAs(page, teacher.email, teacher.password);
     const name = uniqueDraftName("Closed assigned");
     await createNamedDraft(page, name);
-    await assignStudentByName(page, STUDENT_3.name);
+    await assignStudentByName(page, student.name);
     await publishDraft(page);
     await closePublishedPaper(page);
 
     await logOut(page);
-    await loginAs(page, STUDENT_3.email, STUDENT_3.password);
+    await loginAs(page, student.email, student.password);
     await expect(page).toHaveURL(/\/student\/tests/);
     await expect(
       page.getByRole("heading", { name: "Assigned tests" })

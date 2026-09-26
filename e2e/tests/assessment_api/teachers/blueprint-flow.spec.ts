@@ -1,6 +1,8 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../shared-seed";
 import { loginAs, logOut } from "../../helpers/auth";
 import { TEACHER_1, TEACHER_2, TESTS } from "../seed";
+
+test.describe.configure({ mode: "serial" });
 
 test.describe("Blueprint create and explicit access", () => {
   test("header, disabled chapter-wise, and another teacher's paper stays hidden", async ({

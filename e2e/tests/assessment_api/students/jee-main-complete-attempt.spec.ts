@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { test, expect } from "../shared-seed";
 import { loginAs } from "../../helpers/auth";
 import { openAttemptFromCard, testCard } from "../helpers";
 import { STUDENT_2, TESTS } from "../seed";
@@ -21,6 +22,8 @@ async function selectMcqOption(page: Page, optionIndex: number) {
   // NTA radios: (A)/(B)/(C)/(D) — optionIndex is 1-based
   await page.locator(`input[type="radio"][name^="q-"]`).nth(optionIndex - 1).check();
 }
+
+test.describe.configure({ mode: "serial" });
 
 test.describe("Workflow video: complete JEE attempt", () => {
   test("student sits JEE Main Mock Test 1 end to end", async ({ page }) => {
