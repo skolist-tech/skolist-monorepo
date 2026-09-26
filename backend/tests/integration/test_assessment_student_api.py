@@ -10,7 +10,8 @@ from supabase import Client
 PREFIX = "/api/v1/assessment"
 TEST_JEE_MAIN_1 = "00000000-0000-0000-0000-000000000110"
 TEST_ADV_DRAFT = "00000000-0000-0000-0000-000000000114"
-ATTEMPT_GRADED = "00000000-0000-0000-0000-000000000203"
+ATTEMPT_GRADED = "00000000-0000-0000-0000-000000000206"
+ATTEMPT_GRADED_ON_CLOSED_PAPER = "00000000-0000-0000-0000-000000000203"
 ATTEMPT_IN_PROGRESS = "00000000-0000-0000-0000-000000000200"
 Q_NEET_LIVE_PHY = "00000000-0000-0000-0000-000000000151"
 
@@ -35,6 +36,10 @@ class TestAssessmentStudentApi:
         body = response.json()
         assert body["attempt"]["status"] == "graded"
         assert body["attempt"]["total_marks_obtained"] is not None
+
+    def test_closed_paper_result_hidden_until_review_allowed(self, student_test_client: TestClient):
+        response = student_test_client.get(f"{PREFIX}/attempts/{ATTEMPT_GRADED_ON_CLOSED_PAPER}/result")
+        assert response.status_code == 403
 
     def test_save_then_conflict_after_seed_in_progress(self, student_test_client: TestClient):
         save = student_test_client.put(
