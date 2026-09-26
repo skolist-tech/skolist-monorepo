@@ -156,8 +156,8 @@ export async function closePublishedPaper(page: Page) {
 export async function openAttemptFromCard(page: Page, title: string) {
   await testCard(page, title).getByRole("button", { name: "View attempts" }).click();
   const start = page.getByRole("button", { name: "Start" });
-  const continueLink = page.getByRole("link", { name: "Continue" });
-  await expect(start.or(continueLink)).toBeVisible({ timeout: 15_000 });
+  const continueLink = page.getByRole("link", { name: "Continue" }).first();
+  await expect(start.or(continueLink).first()).toBeVisible({ timeout: 15_000 });
   if (await start.isVisible()) {
     await start.click();
     return;
