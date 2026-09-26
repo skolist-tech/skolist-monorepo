@@ -204,7 +204,9 @@ Your Supabase credentials aren't available. Either:
 - Start local Supabase and create `.env.test`
 - Push to GitHub and let CI run the tests
 
-### Tests fail with "Connection refused"
+### Bank tests return 403 under pytest-xdist
+
+`test@example.com` is a private user. Bank tests log in as `bank-admin@seed.skolist.com` (`skolist-admin`). Re-run `python seed.py` if that user is missing.
 
 Local Supabase isn't running. Start it with:
 ```bash

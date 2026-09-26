@@ -195,6 +195,7 @@ def _build_mock_response(response_model, messages: list):
 
     if name == "RegeneratedQuestion":
         from api.v1.qgen.regenerate.service import RegeneratedQuestion
+
         return RegeneratedQuestion(question=_pick_question(content_str))
 
     if name == "FeedbackList":
@@ -226,6 +227,7 @@ def _build_mock_response(response_model, messages: list):
         return _build_questions_list_response(response_model, content_str)
 
     from unittest.mock import MagicMock
+
     return MagicMock()
 
 
@@ -263,6 +265,7 @@ class MockInstructorClient:
 async def _mock_svg_acompletion(model, messages, **kwargs):
     """Mock for litellm.acompletion used by edit_svg service."""
     from unittest.mock import MagicMock
+
     mock = MagicMock()
     mock.choices = [MagicMock()]
     mock.choices[0].message.content = (
@@ -629,18 +632,19 @@ def test_concepts(
     Create test concepts in Supabase and clean up after test.
     """
     concept_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
+    name_suffix = uuid.uuid4().hex[:8]
 
     concepts_data = [
         {
             "id": concept_ids[0],
-            "name": "Newton's Laws of Motion",
+            "name": f"Newton's Laws of Motion ({name_suffix})",
             "description": ("The three fundamental laws describing the relationship between forces and motion."),
             "topic_id": test_topic_id,
             "page_number": 1,
         },
         {
             "id": concept_ids[1],
-            "name": "Kinetic Energy",
+            "name": f"Kinetic Energy ({name_suffix})",
             "description": ("Energy possessed by an object due to its motion. Formula: KE = 1/2 * m * v^2."),
             "topic_id": test_topic_id,
             "page_number": 2,

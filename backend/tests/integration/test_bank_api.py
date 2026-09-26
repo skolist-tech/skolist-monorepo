@@ -17,18 +17,18 @@ from supabase import Client
 # ============================================================================
 
 
-# Test admin credentials (same as regular test user, seeded by skolist-db/seed_users.py)
-TEST_ADMIN_EMAIL = "test@example.com"
+# Seeded by skolist-db python_seeds. Not test@example.com: that user is
+# private_user for qgen tests, and flipping user_type races under xdist.
+TEST_ADMIN_EMAIL = "bank-admin@seed.skolist.com"
 TEST_ADMIN_PASSWORD = "password123"
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def admin_auth_session(env: dict[str, str], service_supabase_client: Client):
     """
-    Create an admin user session for bank tests.
+    Session for the seeded bank admin (`skolist-admin`).
 
-    Uses the same test user but grants admin privileges via user_type.
-    The admin user must have user_type = 'skolist-admin' in users table.
+    Stays admin for the whole worker. Do not reset user_type in teardown.
     """
     from supabase import create_client
 
@@ -44,30 +44,25 @@ def admin_auth_session(env: dict[str, str], service_supabase_client: Client):
     user = getattr(auth_response, "user", None)
 
     if not session or not user:
-        pytest.skip("Could not authenticate admin user")
+        pytest.skip("Could not authenticate bank-admin@seed.skolist.com. Re-run python seed.py.")
 
     token = getattr(session, "access_token", None)
     user_id = getattr(user, "id", None)
     user_email = getattr(user, "email", TEST_ADMIN_EMAIL)
 
-    # Ensure the user exists in public.users with admin privileges
-    # The CHECK constraint requires email OR phone_num to be non-null
     service_supabase_client.table("users").upsert(
         {
             "id": user_id,
             "email": user_email,
             "user_type": "skolist-admin",
-            "credits": 10000,  # Give admin user credits for testing
+            "credits": 10000,
         }
     ).execute()
 
-    yield {
+    return {
         "access_token": token,
         "user_id": user_id,
     }
-
-    # Cleanup: reset user type to non-admin
-    service_supabase_client.table("users").update({"user_type": "private_user"}).eq("id", user_id).execute()
 
 
 @pytest.fixture

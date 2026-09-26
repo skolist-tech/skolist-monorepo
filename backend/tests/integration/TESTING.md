@@ -11,7 +11,7 @@ Needs a local Supabase stack and the Python seeds. See [../README.md](../README.
 | `test_assessment_student_api.py` | Assigned tests, saving a response, submit, grading, and lock after submit. |
 | `test_assessment_teacher_api.py` | Teacher list/read, question CRUD, assign, publish, and delete. |
 | `test_auto_correct_question_api.py` | Auto-correct HTTP API: auth, validation, and a successful correction. |
-| `test_bank_api.py` | Question-bank list, preview, and update. |
+| `test_bank_api.py` | Question-bank list, preview, and update (seeded `bank-admin@seed.skolist.com`) |
 | `test_download_api.py` | PDF and DOCX download endpoints. |
 | `test_edit_svg_api.py` | Edit-SVG endpoint: auth, validation, and a successful edit. |
 | `test_extract_questions_api.py` | Extract-questions endpoint: auth, validation, and a successful extract. |
