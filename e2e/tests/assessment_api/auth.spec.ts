@@ -52,4 +52,49 @@ test.describe("Assessment auth", () => {
       page.getByRole("heading", { name: "Assigned tests" })
     ).toBeVisible();
   });
+
+  test("log out clears the session cookie", async ({ page }, testInfo) => {
+    const { student } = workerPair(testInfo);
+    await loginAs(page, student.email, student.password);
+    await expect(page).toHaveURL(/\/student\/tests/);
+
+    await page.getByRole("button", { name: "Log out" }).click();
+    await expect(page).toHaveURL(/\/login/);
+    await expect(
+      page.getByRole("heading", { name: "Login to your account" })
+    ).toBeVisible();
+
+    await page.reload();
+    await expect(page).toHaveURL(/\/login/);
+    await page.goto("/student/tests");
+    await expect(page).toHaveURL(/\/login/);
+    await expect(page.getByText("Invalid or expired token")).toHaveCount(0);
+  });
+
+  test("an invalid session cookie signs the student out", async ({
+    page,
+  }, testInfo) => {
+    const { student } = workerPair(testInfo);
+    await loginAs(page, student.email, student.password);
+    await expect(page).toHaveURL(/\/student\/tests/);
+
+    const cookies = await page.context().cookies();
+    const authCookies = cookies.filter((cookie) =>
+      cookie.name.includes("auth-token")
+    );
+    expect(authCookies.length).toBeGreaterThan(0);
+    await page.context().addCookies(
+      authCookies.map((cookie) => ({
+        ...cookie,
+        value: "invalid.expired.token",
+      }))
+    );
+
+    await page.reload();
+    await expect(page).toHaveURL(/\/login/, { timeout: 15_000 });
+    await expect(page.getByText("Invalid or expired token")).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Login to your account" })
+    ).toBeVisible();
+  });
 });

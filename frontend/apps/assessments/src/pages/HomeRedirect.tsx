@@ -1,10 +1,11 @@
 import { Navigate } from "react-router-dom";
 import { useActor } from "@/hooks/useActor";
+import { isAuthSessionError } from "@/services/api";
 
 export function HomeRedirect() {
   const { actor, loading, error } = useActor();
 
-  if (loading) {
+  if (loading || isAuthSessionError(error)) {
     return <p className="text-muted-foreground">Loading…</p>;
   }
   if (error || !actor) {

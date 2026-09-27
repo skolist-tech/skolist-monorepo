@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useActor } from "@/hooks/useActor";
+import { isAuthSessionError } from "@/services/api";
 import type { UserRole } from "@/types/assessment";
 
 export function RoleRoute({
@@ -12,7 +13,7 @@ export function RoleRoute({
 }) {
   const { actor, loading, error } = useActor();
 
-  if (loading) {
+  if (loading || isAuthSessionError(error)) {
     return <p className="text-muted-foreground">Loading…</p>;
   }
   if (error || !actor) {

@@ -1,6 +1,8 @@
-import { getSupabaseClient } from "@skolist/auth";
+import { clearLocalAuth, getSupabaseClient } from "@skolist/auth";
 
 const API_URL = import.meta.env.VITE_FASTAPI_URL;
+const AUTH_FAILURE_MESSAGE =
+  /invalid or expired token|not authenticated|missing authorization/i;
 
 export class ApiError extends Error {
   status: number;
@@ -9,6 +11,16 @@ export class ApiError extends Error {
     super(message);
     this.status = status;
   }
+}
+
+export function isAuthSessionError(err: unknown): boolean {
+  if (typeof err === "string") {
+    return AUTH_FAILURE_MESSAGE.test(err);
+  }
+  if (err instanceof ApiError) {
+    return err.status === 401 || AUTH_FAILURE_MESSAGE.test(err.message);
+  }
+  return err instanceof Error && AUTH_FAILURE_MESSAGE.test(err.message);
 }
 
 function detailMessage(body: unknown, fallback: string): string {
@@ -30,7 +42,8 @@ export async function apiFetch<T>(
   } = await getSupabaseClient().auth.getSession();
   const token = session?.access_token;
   if (!token) {
-    throw new Error("User not authenticated");
+    await clearLocalAuth();
+    throw new ApiError("User not authenticated", 401);
   }
 
   const isForm = options.body instanceof FormData;
@@ -49,10 +62,11 @@ export async function apiFetch<T>(
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new ApiError(
-      detailMessage(body, response.statusText),
-      response.status
-    );
+    const message = detailMessage(body, response.statusText);
+    if (response.status === 401 || AUTH_FAILURE_MESSAGE.test(message)) {
+      await clearLocalAuth();
+    }
+    throw new ApiError(message, response.status);
   }
   return body as T;
 }

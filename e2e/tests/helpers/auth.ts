@@ -59,19 +59,14 @@ export async function loginAs(page: Page, email: string, password: string) {
   });
 }
 
-/** Sign out from the Assessments header menu and land on /login. */
+/** Sign out from the Assessments header and land on /login. */
 export async function logOut(page: Page) {
-  await page.getByRole("banner").getByRole("button").last().click();
-  await page.getByRole("menuitem", { name: "Log out" }).click();
-  try {
-    await page.waitForURL(/\/login/, { timeout: 15_000 });
-  } catch {
-    await page.context().clearCookies();
-    await page.evaluate(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-    });
-    await page.goto("/login");
-    await expect(page).toHaveURL(/\/login/);
+  const headerLogout = page.getByRole("button", { name: "Log out" });
+  if (await headerLogout.isVisible().catch(() => false)) {
+    await headerLogout.click();
+  } else {
+    await page.getByRole("banner").getByRole("button").last().click();
+    await page.getByRole("menuitem", { name: "Log out" }).click();
   }
+  await page.waitForURL(/\/login/, { timeout: 15_000 });
 }

@@ -9,6 +9,8 @@ export {
   getSupabaseClient,
   getCurrentUserId,
   isAuthenticated,
+  clearLocalAuth,
+  clearAuthCookies,
 } from "./client";
 
 export { initializeFirebase } from "./firebase";

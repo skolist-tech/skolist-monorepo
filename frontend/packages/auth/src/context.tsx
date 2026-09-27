@@ -10,7 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthError, Provider } from "@supabase/supabase-js";
-import { getSupabaseClient } from "./client";
+import {
+  clearLocalAuth,
+  getSupabaseClient,
+  subscribeLocalAuthCleared,
+} from "./client";
 import type { AuthUser, AuthSession } from "./types";
 
 export interface AuthContextValue {
@@ -53,6 +57,18 @@ export interface AuthContextValue {
   checkUserExists: (phone: string) => Promise<boolean>;
 }
 
+function isDeadSessionError(error: AuthError | null): boolean {
+  if (!error) return false;
+  const message = error.message.toLowerCase();
+  return (
+    error.status === 401 ||
+    message.includes("invalid") ||
+    message.includes("expired") ||
+    message.includes("refresh token") ||
+    message.includes("jwt")
+  );
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
@@ -73,24 +89,47 @@ export function AuthProvider({
 
   // Initialize auth state
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let cancelled = false;
+
+    supabase.auth.getUser().then(async ({ data: { user }, error }) => {
+      if (cancelled) return;
+      if (!user) {
+        if (isDeadSessionError(error)) {
+          await clearLocalAuth();
+        }
+        setSession(null);
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      setSession(session);
+      setUser(user);
+      setIsLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "INITIAL_SESSION") return;
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
     });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const unsubscribeCleared = subscribeLocalAuthCleared(() => {
+      setSession(null);
+      setUser(null);
       setIsLoading(false);
     });
 
     return () => {
+      cancelled = true;
       subscription.unsubscribe();
+      unsubscribeCleared();
     };
   }, [supabase]);
 
@@ -163,9 +202,14 @@ export function AuthProvider({
   );
 
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
-  }, [supabase]);
+    try {
+      await clearLocalAuth();
+      return { error: null };
+    } finally {
+      setSession(null);
+      setUser(null);
+    }
+  }, []);
 
   const resetPassword = useCallback(
     async (email: string) => {

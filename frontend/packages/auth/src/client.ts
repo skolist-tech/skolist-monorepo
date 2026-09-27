@@ -2,30 +2,122 @@ import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CookieOptions } from "@supabase/ssr";
 
-/**
- * Cleanup legacy cookies from previous Supabase projects or incorrect domains
- * This addresses issues where old session tokens cause authentication failures
- */
-const cleanupSubdomainAuth = () => {
-  if (typeof window === "undefined") return;
+const AUTH_COOKIE_PATTERN = /^sb-.*auth-token/;
+const LEGACY_AUTH_COOKIES = [
+  "sb-xgugcyguhzfevxvjdgbm-auth-token",
+  "sb-xgugcyguhzfevxvjdgbm-auth-token-code-verifier",
+  "sb-xgugcyguhzfevxvjdgbm-auth-token.0",
+  "sb-xgugcyguhzfevxvjdgbm-auth-token.1",
+];
 
-  const cookieNames = [
-    "sb-xgugcyguhzfevxvjdgbm-auth-token",
-    "sb-xgugcyguhzfevxvjdgbm-auth-token-code-verifier",
-    "sb-xgugcyguhzfevxvjdgbm-auth-token.0",
-    "sb-xgugcyguhzfevxvjdgbm-auth-token.1",
+const authClearedListeners = new Set<() => void>();
+let clearLocalAuthInFlight: Promise<void> | null = null;
+
+function isAuthCookieName(name: string): boolean {
+  return AUTH_COOKIE_PATTERN.test(name);
+}
+
+function expireCookie(name: string, domain?: string) {
+  if (typeof document === "undefined") return;
+
+  const attrs = [
+    `${name}=`,
+    "Path=/",
+    "Max-Age=0",
+    "Expires=Thu, 01 Jan 1970 00:00:01 GMT",
   ];
+  if (domain) attrs.push(`Domain=${domain}`);
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    attrs.push("Secure");
+  }
+  document.cookie = attrs.join("; ");
+}
 
-  cookieNames.forEach((name) => {
-    // Force delete by setting expiry to 1970
-    document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-    // console.log(`${name}=; Path=/;  Expires=Thu, 01 Jan 1970 00:00:01 GMT;`);
+function writeCookie(
+  name: string,
+  value: string,
+  options: CookieOptions | undefined,
+  domain?: string
+) {
+  const isDelete = value === "" || options?.maxAge === 0;
+  if (isDelete) {
+    expireCookie(name, domain);
+    return;
+  }
+
+  let cookieString = `${name}=${value}`;
+  if (domain) cookieString += `; Domain=${domain}`;
+  cookieString += `; Path=${options?.path ?? "/"}`;
+  cookieString += `; SameSite=${options?.sameSite ?? "Lax"}`;
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    cookieString += "; Secure";
+  }
+  if (options?.maxAge != null) {
+    cookieString += `; Max-Age=${options.maxAge}`;
+  }
+  document.cookie = cookieString;
+}
+
+function cookieNames(): string[] {
+  if (typeof document === "undefined" || !document.cookie) return [];
+  return document.cookie
+    .split("; ")
+    .map((cookie) => cookie.split("=")[0] ?? "");
+}
+
+export function clearAuthCookies() {
+  if (typeof document === "undefined") return;
+
+  const { cookieDomain } = getSupabaseConfig();
+  const names = new Set([...cookieNames(), ...LEGACY_AUTH_COOKIES]);
+  names.forEach((name) => {
+    if (!name || !isAuthCookieName(name)) return;
+    expireCookie(name);
+    if (cookieDomain) expireCookie(name, cookieDomain);
   });
-};
+}
 
-// Execute cleanup immediately on module load if in browser
+export function subscribeLocalAuthCleared(listener: () => void) {
+  authClearedListeners.add(listener);
+  return () => {
+    authClearedListeners.delete(listener);
+  };
+}
+
+function notifyLocalAuthCleared() {
+  authClearedListeners.forEach((listener) => listener());
+}
+
+/**
+ * Drop the browser session even when the refresh token is already dead.
+ * Supabase signOut can return early on a session error and leave cookies in place.
+ */
+export async function clearLocalAuth(): Promise<void> {
+  if (clearLocalAuthInFlight) return clearLocalAuthInFlight;
+
+  clearLocalAuthInFlight = (async () => {
+    try {
+      if (supabaseClient) {
+        await supabaseClient.auth.signOut({ scope: "local" });
+      }
+    } catch {
+      // The stored token may already be invalid; cookies still need to go.
+    }
+    clearAuthCookies();
+    notifyLocalAuthCleared();
+  })().finally(() => {
+    clearLocalAuthInFlight = null;
+  });
+
+  return clearLocalAuthInFlight;
+}
+
 if (typeof window !== "undefined") {
-  cleanupSubdomainAuth();
+  const { cookieDomain } = getSupabaseConfig();
+  LEGACY_AUTH_COOKIES.forEach((name) => {
+    expireCookie(name);
+    if (cookieDomain) expireCookie(name, cookieDomain);
+  });
 }
 
 let supabaseClient: SupabaseClient | null = null;
@@ -81,7 +173,6 @@ export function createClient(): SupabaseClient {
 
   return createBrowserClient(url, anonKey, {
     cookies: {
-      // Custom cookie options for cross-subdomain auth
       getAll() {
         if (typeof document === "undefined") return [];
         return document.cookie.split("; ").map((cookie) => {
@@ -102,27 +193,13 @@ export function createClient(): SupabaseClient {
         if (typeof document === "undefined") return;
 
         cookiesToSet.forEach(({ name, value, options }) => {
-          let cookieString = `${name}=${value}`;
-
-          if (cookieDomain) {
-            cookieString += `; Domain=${cookieDomain}`;
+          const isDelete = value === "" || options?.maxAge === 0;
+          if (isDelete) {
+            writeCookie(name, "", options);
+            if (cookieDomain) writeCookie(name, "", options, cookieDomain);
+            return;
           }
-
-          cookieString += `; Path=${options?.path ?? "/"}`;
-          cookieString += `; SameSite=${options?.sameSite ?? "Lax"}`;
-
-          if (
-            typeof window !== "undefined" &&
-            window.location.protocol === "https:"
-          ) {
-            cookieString += "; Secure";
-          }
-
-          if (options?.maxAge) {
-            cookieString += `; Max-Age=${options.maxAge}`;
-          }
-
-          document.cookie = cookieString;
+          writeCookie(name, value, options, cookieDomain || undefined);
         });
       },
     },

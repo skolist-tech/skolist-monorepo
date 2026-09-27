@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isAuthSessionError } from "@/services/api";
 import { getMe } from "@/services/tests";
 import type { Actor } from "@/types/assessment";
 
@@ -11,13 +12,14 @@ export function useActor() {
     let cancelled = false;
     getMe()
       .then((data) => {
-        if (!cancelled) setActor(data);
+        if (cancelled) return;
+        setActor(data);
+        setLoading(false);
       })
       .catch((err: Error) => {
-        if (!cancelled) setError(err.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (cancelled || isAuthSessionError(err)) return;
+        setError(err.message);
+        setLoading(false);
       });
     return () => {
       cancelled = true;
