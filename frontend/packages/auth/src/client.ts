@@ -3,12 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CookieOptions } from "@supabase/ssr";
 
 const AUTH_COOKIE_PATTERN = /^sb-.*auth-token/;
-const LEGACY_AUTH_COOKIES = [
-  "sb-xgugcyguhzfevxvjdgbm-auth-token",
-  "sb-xgugcyguhzfevxvjdgbm-auth-token-code-verifier",
-  "sb-xgugcyguhzfevxvjdgbm-auth-token.0",
-  "sb-xgugcyguhzfevxvjdgbm-auth-token.1",
-];
 
 const authClearedListeners = new Set<() => void>();
 let clearLocalAuthInFlight: Promise<void> | null = null;
@@ -69,7 +63,7 @@ export function clearAuthCookies() {
   if (typeof document === "undefined") return;
 
   const { cookieDomain } = getSupabaseConfig();
-  const names = new Set([...cookieNames(), ...LEGACY_AUTH_COOKIES]);
+  const names = new Set(cookieNames());
   names.forEach((name) => {
     if (!name || !isAuthCookieName(name)) return;
     expireCookie(name);
@@ -110,14 +104,6 @@ export async function clearLocalAuth(): Promise<void> {
   });
 
   return clearLocalAuthInFlight;
-}
-
-if (typeof window !== "undefined") {
-  const { cookieDomain } = getSupabaseConfig();
-  LEGACY_AUTH_COOKIES.forEach((name) => {
-    expireCookie(name);
-    if (cookieDomain) expireCookie(name, cookieDomain);
-  });
 }
 
 let supabaseClient: SupabaseClient | null = null;

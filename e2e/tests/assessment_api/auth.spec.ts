@@ -53,6 +53,28 @@ test.describe("Assessment auth", () => {
     ).toBeVisible();
   });
 
+  test("a valid session stays signed in after refresh", async ({
+    page,
+  }, testInfo) => {
+    const { student } = workerPair(testInfo);
+    await loginAs(page, student.email, student.password);
+    await expect(page).toHaveURL(/\/student\/tests/);
+    await expect(
+      page.getByRole("heading", { name: "Assigned tests" })
+    ).toBeVisible();
+
+    await page.reload();
+    await expect(page).toHaveURL(/\/student\/tests/);
+    await expect(
+      page.getByRole("heading", { name: "Assigned tests" })
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
+    await expect(page.getByText("Invalid or expired token")).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Login to your account" })
+    ).toHaveCount(0);
+  });
+
   test("log out clears the session cookie", async ({ page }, testInfo) => {
     const { student } = workerPair(testInfo);
     await loginAs(page, student.email, student.password);

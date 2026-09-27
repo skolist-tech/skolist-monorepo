@@ -19,7 +19,7 @@ Credentials and paper titles: [`tests/assessment_api/seed.ts`](./tests/assessmen
 
 | File | What it covers |
 | --- | --- |
-| [`tests/assessment_api/auth.spec.ts`](./tests/assessment_api/auth.spec.ts) | Guest is sent to email + password + org-code sign-in (no sign-up, Google, or phone). The worker's e2e teacher lands on the test list; the worker's e2e student lands on assigned tests. Log out and an invalid session cookie both return the student to login without showing the expired-token error. |
+| [`tests/assessment_api/auth.spec.ts`](./tests/assessment_api/auth.spec.ts) | Guest is sent to email + password + org-code sign-in (no sign-up, Google, or phone). The worker's e2e teacher lands on the test list; the worker's e2e student lands on assigned tests. A valid session stays signed in after refresh. Log out and an invalid session cookie both return the student to login without showing the expired-token error. |
 
 ### Teachers
 
