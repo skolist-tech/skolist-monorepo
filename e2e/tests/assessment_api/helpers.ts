@@ -153,6 +153,37 @@ export async function closePublishedPaper(page: Page) {
   await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
 }
 
+/** Close a published paper, then persist the two student-review flags. */
+export async function allowStudentReview(page: Page) {
+  await closePublishedPaper(page);
+  const review = page.getByRole("checkbox", {
+    name: "Students can review past attempts",
+  });
+  const answers = page.getByRole("checkbox", {
+    name: "Students can see correct answers",
+  });
+  await review.check();
+  await answers.check();
+  const saved = page.waitForResponse((response) => {
+    if (response.request().method() !== "PATCH" || !response.ok()) return false;
+    if (!/\/tests\/[0-9a-f-]{36}$/i.test(new URL(response.url()).pathname)) {
+      return false;
+    }
+    const body = response.request().postDataJSON() as {
+      students_can_review_attempts?: boolean;
+      students_can_see_answers?: boolean;
+    };
+    return (
+      body.students_can_review_attempts === true &&
+      body.students_can_see_answers === true
+    );
+  });
+  await page.getByRole("button", { name: "Save paper" }).click();
+  await saved;
+  await expect(review).toBeChecked();
+  await expect(answers).toBeChecked();
+}
+
 export async function openAttemptFromCard(page: Page, title: string) {
   await testCard(page, title).getByRole("button", { name: "View attempts" }).click();
   const start = page.getByRole("button", { name: "Start" });

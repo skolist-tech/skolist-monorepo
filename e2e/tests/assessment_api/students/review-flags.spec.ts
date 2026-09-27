@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { loginAs, logOut } from "../../helpers/auth";
 import {
   JOURNEY_MCQS,
+  allowStudentReview,
   assignStudentByName,
   authorDraftWithMcqs,
   openAttemptFromCard,
@@ -45,10 +46,7 @@ test("past attempts and correct answers stay hidden until the teacher allows the
   await logOut(page);
   await loginAs(page, teacher.email, teacher.password);
   await page.goto(editorUrl);
-  await page.getByRole("button", { name: "Close paper" }).click();
-  await page.getByRole("checkbox", { name: "Students can review past attempts" }).check();
-  await page.getByRole("checkbox", { name: "Students can see correct answers" }).check();
-  await page.getByRole("button", { name: "Save paper" }).click();
+  await allowStudentReview(page);
 
   await logOut(page);
   await loginAs(page, student.email, student.password);

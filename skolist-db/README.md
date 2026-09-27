@@ -21,8 +21,9 @@ skolist-db/
 │   ├── config.toml
 │   ├── migrations/     # Schema + SQL changes (ordered)
 │   └── seeds/          # SQL seed files (applied on db reset)
-├── python_seeds/       # Auth users, orgs, activities, assessment rows
-│   └── import_paper.py # Load one extracted paper.json as teacher1's draft test
+├── python_seeds/           # Auth users, orgs, activities, assessment rows
+│   ├── import_paper.py     # Load one extracted paper.json as teacher1's draft test
+│   └── import_blueprint.py # Load one extracted paper.json as a catalog blueprint
 ├── seed.py             # Auto-discovers python_seeds/_…_seed_….py in order
 └── unseed.py           # Wipes application tables for a clean reseed
 ```
@@ -34,4 +35,10 @@ Import an extracted paper as a draft test for `teacher1@seed.skolist.com`:
 ```bash
 cd skolist-db
 python python_seeds/import_paper.py ../extraction_app/runs/mht-cet-2025/paper.json
+```
+
+Import the same `paper.json` as a catalog blueprint. `--kind` is required. The only accepted kind is `full_syllabus`. This does not create a draft test.
+
+```bash
+python python_seeds/import_blueprint.py --kind full_syllabus ../internal-tools/extraction_app/out/paper.json
 ```
