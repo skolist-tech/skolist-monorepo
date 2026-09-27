@@ -56,6 +56,10 @@ class TestAssessmentAuth:
         response = student_test_client.get(f"{PREFIX}/tests/{TEST_JEE_MAIN_1}")
         assert response.status_code == 403
 
+    def test_student_cannot_read_blueprint_detail(self, student_test_client: TestClient):
+        response = student_test_client.get(f"{PREFIX}/blueprints/00000000-0000-0000-0000-000000000180")
+        assert response.status_code == 403
+
 
 @pytest.mark.assessment
 class TestAssessmentKeyLeakage:

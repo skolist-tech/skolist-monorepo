@@ -16,11 +16,22 @@ export function uniqueDraftName(prefix = "E2E draft") {
   return `${prefix} ${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
 }
 
+/** Card for a catalog blueprint on the create-test list. */
+export function blueprintCard(page: Page, title: string) {
+  return page
+    .getByRole("heading", { name: title, exact: true })
+    .locator(
+      "xpath=ancestor::div[.//a[normalize-space()='View Test'] or .//button[normalize-space()='Use Test']][1]"
+    );
+}
+
 /** Clone the seeded full-syllabus blueprint and rename it on the paper view. */
 export async function createNamedDraft(page: Page, name: string) {
   await page.getByRole("link", { name: "Create test" }).click();
   await page.getByRole("button", { name: "Full Syllabus Test" }).click();
-  await page.getByRole("button", { name: "Full Syllabus Sample" }).click();
+  await blueprintCard(page, "Full Syllabus Sample")
+    .getByRole("button", { name: "Use Test" })
+    .click();
   await expect(page).toHaveURL(/\/teacher\/tests\/[0-9a-f-]{36}/i, {
     timeout: 15_000,
   });

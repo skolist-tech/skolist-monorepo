@@ -28,6 +28,7 @@ Credentials and paper titles: [`tests/assessment_api/seed.ts`](./tests/assessmen
 | [`tests/assessment_api/teachers/teacher.spec.ts`](./tests/assessment_api/teachers/teacher.spec.ts) | Teacher 1 sees all seed papers (including draft and closed). Opens the draft JEE Advanced editor (Publish). Opens a live NEET paper and sees attempts. **Open** on a draft card goes to the editor; **Back** returns to the tests list. |
 | [`tests/assessment_api/teachers/workflow.spec.ts`](./tests/assessment_api/teachers/workflow.spec.ts) | The worker's e2e teacher creates a named draft; adds/edits a question and saves; assigns that worker's e2e student from the name/photo search; publishes a new draft; closes a published paper and lands back on the list as closed. Delete bin on a card opens a confirm modal: Cancel keeps the paper, Delete removes it. |
 | [`tests/assessment_api/teachers/author-and-publish.spec.ts`](./tests/assessment_api/teachers/author-and-publish.spec.ts) | One journey: the worker's e2e teacher logs in, creates a draft, adds a section and two MCQs, edits stems/options/keys, and publishes. |
+| [`tests/assessment_api/teachers/blueprint-flow.spec.ts`](./tests/assessment_api/teachers/blueprint-flow.spec.ts) | Full Syllabus catalog shows **View Test** and **Use Test**. View Test is read-only. Use Test shows **Creating Test** while cloning. |
 
 ### Students
 

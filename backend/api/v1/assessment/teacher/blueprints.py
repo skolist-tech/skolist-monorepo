@@ -1,4 +1,4 @@
-"""Clone a full-syllabus blueprint into an organisation draft."""
+"""List, preview, and clone a full-syllabus blueprint into an organisation draft."""
 
 from uuid import UUID
 
@@ -8,11 +8,37 @@ from supabase import Client
 from api.v1.auth import get_supabase_client
 
 from ..common.access import question_clone_payload
+from ..common.question_images import sign_question_images
 from ..db import assessment_table, fetch_all, fetch_one, grant_teacher_access
 from ..dependencies import require_teacher
 from ..models import AssessmentActor
 
 router = APIRouter()
+
+
+def _blueprint_detail(supabase: Client, blueprint: dict) -> dict:
+    sections = fetch_all(
+        assessment_table(supabase, "blueprint_sections")
+        .select("*")
+        .eq("blueprint_id", blueprint["id"])
+        .order("position")
+    )
+    questions = sign_question_images(
+        supabase,
+        fetch_all(
+            assessment_table(supabase, "blueprint_questions")
+            .select("*")
+            .eq("blueprint_id", blueprint["id"])
+            .order("position")
+        ),
+    )
+    by_section: dict[str, list] = {section["id"]: [] for section in sections}
+    for question in questions:
+        by_section.setdefault(question["section_id"], []).append(question)
+    return {
+        **blueprint,
+        "sections": [{**section, "questions": by_section.get(section["id"], [])} for section in sections],
+    }
 
 
 @router.get("/blueprints")
@@ -27,6 +53,19 @@ def list_blueprints(
         .order("name")
     )
     return {"blueprints": rows}
+
+
+@router.get("/blueprints/{blueprint_id}")
+def get_blueprint(
+    blueprint_id: UUID,
+    _actor: AssessmentActor = Depends(require_teacher),
+    supabase: Client = Depends(get_supabase_client),
+) -> dict:
+    blueprint = fetch_one(
+        assessment_table(supabase, "test_blueprints").select("*").eq("id", str(blueprint_id)),
+        "Blueprint not found",
+    )
+    return _blueprint_detail(supabase, blueprint)
 
 
 @router.post("/blueprints/{blueprint_id}/clone", status_code=status.HTTP_201_CREATED)

@@ -9,6 +9,7 @@ import { TestListPage } from "./pages/teacher/TestListPage";
 import { CreateTestPage } from "./pages/teacher/CreateTestPage";
 import { TestEditorPage } from "./pages/teacher/TestEditorPage";
 import { TeacherPaperPage } from "./pages/teacher/TeacherPaperPage";
+import { BlueprintPaperPage } from "./pages/teacher/BlueprintPaperPage";
 import { AttemptReviewPage } from "./pages/teacher/AttemptReviewPage";
 import { AssignedTestsPage } from "./pages/student/AssignedTestsPage";
 import { StudentAttemptsPage } from "./pages/student/StudentAttemptsPage";
@@ -98,6 +99,23 @@ function App() {
           element={
             <RoleRoute role="teacher">
               <TeacherPaperPage />
+            </RoleRoute>
+          }
+        />
+      </Route>
+      <Route
+        path="/teacher/blueprints/:blueprintId/paper"
+        element={
+          <ProtectedRoute>
+            <ExamLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route
+          index
+          element={
+            <RoleRoute role="teacher">
+              <BlueprintPaperPage />
             </RoleRoute>
           }
         />

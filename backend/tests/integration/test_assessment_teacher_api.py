@@ -9,6 +9,7 @@ from supabase import Client
 
 PREFIX = "/api/v1/assessment"
 TEST_JEE_MAIN_1 = "00000000-0000-0000-0000-000000000110"
+BLUEPRINT_FULL_SYLLABUS = "00000000-0000-0000-0000-000000000180"
 
 
 def _assessment(supabase: Client, table_name: str):
@@ -17,6 +18,23 @@ def _assessment(supabase: Client, table_name: str):
 
 @pytest.mark.assessment
 class TestAssessmentTeacherApi:
+    def test_teacher_can_preview_seed_blueprint(self, teacher_test_client: TestClient):
+        listed = teacher_test_client.get(f"{PREFIX}/blueprints")
+        assert listed.status_code == 200
+        ids = {item["id"] for item in listed.json()["blueprints"]}
+        assert BLUEPRINT_FULL_SYLLABUS in ids
+
+        detail = teacher_test_client.get(f"{PREFIX}/blueprints/{BLUEPRINT_FULL_SYLLABUS}")
+        assert detail.status_code == 200
+        body = detail.json()
+        questions = [q for section in body["sections"] for q in section["questions"]]
+        assert questions
+        assert any(q.get("correct_mcq_option") is not None for q in questions)
+        assert any("2 + 2" in (q.get("question_text") or "") for q in questions)
+
+        missing = teacher_test_client.get(f"{PREFIX}/blueprints/00000000-0000-0000-0000-000000000099")
+        assert missing.status_code == 404
+
     def test_teacher_can_list_seed_tests(self, teacher_test_client: TestClient):
         response = teacher_test_client.get(f"{PREFIX}/tests")
         assert response.status_code == 200

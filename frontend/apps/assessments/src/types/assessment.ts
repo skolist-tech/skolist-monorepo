@@ -142,6 +142,11 @@ export type BlueprintSummary = {
   kind: string;
 };
 
+export type BlueprintDetail = BlueprintSummary & {
+  sections: Section<TeacherQuestion>[];
+  total_marks?: number | null;
+};
+
 export type AttemptReviewSummary = {
   correct: number;
   wrong: number;

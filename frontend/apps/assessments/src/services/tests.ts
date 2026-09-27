@@ -5,6 +5,7 @@ import type {
   OrgStudent,
   StudentResponse,
   AttemptReviewSummary,
+  BlueprintDetail,
   BlueprintSummary,
   GroupAssignee,
   StudentGroup,
@@ -28,6 +29,10 @@ export function getTeacherTest(testId: string) {
 
 export function listBlueprints() {
   return apiFetch<{ blueprints: BlueprintSummary[] }>("/blueprints");
+}
+
+export function getBlueprint(blueprintId: string) {
+  return apiFetch<BlueprintDetail>(`/blueprints/${blueprintId}`);
 }
 
 export function cloneBlueprint(blueprintId: string) {

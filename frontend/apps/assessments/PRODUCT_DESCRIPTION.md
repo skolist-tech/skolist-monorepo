@@ -22,6 +22,7 @@ The goal is not a casual quiz. It is a fair, focused attempt that matches how hi
 
 ## What a teacher can do
 
+- Preview a catalog paper (view only), then use it to create an editable draft.
 - Create and edit a paper (structure, questions, assignment).
 - Publish it so students can start.
 - Review a student’s attempt after the fact.

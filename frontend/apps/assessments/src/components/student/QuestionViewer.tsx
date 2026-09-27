@@ -20,6 +20,11 @@ export type QuestionEditor = {
   answer?: string | null;
 };
 
+export type QuestionPreview = {
+  correctOptions: number[];
+  answer?: string | null;
+};
+
 type Props = {
   question: StudentQuestion;
   draft: Partial<StudentResponse>;
@@ -28,6 +33,7 @@ type Props = {
   passageText?: string | null;
   language: "en" | "hi";
   editor?: QuestionEditor;
+  preview?: QuestionPreview;
 };
 
 type Option = ReturnType<typeof optionEntries>[number];
@@ -40,8 +46,12 @@ export function QuestionViewer({
   passageText,
   language,
   editor,
+  preview,
 }: Props) {
-  const options = optionEntries(question, Boolean(editor));
+  const key = editor ?? preview;
+  const canEdit = Boolean(editor);
+  const showKey = Boolean(key);
+  const options = optionEntries(question, showKey);
   const typeLabel =
     question.question_type === "mcq"
       ? language === "hi"
@@ -59,7 +69,7 @@ export function QuestionViewer({
             ? "पूर्णांक"
             : "Integer Answer";
 
-  const editGutter = editor ? "pr-14" : "";
+  const editGutter = canEdit ? "pr-14" : "";
   const stemBody = (
     <>
       <div
@@ -84,9 +94,30 @@ export function QuestionViewer({
     question.question_type === "numerical" ||
     question.question_type === "integer";
 
+  const explanationBody = (
+    <div className="text-sm text-slate-700">
+      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Explanation
+      </p>
+      {(question as TeacherQuestion).explanation ? (
+        <LatexRenderer
+          content={(question as TeacherQuestion).explanation ?? ""}
+        />
+      ) : (
+        <p className="text-slate-500">No explanation yet.</p>
+      )}
+      <QuestionFigure
+        svgCode={(question as TeacherQuestion).explanation_svg_image_code}
+        imageUrl={(question as TeacherQuestion).explanation_image_url}
+        alt="Explanation figure"
+        className="mt-2 max-h-48 object-contain [&>svg]:max-h-48 [&>svg]:w-auto"
+      />
+    </div>
+  );
+
   function renderOption(option: Option, selected: boolean, input: ReactNode) {
     const letter = String.fromCharCode(64 + option.index);
-    const isCorrect = editor?.correctOptions.includes(option.index) ?? false;
+    const isCorrect = key?.correctOptions.includes(option.index) ?? false;
     const body = (
       <>
         {input}
@@ -113,25 +144,32 @@ export function QuestionViewer({
         : "border-slate-300 bg-white hover:bg-slate-50"
     }`;
 
-    if (!editor) {
+    if (canEdit && editor) {
       return (
-        <label key={option.index} className={`cursor-pointer ${rowClass}`}>
+        <EditableBlock
+          key={option.index}
+          label={`option ${letter}`}
+          text={option.text ?? ""}
+          imageUrl={option.imageUrl}
+          svgCode={option.svgCode}
+          correct={isCorrect}
+          onSave={(save) => editor.onSaveOption(option.index, save)}
+        >
+          <div className={rowClass}>{body}</div>
+        </EditableBlock>
+      );
+    }
+    if (showKey) {
+      return (
+        <div key={option.index} className={rowClass}>
           {body}
-        </label>
+        </div>
       );
     }
     return (
-      <EditableBlock
-        key={option.index}
-        label={`option ${letter}`}
-        text={option.text ?? ""}
-        imageUrl={option.imageUrl}
-        svgCode={option.svgCode}
-        correct={isCorrect}
-        onSave={(save) => editor.onSaveOption(option.index, save)}
-      >
-        <div className={rowClass}>{body}</div>
-      </EditableBlock>
+      <label key={option.index} className={`cursor-pointer ${rowClass}`}>
+        {body}
+      </label>
     );
   }
 
@@ -156,7 +194,7 @@ export function QuestionViewer({
         </div>
       ) : null}
 
-      {editor ? (
+      {canEdit && editor ? (
         <EditableBlock
           label="question"
           text={question.question_text}
@@ -174,10 +212,17 @@ export function QuestionViewer({
           ) : null}
         </EditableBlock>
       ) : (
-        stemBody
+        <>
+          {stemBody}
+          {showKey && isAnswerType && key?.answer != null ? (
+            <p className="mt-2 text-sm font-semibold text-green-800">
+              Correct answer: {key.answer}
+            </p>
+          ) : null}
+        </>
       )}
 
-      {editor ? (
+      {canEdit && editor ? (
         <EditableBlock
           label="explanation"
           text={(question as TeacherQuestion).explanation ?? ""}
@@ -185,25 +230,10 @@ export function QuestionViewer({
           svgCode={(question as TeacherQuestion).explanation_svg_image_code}
           onSave={editor.onSaveExplanation}
         >
-          <div className="text-sm text-slate-700">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Explanation
-            </p>
-            {(question as TeacherQuestion).explanation ? (
-              <LatexRenderer
-                content={(question as TeacherQuestion).explanation ?? ""}
-              />
-            ) : (
-              <p className="text-slate-500">No explanation yet.</p>
-            )}
-            <QuestionFigure
-              svgCode={(question as TeacherQuestion).explanation_svg_image_code}
-              imageUrl={(question as TeacherQuestion).explanation_image_url}
-              alt="Explanation figure"
-              className="mt-2 max-h-48 object-contain [&>svg]:max-h-48 [&>svg]:w-auto"
-            />
-          </div>
+          {explanationBody}
         </EditableBlock>
+      ) : showKey ? (
+        explanationBody
       ) : null}
 
       {question.question_type === "mcq" ? (
@@ -218,7 +248,7 @@ export function QuestionViewer({
                 className="mt-1"
                 name={`q-${question.id}`}
                 checked={selected}
-                disabled={Boolean(editor)}
+                disabled={canEdit || showKey}
                 onChange={() =>
                   onDraftChange({ selected_mcq_option: option.index })
                 }
@@ -245,7 +275,7 @@ export function QuestionViewer({
                 type="checkbox"
                 className="mt-1"
                 checked={selected}
-                disabled={Boolean(editor)}
+                disabled={canEdit || showKey}
                 onChange={() => {
                   const next = [...flags];
                   while (next.length < 4) next.push(false);
@@ -258,7 +288,7 @@ export function QuestionViewer({
         </div>
       ) : null}
 
-      {isAnswerType && !editor ? (
+      {isAnswerType && !canEdit && !showKey ? (
         <div className="max-w-xs space-y-1">
           <label className="text-xs font-medium text-slate-600">
             {language === "hi" ? "अपना उत्तर दर्ज करें" : "Enter your answer"}
