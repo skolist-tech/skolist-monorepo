@@ -1,4 +1,8 @@
-"""LangGraph that reads a scanned MHT-CET PDF into a Test object."""
+"""LangGraph for the MHT-CET 2024 paper.
+
+Input is a PDF path. Output is paper.json in the run directory.
+Layout assumptions for this paper live in this folder.
+"""
 
 import asyncio
 import json
@@ -9,9 +13,9 @@ from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
 
-from paper_extract.errors import EmptyPaperError, PartialQuestionError
-from paper_extract.llm import ModelClient
-from paper_extract.models import (
+from common.errors import EmptyPaperError, PartialQuestionError
+from common.llm import ModelClient
+from common.models import (
     AnswerBelongs,
     AnswerFragment,
     Block,
@@ -24,16 +28,16 @@ from paper_extract.models import (
     SvgDrawing,
     Test,
 )
-from paper_extract.pipeline.assemble import (
+from common.assemble import (
     build_test,
     merge_metadata,
     namespace_blocks,
     normalize_number,
     take_page,
 )
-from paper_extract.pipeline.crops import crop_blocks
-from paper_extract.pipeline.rasterize import rasterize
-from paper_extract.prompts import image_link_prompt, orphan_pair_prompt, page_read_prompt, svg_decision_prompt, svg_draw_prompt
+from common.crops import crop_blocks
+from common.rasterize import rasterize
+from .prompts import image_link_prompt, orphan_pair_prompt, page_read_prompt, svg_decision_prompt, svg_draw_prompt
 
 logger = logging.getLogger(__name__)
 

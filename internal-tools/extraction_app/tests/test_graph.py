@@ -5,9 +5,12 @@ from pathlib import Path
 import fitz
 import pytest
 
-from paper_extract.errors import PartialQuestionError
-from paper_extract.models import Block, PageRead, QuestionOnPage, SvgDecision
-from paper_extract.pipeline.graph import Extractor
+from common.errors import PartialQuestionError
+from common.models import Block, PageRead, QuestionOnPage, SvgDecision
+from workflows.mht_cet_2024.graph import Extractor as Extractor2024
+from workflows.mht_cet_2025.graph import Extractor as Extractor2025
+
+EXTRACTORS = [Extractor2024, Extractor2025]
 
 
 class FakeClient:
@@ -52,7 +55,8 @@ def _mcq(number: str, *, complete: bool = True, image: bool = False) -> Question
     )
 
 
-def test_graph_writes_paper_json(tmp_path: Path):
+@pytest.mark.parametrize("Extractor", EXTRACTORS, ids=["2024", "2025"])
+def test_graph_writes_paper_json(tmp_path: Path, Extractor):
     pdf = tmp_path / "paper.pdf"
     _write_pdf(pdf, 2)
     out = tmp_path / "out"
@@ -83,7 +87,8 @@ def test_graph_writes_paper_json(tmp_path: Path):
     assert "page 2" in (out / "logs" / "run.log").read_text()
 
 
-def test_graph_raises_when_the_next_page_does_not_continue(tmp_path: Path):
+@pytest.mark.parametrize("Extractor", EXTRACTORS, ids=["2024", "2025"])
+def test_graph_raises_when_the_next_page_does_not_continue(tmp_path: Path, Extractor):
     pdf = tmp_path / "paper.pdf"
     _write_pdf(pdf, 2)
     client = FakeClient(

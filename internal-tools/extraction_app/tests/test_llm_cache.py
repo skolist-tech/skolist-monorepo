@@ -3,8 +3,8 @@
 import asyncio
 from types import SimpleNamespace
 
-import paper_extract.llm as llm
-from paper_extract.models import SvgDecision
+import common.llm as llm
+from common.models import SvgDecision
 
 
 def _reply(text: str = '{"replaceable": false, "reason": "x"}') -> SimpleNamespace:
@@ -104,3 +104,37 @@ def test_max_concurrent_is_read_from_the_environment(monkeypatch, tmp_path):
 
     asyncio.run(go())
     assert state["max"] == 2
+
+
+def test_tool_turn_is_read_from_its_file(monkeypatch, tmp_path):
+    monkeypatch.setattr(llm, "_CACHE_DIR", tmp_path)
+    calls = {"n": 0}
+
+    def fake(*args, **kwargs):
+        calls["n"] += 1
+        function = SimpleNamespace(name="see_next_page", arguments='{"n": 1}')
+        call = SimpleNamespace(id="call_1", function=function)
+        message = SimpleNamespace(content=None, tool_calls=[call])
+        return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+
+    monkeypatch.setattr(llm, "_raw_completion", fake)
+    client = llm.LiteLLMClient()
+    first = client.complete_turn(
+        model="gpt-6-luna",
+        messages=[{"role": "user", "content": "question"}],
+        tools=[],
+        purpose="question 1 tool 0",
+        cache_key="paper-question-1-tool-0.txt",
+    )
+    second = client.complete_turn(
+        model="gpt-6-luna",
+        messages=[{"role": "user", "content": "question"}],
+        tools=[],
+        purpose="question 1 tool 0",
+        cache_key="paper-question-1-tool-0.txt",
+    )
+    assert calls["n"] == 1
+    assert first.tool_calls[0].name == "see_next_page"
+    assert first.tool_calls[0].arguments == {"n": 1}
+    assert second.tool_calls[0].id == "call_1"
+    assert (tmp_path / "paper-question-1-tool-0.txt").is_file()

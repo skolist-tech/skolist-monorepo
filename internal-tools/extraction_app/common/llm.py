@@ -7,6 +7,7 @@ reply under extraction_app/.cache/llm/<pdf-name>-<task>.txt.
 
 import asyncio
 import base64
+import json
 import logging
 import os
 import threading
@@ -17,14 +18,14 @@ from typing import Any, Protocol
 
 import litellm
 from dotenv import load_dotenv
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 logging.getLogger("LiteLLM").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-_PACKAGE_ROOT = Path(__file__).resolve().parents[2]
-_CACHE_DIR = _PACKAGE_ROOT / ".cache" / "llm"
+_APP_ROOT = Path(__file__).resolve().parents[1]
+_CACHE_DIR = _APP_ROOT / ".cache" / "llm"
 _DEFAULT_MAX_IN_FLIGHT = 10
 _async_sem: asyncio.Semaphore | None = None
 _sync_sem: threading.Semaphore | None = None
@@ -36,7 +37,7 @@ _cache_name: ContextVar[str | None] = ContextVar("paper_extract_cache_name", def
 
 def load_local_env() -> None:
     """Load extraction_app/.env, then a .env in the current working directory."""
-    load_dotenv(_PACKAGE_ROOT / ".env")
+    load_dotenv(_APP_ROOT / ".env")
     load_dotenv()
 
 
@@ -74,6 +75,21 @@ class ModelClient(Protocol):
         purpose: str = "call",
         cache_key: str | None = None,
     ) -> BaseModel: ...
+
+
+class ToolCall(BaseModel):
+    """One tool call from a model turn."""
+
+    id: str
+    name: str
+    arguments: dict = Field(default_factory=dict)
+
+
+class ModelTurn(BaseModel):
+    """Assistant turn that may request tools instead of a final schema."""
+
+    content: str | None = None
+    tool_calls: list[ToolCall] = Field(default_factory=list)
 
 
 class LiteLLMClient:
@@ -138,6 +154,132 @@ class LiteLLMClient:
         self._log_cost(purpose, model, response)
         return _parse_schema(schema, raw, purpose)
 
+    def complete_messages(
+        self,
+        *,
+        model: str,
+        messages: list[dict],
+        schema: type[BaseModel],
+        purpose: str = "call",
+        cache_key: str | None = None,
+    ) -> BaseModel:
+        load_local_env()
+        logger.info("litellm start %s model=%s", purpose, model)
+        token = _cache_name.set(cache_key)
+        try:
+            response = litellm.completion(
+                model=model,
+                messages=messages,
+                response_format=schema,
+            )
+        finally:
+            _cache_name.reset(token)
+        raw = response.choices[0].message.content or ""
+        self._log_cost(purpose, model, response)
+        return _parse_schema(schema, raw, purpose)
+
+    async def acomplete_messages(
+        self,
+        *,
+        model: str,
+        messages: list[dict],
+        schema: type[BaseModel],
+        purpose: str = "call",
+        cache_key: str | None = None,
+    ) -> BaseModel:
+        load_local_env()
+        logger.info("litellm start %s model=%s", purpose, model)
+        token = _cache_name.set(cache_key)
+        try:
+            response = await litellm.acompletion(
+                model=model,
+                messages=messages,
+                response_format=schema,
+            )
+        finally:
+            _cache_name.reset(token)
+        raw = response.choices[0].message.content or ""
+        self._log_cost(purpose, model, response)
+        return _parse_schema(schema, raw, purpose)
+
+    def complete_turn(
+        self,
+        *,
+        model: str,
+        messages: list[dict],
+        tools: list[dict],
+        purpose: str = "call",
+        cache_key: str | None = None,
+    ) -> ModelTurn:
+        load_local_env()
+        logger.info("litellm start %s model=%s", purpose, model)
+        cached = _load_turn(cache_key)
+        if cached is not None:
+            self._log_cached(purpose, model)
+            return cached
+        with _semaphores()[1]:
+            cached = _load_turn(cache_key)
+            if cached is not None:
+                self._log_cached(purpose, model)
+                return cached
+            response = _raw_completion(
+                **_with_provider(
+                    {
+                        "model": model,
+                        "messages": messages,
+                        "tools": tools,
+                        "tool_choice": "auto",
+                    }
+                )
+            )
+        turn = _parse_turn(response)
+        _store_turn(cache_key, turn)
+        self._log_cost(purpose, model, response)
+        return turn
+
+    async def acomplete_turn(
+        self,
+        *,
+        model: str,
+        messages: list[dict],
+        tools: list[dict],
+        purpose: str = "call",
+        cache_key: str | None = None,
+    ) -> ModelTurn:
+        load_local_env()
+        logger.info("litellm start %s model=%s", purpose, model)
+        cached = _load_turn(cache_key)
+        if cached is not None:
+            self._log_cached(purpose, model)
+            return cached
+        async with _semaphores()[0]:
+            cached = _load_turn(cache_key)
+            if cached is not None:
+                self._log_cached(purpose, model)
+                return cached
+            response = await _raw_acompletion(
+                **_with_provider(
+                    {
+                        "model": model,
+                        "messages": messages,
+                        "tools": tools,
+                        "tool_choice": "auto",
+                    }
+                )
+            )
+        turn = _parse_turn(response)
+        _store_turn(cache_key, turn)
+        self._log_cost(purpose, model, response)
+        return turn
+
+    def _log_cached(self, purpose: str, model: str) -> None:
+        logger.info(
+            "litellm done %s model=%s cached cost=$0.000000 running=$%.6f",
+            purpose,
+            model,
+            self.spent,
+        )
+
     def _log_cost(self, purpose: str, model: str, response: object) -> None:
         try:
             cost = float(litellm.completion_cost(completion_response=response))
@@ -201,6 +343,45 @@ def _load_reply(name: str | None) -> Any | None:
     if path is None or not path.is_file():
         return None
     return _cached_response(path.read_text())
+
+
+def _load_turn(name: str | None) -> ModelTurn | None:
+    path = _cache_file(name)
+    if path is None or not path.is_file():
+        return None
+    return ModelTurn.model_validate_json(path.read_text())
+
+
+def _store_turn(name: str | None, turn: ModelTurn) -> None:
+    path = _cache_file(name)
+    if path is None:
+        return
+    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    path.write_text(turn.model_dump_json())
+
+
+def _parse_turn(response: Any) -> ModelTurn:
+    message = response.choices[0].message
+    calls: list[ToolCall] = []
+    for index, call in enumerate(getattr(message, "tool_calls", None) or []):
+        function = call.function if hasattr(call, "function") else call["function"]
+        name = function.name if hasattr(function, "name") else function["name"]
+        raw_args = function.arguments if hasattr(function, "arguments") else function["arguments"]
+        call_id = call.id if hasattr(call, "id") else call.get("id")
+        if isinstance(raw_args, str):
+            try:
+                arguments = json.loads(raw_args) if raw_args else {}
+            except json.JSONDecodeError:
+                arguments = {}
+        elif isinstance(raw_args, dict):
+            arguments = raw_args
+        else:
+            arguments = {}
+        if not isinstance(arguments, dict):
+            arguments = {}
+        calls.append(ToolCall(id=call_id or f"call-{index}", name=name, arguments=arguments))
+    content = message.content or None
+    return ModelTurn(content=content, tool_calls=calls)
 
 
 def _parse_schema(schema: type[BaseModel], raw: str, purpose: str) -> BaseModel:

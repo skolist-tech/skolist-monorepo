@@ -1,7 +1,7 @@
 """Deterministic assembly of page reads into an MHT-CET test object."""
 
-from paper_extract.errors import EmptyPaperError, PartialQuestionError
-from paper_extract.models import (
+from common.errors import EmptyPaperError, PartialQuestionError
+from common.models import (
     AnswerFragment,
     Block,
     MetadataSeen,

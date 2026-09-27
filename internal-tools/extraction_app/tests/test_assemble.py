@@ -2,9 +2,9 @@
 
 import pytest
 
-from paper_extract.errors import EmptyPaperError, PartialQuestionError
-from paper_extract.models import AnswerFragment, Block, MetadataSeen, PageRead, QuestionOnPage, SectionStart
-from paper_extract.pipeline.assemble import (
+from common.errors import EmptyPaperError, PartialQuestionError
+from common.models import AnswerFragment, Block, MetadataSeen, PageRead, QuestionOnPage, SectionStart
+from common.assemble import (
     attach_answers,
     build_test,
     merge_metadata,
@@ -13,7 +13,7 @@ from paper_extract.pipeline.assemble import (
     normalize_number,
     take_page,
 )
-from paper_extract.pipeline.crops import pixel_box
+from common.crops import pixel_box
 
 
 def _question(number: str, text: str, *, complete: bool = True, section: str | None = None) -> QuestionOnPage:
@@ -170,7 +170,7 @@ def test_pixel_box_clamps_to_the_page():
 
 
 def test_attach_answers_does_not_overwrite_a_printed_option():
-    from paper_extract.models import Question
+    from common.models import Question
 
     question = Question(
         position=1,

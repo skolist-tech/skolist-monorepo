@@ -1,6 +1,18 @@
-"""Prompts for page reading, cheap checks, and SVG redraw."""
+"""Prompts for the MHT-CET 2024 paper.
 
-from paper_extract.models import AnswerFragment, QuestionOnPage
+Layout assumptions for this paper live here. Other papers have their own copy.
+"""
+
+from common.models import AnswerFragment, QuestionOnPage
+
+# Same rule as backend/api/v1/qgen/prompts/common_instructions.py: inline KaTeX
+# unless a formula cannot be read on one line.
+_INLINE_MATH = """
+Math is KaTeX. Write every formula as inline math: $...$.
+Do not use display math ($$...$$) for a formula that fits on one line. A formula printed alone or centered on the page is still inline. Examples that stay inline: $ax^{2}+(2a+1)xy+2y^{2}=0$, $A=a$, $m_{1}=\\frac{1}{m_{2}}$, $\\frac{1}{2}\\times$ base $\\times$ height.
+Display math is only for a formula that cannot be written inline: a matrix, a cases block, an alignment of several lines, or one long derivation that is unreadable as a single inline expression.
+Do not place two $...$ spans next to each other with nothing between them. Put at least a space or a word between them.
+""".strip()
 
 
 def page_read_prompt(page_number: int, page_count: int, pending: QuestionOnPage | None) -> str:
@@ -31,10 +43,10 @@ Questions:
 - A question has a stem. An answer key line is not a question. Never put an answer key into questions.
 - Every question is a single-correct MCQ. option1, option2, option3, and option4 are required strings. Copy each option as printed.
 - Put the printed question number in number when it is visible. Leave number null when the page shows no number.
-- Transcribe text as printed. Use $...$ for inline math and $$...$$ only for display math.
-- Do not paraphrase. Do not invent options or answers.
+- Transcribe text as printed. Do not paraphrase. Do not invent options or answers.
+{_INLINE_MATH}
 - If this page also shows the correct option for a question, and that question is complete on this page, set correct_mcq_option on the question. Do not also emit an answer object for it.
-- explanation is the worked solution in KaTeX. Use $...$ for inline math and $$...$$ only for display math. Leave it null when the page has no solution.
+- explanation is the worked solution, using the same inline-math rule. Leave it null when the page has no solution. A solution step on its own line is still $...$, not $$...$$.
 - If the solution has a figure, set explanation_image_required true and explanation_figure_id to that block id.
 - A question that stops at the bottom of the left column usually continues at the top of the right column on this same page. Before you mark a question incomplete, or decide a cut-off question is not on this page, read the whole page, including the next column.
 - is_complete is false only when the question is still unfinished at the bottom of the page, after both columns, and must continue on the next page.
@@ -51,7 +63,7 @@ Metadata:
 Answers:
 - Output an answer object when you see an answer, not a question. This includes answer-key pages and lines like "26 (c)" or "26. 3".
 - question_number is the printed number when it is visible, otherwise null. correct_mcq_option is 1, 2, 3, or 4. Do not guess.
-- explanation is the worked solution in KaTeX ($...$ inline, $$...$$ for display) when it is printed with that answer and the question is not complete on this page. Leave it null when there is no solution text.
+- explanation is the worked solution, using the same inline-math rule, when it is printed with that answer and the question is not complete on this page. Leave it null when there is no solution text.
 - If that solution has a figure, set explanation_image_required true and explanation_figure_id to that block id.
 - If the matching question is not on this page, or it is on this page but not complete, emit the answer object. Do not invent a question to hold it.
 

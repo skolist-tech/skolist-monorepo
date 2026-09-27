@@ -4,7 +4,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from paper_extract.models import Block
+from common.models import Block
 
 
 def pixel_box(block: Block, width: int, height: int) -> tuple[int, int, int, int]:

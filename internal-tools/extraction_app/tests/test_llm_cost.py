@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from paper_extract.llm import LiteLLMClient
-from paper_extract.models import SvgDecision
+from common.llm import LiteLLMClient
+from common.models import SvgDecision
 
 
 def _response() -> SimpleNamespace:
@@ -14,8 +14,8 @@ def _response() -> SimpleNamespace:
 def test_each_call_logs_its_cost_and_the_running_total(caplog):
     client = LiteLLMClient()
     with (
-        patch("paper_extract.llm.litellm.completion", return_value=_response()),
-        patch("paper_extract.llm.litellm.completion_cost", side_effect=[0.01, 0.02]),
+        patch("common.llm.litellm.completion", return_value=_response()),
+        patch("common.llm.litellm.completion_cost", side_effect=[0.01, 0.02]),
         caplog.at_level("INFO"),
     ):
         client.complete(model="gpt-6-luna", prompt="a", schema=SvgDecision, purpose="page 1 read")
@@ -29,8 +29,8 @@ def test_each_call_logs_its_cost_and_the_running_total(caplog):
 def test_unknown_cost_does_not_change_the_running_total(caplog):
     client = LiteLLMClient()
     with (
-        patch("paper_extract.llm.litellm.completion", return_value=_response()),
-        patch("paper_extract.llm.litellm.completion_cost", side_effect=RuntimeError("no price")),
+        patch("common.llm.litellm.completion", return_value=_response()),
+        patch("common.llm.litellm.completion_cost", side_effect=RuntimeError("no price")),
         caplog.at_level("INFO"),
     ):
         client.complete(model="gpt-6-luna", prompt="a", schema=SvgDecision, purpose="page 4 read")

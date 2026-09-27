@@ -2,7 +2,7 @@
 
 
 class PaperExtractError(Exception):
-    """Base error for this package."""
+    """Base error for a paper extraction run."""
 
 
 class PartialQuestionError(PaperExtractError):
