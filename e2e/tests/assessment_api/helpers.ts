@@ -8,7 +8,7 @@ export function testCard(page: Page, title: string) {
   return page
     .getByRole("heading", { name: title, exact: true })
     .locator(
-      "xpath=ancestor::div[.//a[normalize-space()='Open'] or .//button[normalize-space()='Start' or normalize-space()='Continue' or normalize-space()='View attempts']][1]"
+      "xpath=ancestor::div[.//a[normalize-space()='Open'] or .//button[normalize-space()='Start' or normalize-space()='Start New Attempt' or normalize-space()='Continue' or normalize-space()='View attempts' or normalize-space()='View Past Attempts']][1]"
     );
 }
 
@@ -185,15 +185,22 @@ export async function allowStudentReview(page: Page) {
 }
 
 export async function openAttemptFromCard(page: Page, title: string) {
-  await testCard(page, title).getByRole("button", { name: "View attempts" }).click();
-  const start = page.getByRole("button", { name: "Start" });
-  const continueLink = page.getByRole("link", { name: "Continue" }).first();
-  await expect(start.or(continueLink).first()).toBeVisible({ timeout: 15_000 });
-  if (await start.isVisible()) {
-    await start.click();
+  const card = testCard(page, title);
+  const startNew = card.getByRole("button", { name: "Start New Attempt" });
+  await expect(startNew).toBeVisible({ timeout: 15_000 });
+  if (await startNew.isEnabled()) {
+    await startNew.click();
     return;
   }
-  await continueLink.click();
+  await card.getByRole("button", { name: "View Past Attempts" }).click();
+  const continueLink = page.getByRole("link", { name: "Continue" }).first();
+  const start = page.getByRole("button", { name: "Start New Attempt" });
+  await expect(start.or(continueLink).first()).toBeVisible({ timeout: 15_000 });
+  if (await continueLink.isVisible()) {
+    await continueLink.click();
+    return;
+  }
+  await start.click();
 }
 
 export async function goBackToTeacherTests(page: Page) {

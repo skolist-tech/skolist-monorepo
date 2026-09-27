@@ -12,7 +12,7 @@ It is built so the attempt feels familiar to anyone who has used an official com
 
 ## What a student can do
 
-- See papers that have been **assigned** to them.
+- See papers that have been **assigned** to them, review past attempts, and start a new attempt when they have remaining attempts.
 - Read **instructions** and agree to exam rules before the clock starts.
 - Work through **sections** (Physics, Chemistry, Maths, and similar), jump around, and use a **palette** that shows visited / answered / marked-for-review the way NTA interfaces do.
 - Answer multiple-choice and numerical questions, clear a response, and submit when finished (or when time runs out).

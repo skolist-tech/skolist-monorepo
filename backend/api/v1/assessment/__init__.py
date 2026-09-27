@@ -8,8 +8,9 @@ This Assessment API is completely independent of it, it's an assessment platform
 
 Schools / Coachings can use this API to create assessments, and students can take the assessments.
 
-Data lives in the `assessment` schema (tests, sections, questions, test_assignees, attempts, responses),
-aimed at JEE Main, JEE Advanced, and NEET papers.
+Data lives in the `assessment` schema (tests, sections, questions, test_assignees,
+test_attempts_remaining_per_student, attempts, responses), aimed at JEE Main, JEE Advanced,
+and NEET papers.
 """
 
 from fastapi import APIRouter, Depends

@@ -4,6 +4,7 @@ Python-only. No database and no frontend. Parent: [../../TESTING.md](../../TESTI
 
 | File | What it covers |
 | --- | --- |
+| `test_assessment_access.py` | Teacher access is explicit; past-test, review/answer flags, remaining-attempt start gate, attempt summary counts, and question clone payload. |
 | `test_assessment_assignees.py` | Assignee profile enrichment and student search matching. |
 | `test_assessment_grading.py` | MCQ, MSQ, numerical, and integer scoring, including unanswered and passage stems. |
 | `test_assessment_login.py` | Organisation-code normalisation, and password sign-in on a throwaway Supabase client (settings and client are stubbed). |

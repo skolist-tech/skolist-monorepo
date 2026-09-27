@@ -11,6 +11,7 @@ from .db import (
     as_str,
     assessment_table,
     enrich_assignee_row,
+    grant_attempts_remaining,
     is_assigned,
     list_assignees_for_test,
     list_org_students,
@@ -56,6 +57,7 @@ def add_assignee(
     rows = response.data or []
     if not rows:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to assign user")
+    grant_attempts_remaining(supabase, test["id"], [user_id])
     return enrich_assignee_row(rows[0], user.data[0])
 
 

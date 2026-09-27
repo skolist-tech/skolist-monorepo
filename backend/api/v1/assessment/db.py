@@ -8,6 +8,7 @@ from supabase import Client
 from .models import STUDENT_USER_TYPE
 
 RESPONSES_TABLE = "responses"
+REMAINING_TABLE = "test_attempts_remaining_per_student"
 USER_PROFILE_FIELDS = "id, name, email, avatar_url"
 
 
@@ -240,3 +241,102 @@ def list_org_groups(supabase: Client, org_id: str | None) -> list[dict]:
     return fetch_all(
         assessment_table(supabase, "student_groups").select("id, name, org_id").eq("org_id", org_id).order("name")
     )
+
+
+def list_group_member_ids(supabase: Client, group_id: UUID | str) -> list[str]:
+    """User ids currently in a student group."""
+    rows = fetch_all(
+        assessment_table(supabase, "student_group_members").select("user_id").eq("group_id", as_str(group_id))
+    )
+    return [str(row["user_id"]) for row in rows if row.get("user_id")]
+
+
+def get_attempts_remaining(supabase: Client, test_id: UUID | str, student_id: str) -> int:
+    """Remaining new starts for one student on one test. Missing row is 0."""
+    rows = fetch_all(
+        assessment_table(supabase, REMAINING_TABLE)
+        .select("attempts_remaining")
+        .eq("test_id", as_str(test_id))
+        .eq("student_id", student_id)
+    )
+    if not rows:
+        return 0
+    return int(rows[0].get("attempts_remaining") or 0)
+
+
+def list_attempts_remaining_for_student(supabase: Client, student_id: str, test_ids: list[str]) -> dict[str, int]:
+    """Map test id to remaining starts for a student."""
+    if not test_ids:
+        return {}
+    rows = fetch_all(
+        assessment_table(supabase, REMAINING_TABLE)
+        .select("test_id, attempts_remaining")
+        .eq("student_id", student_id)
+        .in_("test_id", test_ids)
+    )
+    return {str(row["test_id"]): int(row.get("attempts_remaining") or 0) for row in rows if row.get("test_id")}
+
+
+def grant_attempts_remaining(
+    supabase: Client,
+    test_id: UUID | str,
+    student_ids: list[str],
+    amount: int = 1,
+) -> None:
+    """Insert remaining=amount for students who do not already have a row."""
+    for student_id in dict.fromkeys(user_id for user_id in student_ids if user_id):
+        existing = fetch_all(
+            assessment_table(supabase, REMAINING_TABLE)
+            .select("id")
+            .eq("test_id", as_str(test_id))
+            .eq("student_id", student_id)
+        )
+        if existing:
+            continue
+        assessment_table(supabase, REMAINING_TABLE).insert(
+            {
+                "test_id": as_str(test_id),
+                "student_id": student_id,
+                "attempts_remaining": amount,
+            }
+        ).execute()
+
+
+def consume_attempt_slot(supabase: Client, test_id: UUID | str, student_id: str) -> bool:
+    """Decrement remaining by 1. False if the student has none left."""
+    rows = fetch_all(
+        assessment_table(supabase, REMAINING_TABLE)
+        .select("id, attempts_remaining")
+        .eq("test_id", as_str(test_id))
+        .eq("student_id", student_id)
+    )
+    if not rows:
+        return False
+    current = int(rows[0].get("attempts_remaining") or 0)
+    if current < 1:
+        return False
+    updated = (
+        assessment_table(supabase, REMAINING_TABLE)
+        .update({"attempts_remaining": current - 1})
+        .eq("id", rows[0]["id"])
+        .eq("attempts_remaining", current)
+        .execute()
+    )
+    return bool(updated.data)
+
+
+def refund_attempt_slot(supabase: Client, test_id: UUID | str, student_id: str) -> None:
+    """Give back one remaining start after a failed attempt insert."""
+    rows = fetch_all(
+        assessment_table(supabase, REMAINING_TABLE)
+        .select("id, attempts_remaining")
+        .eq("test_id", as_str(test_id))
+        .eq("student_id", student_id)
+    )
+    if not rows:
+        grant_attempts_remaining(supabase, test_id, [student_id])
+        return
+    current = int(rows[0].get("attempts_remaining") or 0)
+    assessment_table(supabase, REMAINING_TABLE).update({"attempts_remaining": current + 1}).eq(
+        "id", rows[0]["id"]
+    ).execute()

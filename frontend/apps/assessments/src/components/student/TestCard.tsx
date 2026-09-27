@@ -10,10 +10,14 @@ import type { TestSummary } from "@/types/assessment";
 
 export function TestCard({
   test,
-  onOpen,
+  starting = false,
+  onViewAttempts,
+  onStartAttempt,
 }: {
   test: TestSummary;
-  onOpen: (testId: string) => void;
+  starting?: boolean;
+  onViewAttempts: (testId: string) => void;
+  onStartAttempt: (testId: string) => void;
 }) {
   const attempt = test.latest_attempt;
   return (
@@ -31,7 +35,17 @@ export function TestCard({
         ) : (
           <p className="text-sm">No attempt yet</p>
         )}
-        <Button onClick={() => onOpen(test.id)}>View attempts</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => onViewAttempts(test.id)}>
+            View Past Attempts
+          </Button>
+          <Button
+            disabled={!test.can_start || starting}
+            onClick={() => onStartAttempt(test.id)}
+          >
+            Start New Attempt
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

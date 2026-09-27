@@ -22,6 +22,8 @@ export type TestSummary = {
   starts_at?: string | null;
   ends_at?: string | null;
   latest_attempt?: AttemptSummary | null;
+  attempts_remaining?: number;
+  can_start?: boolean;
 };
 
 export type AttemptSummary = {

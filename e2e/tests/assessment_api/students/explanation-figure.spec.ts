@@ -75,7 +75,7 @@ test("explanation figure stays hidden until the teacher reveals answers", async 
 
   await logOut(page);
   await loginAs(page, student.email, student.password);
-  await testCard(page, name).getByRole("button", { name: "View attempts" }).click();
+  await testCard(page, name).getByRole("button", { name: "View Past Attempts" }).click();
   await page.getByRole("link", { name: "View result" }).click();
   await expect(page.getByText(EXPLANATION)).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("img", { name: "Explanation figure" })).toBeVisible();

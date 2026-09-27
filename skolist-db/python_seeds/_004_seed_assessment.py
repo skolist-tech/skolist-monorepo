@@ -152,6 +152,15 @@ def seed_assessment():
     upsert_rows(supabase, "student_groups", groups)
     upsert_rows(supabase, "student_group_members", members)
     upsert_rows(supabase, "test_assignees", assignees)
+    remaining = [
+        {
+            "student_id": assignee["user_id"],
+            "test_id": assignee["test_id"],
+            "attempts_remaining": 1,
+        }
+        for assignee in assignees
+    ]
+    upsert_rows(supabase, "test_attempts_remaining_per_student", remaining, on_conflict="student_id,test_id")
     upsert_rows(supabase, "sections", copy.deepcopy(data.SECTIONS))
     upsert_questions(supabase, parents)
     upsert_questions(supabase, children)

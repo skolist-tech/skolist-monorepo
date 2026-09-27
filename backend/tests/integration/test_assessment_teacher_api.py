@@ -99,6 +99,15 @@ class TestAssessmentTeacherApi:
             assert assigned.json().get("user_id") == student_auth_session["user_id"]
             assert assigned.json().get("name")
             assert assigned.json().get("email") == student_auth_session["email"]
+            remaining = (
+                _assessment(service_supabase_client, "test_attempts_remaining_per_student")
+                .select("attempts_remaining")
+                .eq("test_id", test_id)
+                .eq("student_id", student_auth_session["user_id"])
+                .execute()
+            )
+            assert remaining.data
+            assert remaining.data[0]["attempts_remaining"] == 1
 
             listed = teacher_test_client.get(f"{PREFIX}/tests/{test_id}/assignees")
             assert listed.status_code == 200
@@ -119,8 +128,54 @@ class TestAssessmentTeacherApi:
 
             assigned_tests = student_test_client.get(f"{PREFIX}/assigned-tests")
             assert assigned_tests.status_code == 200
-            ids = {item["id"] for item in assigned_tests.json()["tests"]}
+            listed_tests = assigned_tests.json()["tests"]
+            ids = {item["id"] for item in listed_tests}
             assert test_id in ids
+            created_row = next(item for item in listed_tests if item["id"] == test_id)
+            assert created_row["can_start"] is True
+            assert created_row["attempts_remaining"] == 1
+        finally:
+            _assessment(service_supabase_client, "tests").delete().eq("id", test_id).execute()
+
+    def test_group_assign_grants_remaining(
+        self,
+        teacher_test_client: TestClient,
+        service_supabase_client: Client,
+    ):
+        group_id = "00000000-0000-0000-0000-000000000190"
+        created = teacher_test_client.post(
+            f"{PREFIX}/tests",
+            json={
+                "name": "Group remaining test",
+                "exam_type": "jee_main",
+                "duration_minutes": 30,
+            },
+        )
+        assert created.status_code == 201
+        test_id = created.json()["id"]
+        try:
+            assigned = teacher_test_client.post(
+                f"{PREFIX}/tests/{test_id}/group-assignees",
+                json={"group_id": group_id},
+            )
+            assert assigned.status_code == 201
+            members = (
+                _assessment(service_supabase_client, "student_group_members")
+                .select("user_id")
+                .eq("group_id", group_id)
+                .execute()
+            )
+            member_ids = {row["user_id"] for row in members.data or []}
+            assert member_ids
+            remaining = (
+                _assessment(service_supabase_client, "test_attempts_remaining_per_student")
+                .select("student_id, attempts_remaining")
+                .eq("test_id", test_id)
+                .execute()
+            )
+            remaining_ids = {row["student_id"] for row in remaining.data or []}
+            assert member_ids <= remaining_ids
+            assert all(row["attempts_remaining"] == 1 for row in remaining.data or [])
         finally:
             _assessment(service_supabase_client, "tests").delete().eq("id", test_id).execute()
 

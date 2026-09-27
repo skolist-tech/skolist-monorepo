@@ -42,46 +42,53 @@ export function StudentAttemptsPage() {
         <p className="text-muted-foreground">Your attempts</p>
       </div>
       {error ? <p className="text-destructive">{error}</p> : null}
-      {test.can_start ? (
-        <Button
-          type="button"
-          onClick={() => {
-            if (!testId) return;
-            startAttempt(testId)
-              .then((attempt) => navigate(`/student/attempts/${attempt.id}`))
-              .catch((err: Error) => setError(err.message));
-          }}
-        >
-          Start
-        </Button>
-      ) : null}
-      <ul className="space-y-2">
-        {attempts.map((attempt) => (
-          <li
-            key={attempt.id}
-            className="flex items-center justify-between rounded-md border px-3 py-2"
+      {attempts.length === 0 ? (
+        <p className="text-muted-foreground">
+          You have not attempted the test yet
+        </p>
+      ) : (
+        <>
+          <Button
+            type="button"
+            disabled={!test.can_start}
+            onClick={() => {
+              if (!testId) return;
+              startAttempt(testId)
+                .then((attempt) => navigate(`/student/attempts/${attempt.id}`))
+                .catch((err: Error) => setError(err.message));
+            }}
           >
-            <span className="text-sm">
-              Attempt {attempt.attempt_number} · {attempt.status}
-            </span>
-            {attempt.status !== "in_progress" ? (
-              <Link
-                className="text-sm text-primary"
-                to={`/student/attempts/${attempt.id}/result`}
+            Start New Attempt
+          </Button>
+          <ul className="space-y-2">
+            {attempts.map((attempt) => (
+              <li
+                key={attempt.id}
+                className="flex items-center justify-between rounded-md border px-3 py-2"
               >
-                View result
-              </Link>
-            ) : (
-              <Link
-                className="text-sm text-primary"
-                to={`/student/attempts/${attempt.id}`}
-              >
-                Continue
-              </Link>
-            )}
-          </li>
-        ))}
-      </ul>
+                <span className="text-sm">
+                  Attempt {attempt.attempt_number} · {attempt.status}
+                </span>
+                {attempt.status !== "in_progress" ? (
+                  <Link
+                    className="text-sm text-primary"
+                    to={`/student/attempts/${attempt.id}/result`}
+                  >
+                    View result
+                  </Link>
+                ) : (
+                  <Link
+                    className="text-sm text-primary"
+                    to={`/student/attempts/${attempt.id}`}
+                  >
+                    Continue
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }

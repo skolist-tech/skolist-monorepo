@@ -8,8 +8,8 @@ Needs a local Supabase stack and the Python seeds. See [../README.md](../README.
 | --- | --- |
 | `test_assessment_auth_api.py` | Assessment auth, and that student payloads do not leak answer keys. |
 | `test_assessment_login_api.py` | Email, password, and organisation-code sign-in against seeded users. |
-| `test_assessment_student_api.py` | Assigned tests, saving a response, submit, grading, and lock after submit. |
-| `test_assessment_teacher_api.py` | Teacher list/read, question CRUD, assign, publish, and delete. |
+| `test_assessment_student_api.py` | Assigned tests, saving a response, submit, grading, lock after submit, and that a second start is blocked when remaining is 0. |
+| `test_assessment_teacher_api.py` | Teacher list/read, question CRUD, assign (grants remaining=1), group assign, publish, and delete. |
 | `test_auto_correct_question_api.py` | Auto-correct HTTP API: auth, validation, and a successful correction. |
 | `test_bank_api.py` | Question-bank list, preview, and update (seeded `bank-admin@seed.skolist.com`) |
 | `test_download_api.py` | PDF and DOCX download endpoints. |

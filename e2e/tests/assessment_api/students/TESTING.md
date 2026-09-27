@@ -4,7 +4,7 @@ Parent: [../TESTING.md](../TESTING.md).
 
 | File | What it covers |
 | --- | --- |
-| `student.spec.ts` | Assigned list shows published seeds, not draft or closed. Student 3 sees **No attempt yet** and **View attempts**. Student 1 opens a live NEET paper from the attempts list (instructions, palette, Save & Next). |
+| `student.spec.ts` | Assigned list shows published seeds, not draft or closed. Student 3 sees **No attempt yet**, **View Past Attempts**, and enabled **Start New Attempt** on the card. Opening past attempts with none shows **You have not attempted the test yet** and hides **Start New Attempt**. Student 1 opens a live NEET paper from the card (instructions, palette, Save & Next). |
 | `workflow.spec.ts` | Student 3 starts NEET Open, answers, Save & Next, then jumps back to question 1 from the palette. |
 | `attempt-authored-paper.spec.ts` | The worker's e2e teacher authors, assigns that worker's e2e student, and publishes. The student sits the paper, submits, sees 8/8, and goes **Back**. The teacher reviews the graded attempt and goes **Back**. |
 | `unreleased-paper.spec.ts` | The worker's e2e student does not see a draft they were assigned, a published paper that was never assigned, or a paper after the teacher closes it. |

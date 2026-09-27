@@ -53,6 +53,11 @@ def can_student_attempt(test: dict) -> bool:
     return test.get("status") == "published" and is_within_window(test)
 
 
+def student_can_start_attempt(test: dict, attempts_remaining: int) -> bool:
+    """True when the paper is open and the student still has remaining starts."""
+    return can_student_attempt(test) and attempts_remaining >= 1
+
+
 def teacher_has_access(actor: AssessmentActor, teacher_ids: set[str]) -> bool:
     if actor.is_platform_admin:
         return True
@@ -175,6 +180,7 @@ __all__ = [
     "STUDENT_USER_TYPE",
     "TEACHER_USER_TYPES",
     "can_student_attempt",
+    "student_can_start_attempt",
     "is_within_window",
     "parse_datetime",
     "require_assessment_actor",

@@ -114,11 +114,19 @@ class TestAssessmentStudentApi:
                 json={"selected_mcq_option": 1},
             )
             assert locked.status_code == 409
+
+            second = student_test_client.post(f"{PREFIX}/tests/{test_id}/attempts")
+            assert second.status_code == 403
+            assert second.json()["detail"] == "No attempts remaining"
         finally:
             _assessment(service_supabase_client, "tests").delete().eq("id", test_id).execute()
 
     def test_seed_assigned_main_is_visible(self, student_test_client: TestClient):
         response = student_test_client.get(f"{PREFIX}/assigned-tests")
         assert response.status_code == 200
-        ids = {item["id"] for item in response.json()["tests"]}
+        body = response.json()["tests"]
+        ids = {item["id"] for item in body}
         assert TEST_JEE_MAIN_1 in ids
+        main = next(item for item in body if item["id"] == TEST_JEE_MAIN_1)
+        assert main["can_start"] is True
+        assert main["attempts_remaining"] >= 1

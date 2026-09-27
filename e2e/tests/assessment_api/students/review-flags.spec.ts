@@ -53,7 +53,7 @@ test("past attempts and correct answers stay hidden until the teacher allows the
   await expect(page.getByRole("heading", { name: "Past tests" })).toBeVisible({
     timeout: 15_000,
   });
-  await testCard(page, name).getByRole("button", { name: "View attempts" }).click();
+  await testCard(page, name).getByRole("button", { name: "View Past Attempts" }).click();
   await page.getByRole("link", { name: "View result" }).click();
   await expect(page.getByText("Correct").first()).toBeVisible({ timeout: 15_000 });
 });

@@ -14,12 +14,14 @@ from .db import (
     RESPONSES_TABLE,
     as_str,
     assessment_table,
+    consume_attempt_slot,
     fetch_all,
     fetch_question,
     fetch_test,
     list_questions_for_test,
     list_responses_for_attempt,
     list_sections_for_test,
+    refund_attempt_slot,
 )
 from .dependencies import can_student_attempt, require_assigned_test, require_attempt_owner, require_student
 from .grading import grade_attempt
@@ -100,6 +102,12 @@ def start_attempt(
     if in_progress:
         return in_progress
 
+    if not consume_attempt_slot(supabase, test_id, actor.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No attempts remaining",
+        )
+
     next_number = (max((row.get("attempt_number") or 1) for row in existing) + 1) if existing else 1
     questions = list_questions_for_test(supabase, test_id)
     possible = sum(float(q.get("marks") or 0) for q in questions)
@@ -111,9 +119,14 @@ def start_attempt(
         "started_at": _now_iso(),
         "total_marks_possible": possible,
     }
-    response = assessment_table(supabase, "attempts").insert(insert).execute()
+    try:
+        response = assessment_table(supabase, "attempts").insert(insert).execute()
+    except Exception:
+        refund_attempt_slot(supabase, test_id, actor.id)
+        raise
     rows = response.data or []
     if not rows:
+        refund_attempt_slot(supabase, test_id, actor.id)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to start attempt")
     return rows[0]
 

@@ -10,6 +10,7 @@ from api.v1.assessment.common.access import (
     student_can_see_answers,
     teacher_has_access,
 )
+from api.v1.assessment.dependencies import student_can_start_attempt
 from api.v1.assessment.models import AssessmentActor
 
 
@@ -57,6 +58,13 @@ def test_attempt_summary_counts():
         "unanswered": 1,
         "total": 3,
     }
+
+
+def test_student_can_start_attempt_requires_remaining_and_open_window():
+    published = {"status": "published"}
+    assert student_can_start_attempt(published, 1) is True
+    assert student_can_start_attempt(published, 0) is False
+    assert student_can_start_attempt({"status": "closed"}, 1) is False
 
 
 def test_question_clone_payload_copies_key_and_stem():

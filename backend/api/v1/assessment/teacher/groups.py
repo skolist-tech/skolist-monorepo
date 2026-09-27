@@ -7,7 +7,15 @@ from supabase import Client
 
 from api.v1.auth import get_supabase_client
 
-from ..db import assessment_table, fetch_all, fetch_one, list_group_assignees_for_test, list_org_groups
+from ..db import (
+    assessment_table,
+    fetch_all,
+    fetch_one,
+    grant_attempts_remaining,
+    list_group_assignees_for_test,
+    list_group_member_ids,
+    list_org_groups,
+)
 from ..dependencies import require_teacher, require_test_for_teacher
 from ..models import AssessmentActor, GroupAssigneeCreate
 
@@ -59,6 +67,7 @@ def add_group_assignee(
     rows = response.data or []
     if not rows:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to assign group")
+    grant_attempts_remaining(supabase, test["id"], list_group_member_ids(supabase, body.group_id))
     return {**rows[0], "name": group.get("name")}
 
 

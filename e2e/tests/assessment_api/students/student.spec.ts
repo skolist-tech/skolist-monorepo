@@ -44,7 +44,21 @@ test.describe("Student assessment flows", () => {
     await expect(card.getByText("No attempt yet")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(card.getByRole("button", { name: "View attempts" })).toBeVisible();
+    await expect(
+      card.getByRole("button", { name: "View Past Attempts" })
+    ).toBeVisible();
+    await expect(
+      card.getByRole("button", { name: "Start New Attempt" })
+    ).toBeEnabled();
+
+    await card.getByRole("button", { name: "View Past Attempts" }).click();
+    await expect(page).toHaveURL(/\/student\/tests\/.+\/attempts$/);
+    await expect(
+      page.getByText("You have not attempted the test yet")
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Start New Attempt" })
+    ).toHaveCount(0);
   });
 
   test("opens NEET paper into the NTA paper UI", async ({
